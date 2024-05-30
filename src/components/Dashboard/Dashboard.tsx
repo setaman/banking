@@ -38,7 +38,7 @@ export default async function Dashboard({
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                   }
                 >
-                  <Amount value={1000000000} />
+                  <Amount value={stats.totalBalance} />
                 </StatCard>
               </div>
               <div className="grid grid-cols-2 gap-5 mt-5">
@@ -53,7 +53,7 @@ export default async function Dashboard({
                     }
                   >
                     <span className="text-sm">
-                      <Amount value={-1500} colored={false} />
+                      <Amount value={stats.expenses} colored={false} />
                     </span>
                   </StatCard>
                 </div>
@@ -68,7 +68,7 @@ export default async function Dashboard({
                     }
                   >
                     <span className="text-sm">
-                      <Amount value={5650} colored={false} />
+                      <Amount value={stats.income} colored={false} />
                     </span>
                   </StatCard>
                 </div>
