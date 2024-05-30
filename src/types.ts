@@ -62,5 +62,8 @@ export interface TransactionsByMonthI {
   transactions: TransactionI[];
 }
 export interface StatsI {
+  totalBalance: number;
+  expenses: number;
+  income: number;
   transactionsByMonth: TransactionsByMonthI[];
 }

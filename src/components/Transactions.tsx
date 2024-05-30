@@ -92,7 +92,7 @@ export default function Transactions({
                         ))}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <Amount value={t.amount} />
+                        <Amount value={t.amount * -1} />
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {format(t.authorized_date ?? "", "dd.MM.yyyy")}

@@ -11,6 +11,7 @@ import {
 import { mapDkbCsvExportToTransactions } from "@/src/lib/institutionsMaps/dkb";
 import { hash256 } from "@/src/lib/hash256";
 import { format } from "date-fns";
+import { getExpenses, getIncome, getTotalBalance } from "@/src/statistics/calculator";
 
 const groupTransactionByDate = (transactions: TransactionI[]) => {
   const groups: TransactionsByMonthI[] = [];
@@ -38,12 +39,15 @@ export async function uploadCsvExport(formData: FormData, inst: Institution) {
   const fileContents = await file.text();
   const statsFileName = hash256(fileContents);
 
-  if (!fs.existsSync(`uploads/${statsFileName}.json`)) {
+  if (fs.existsSync(`uploads/${statsFileName}.json`)) {
     const transactions = mapDkbCsvExportToTransactions(fileContents);
     const transactionsByMonth = groupTransactionByDate(transactions);
 
     const stats: StatsI = {
-      transactionsByMonth,
+      totalBalance: getTotalBalance(transactions),
+      expenses: getExpenses(transactions),
+      income: getIncome(transactions),
+      transactionsByMonth: transactionsByMonth,
     };
 
     fs.writeFileSync(`uploads/${statsFileName}.json`, JSON.stringify(stats));

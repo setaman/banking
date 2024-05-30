@@ -54,7 +54,7 @@ const dkbTransaction = z
     return {
       account_id: "",
       transaction_id,
-      amount: EURO(t["Betrag (€)"]).value,
+      amount: amount.value * -1,
       authorized_date: parsedAuthDate.toISOString(),
       date: parsedDate ? parsedDate.toISOString() : "",
       pending: t.Status !== "Gebucht",
@@ -64,7 +64,7 @@ const dkbTransaction = z
     };
   });
 
-export const mapDkbCsvExportToTransactions = (file: string) => {
+export const mapDkbCsvExportToTransactions = (file: string): TransactionI[] => {
   let transactions = parseCsv(file).filter((t) => {
     const parseResult = dkbTransaction.safeParse(t);
     if (!parseResult.success) {
