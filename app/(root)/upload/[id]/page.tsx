@@ -15,7 +15,7 @@ export default async function UploadResult({
         <>
           <Dashboard stats={stats} />
           <div className="mt-16">
-            <Transactions transactions={stats?.transactionsByMonth ?? []} />
+            <Transactions transactions={stats?.transactionsGroup ?? []} />
           </div>
         </>
       )}
