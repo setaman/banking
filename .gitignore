@@ -129,6 +129,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .idea
-**/institutionsMap/**/*.csv
+
 uploads/*.json
 db/db.json
+src/lib/institutionsMaps/**/*.csv

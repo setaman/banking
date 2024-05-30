@@ -64,7 +64,7 @@ const dkbTransaction = z
     };
   });
 
-export const mapDkbCsvExportToTransactions = (file: string) => {
+export const mapDkbCsvExportToTransactions = (file: string): TransactionI[] => {
   let transactions = parseCsv(file).filter((t) => {
     const parseResult = dkbTransaction.safeParse(t);
     if (!parseResult.success) {
@@ -85,7 +85,7 @@ export const init = () => {
   if (!Banks.getById(akbBankAccount.account_id)) {
     Banks.insert(akbBankAccount);
   }
-  const file = fs.readFileSync(
+  /* const file = fs.readFileSync(
     "./src/lib/institutionsMaps/dkb/20-05-2024.csv",
     "utf-8"
   );
@@ -97,5 +97,5 @@ export const init = () => {
       `--- Inserting ${transactions.length} new transactions for ${dkbInstitution.name} ---`
     );
     Transactions.insertBulk(transactions as TransactionI[]);
-  }
+  }*/
 };

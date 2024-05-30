@@ -1,7 +1,6 @@
 import Papa from "papaparse";
 
 export const parseCsv = (file: string) => {
-  // @ts-ignore
   const parsedData = Papa.parse(file).data as string[][];
   const headers = parsedData[0];
   // convert parse data to an array of objects with headers as keys
