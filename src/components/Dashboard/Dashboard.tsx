@@ -8,6 +8,7 @@ import { DollarSign, ArrowDownLeft, Minus, ArrowUpRight } from "lucide-react";
 import { StatCard } from "@/src/components/StatCard";
 import Amount from "@/src/components/Amount";
 import { StatsI } from "@/src/types";
+import { IncomeExpenseDistribution } from "@/src/components/Dashboard/Charts/IncomeExpenseDistribution";
 
 export default async function Dashboard({
   stats,
@@ -77,11 +78,13 @@ export default async function Dashboard({
           </Card>
         </div>
         <div className="col-span-4 md:col-span-4 lg:col-span-2 xl:col-span-3">
-          <Card className="h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card className="h-full flex flex-col">
+            <CardHeader>
               <CardTitle className="text-sm font-medium">Nice Chart</CardTitle>
             </CardHeader>
-            <CardContent>Charts</CardContent>
+            <CardContent className="grow">
+              <IncomeExpenseDistribution stats={stats} />
+            </CardContent>
           </Card>
         </div>
       </div>
