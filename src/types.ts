@@ -65,5 +65,6 @@ export interface StatsI {
   totalBalance: number;
   expenses: number;
   income: number;
-  transactionsGroup: TransactionsGroupI[];
+  transactionsGroupByMonth: TransactionsGroupI[];
+  transactionsGroupByDay: TransactionsGroupI[];
 }

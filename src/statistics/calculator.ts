@@ -27,7 +27,7 @@ export function getIncome(transactions: TransactionI[]): number {
 }
 
 export function groupTransactionByDay(transactions: TransactionI[]): TransactionsGroupI[] { 
-    return groupTransaction(transactions, "DD.MM.yyyy");
+    return groupTransaction(transactions, "dd.MM.yyyy");
 }
 
 export function groupTransactionByDate (transactions: TransactionI[]): TransactionsGroupI[] {
