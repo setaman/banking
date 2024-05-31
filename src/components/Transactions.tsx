@@ -110,7 +110,7 @@ export default function Transactions({
         <CardFooter>
           <div className="w-full text-xs text-muted-foreground flex justify-center">
             <span>
-              Showing <strong>{maxVisibleTransactions}</strong> of{" "}
+              Showing <strong>{count}</strong> of{" "}
               <strong>{count}</strong> transactions
             </span>
           </div>
