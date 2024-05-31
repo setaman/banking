@@ -22,12 +22,13 @@ import { format } from "date-fns";
 
 export default function Transactions({
   transactions,
+  count,
 }: {
   transactions: TransactionsByMonthI[];
+  count: number;
 }) {
   const maxVisibleTransactions = 50;
   const collapsedTransactions = transactions.slice(0, maxVisibleTransactions);
-  const transactionsCount = transactions.length;
 
   return (
     <div>
@@ -110,7 +111,7 @@ export default function Transactions({
           <div className="w-full text-xs text-muted-foreground flex justify-center">
             <span>
               Showing <strong>{maxVisibleTransactions}</strong> of{" "}
-              <strong>{transactionsCount}</strong> transactions
+              <strong>{count}</strong> transactions
             </span>
           </div>
         </CardFooter>

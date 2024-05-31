@@ -66,4 +66,5 @@ export interface StatsI {
   expenses: number;
   income: number;
   transactionsByMonth: TransactionsByMonthI[];
+  transactionsCount: number;
 }

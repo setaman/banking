@@ -42,12 +42,14 @@ export async function uploadCsvExport(formData: FormData, inst: Institution) {
   if (!fs.existsSync(`uploads/${statsFileName}.json`)) {
     const transactions = mapDkbCsvExportToTransactions(fileContents);
     const transactionsByMonth = groupTransactionByDate(transactions);
+    const transactionsCount = transactions.length;
 
     const stats: StatsI = {
       totalBalance: getTotalBalance(transactions),
       expenses: getExpenses(transactions),
       income: getIncome(transactions),
       transactionsByMonth: transactionsByMonth,
+      transactionsCount: transactionsCount,
     };
 
     fs.writeFileSync(`uploads/${statsFileName}.json`, JSON.stringify(stats));
