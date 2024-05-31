@@ -61,10 +61,16 @@ export interface TransactionsGroupI {
   date: string;
   transactions: TransactionI[];
 }
+
 export interface StatsI {
   totalBalance: number;
   expenses: number;
   income: number;
   transactionsGroupByMonth: TransactionsGroupI[];
   transactionsGroupByDay: TransactionsGroupI[];
+}
+
+export interface TimeSeriesI {
+  date: string;
+  value: number;
 }
