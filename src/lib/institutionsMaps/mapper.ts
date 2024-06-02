@@ -8,27 +8,30 @@ import { dbTransaction } from "./db/index";
 export const mapCsvExportToTransactions = (file: string, accountId: string): TransactionI[] => {
   const instTransaction = (function () {
     switch (accountId) {
-      case dkbBankAccount.account_id:
-        return dkbTransaction;
-      case dbBankAccount.account_id:
-        return dbTransaction;
-      default:
-        console.warn(`Account ${ accountId } does not exist`);
+    case dkbBankAccount.account_id:
+      return dkbTransaction;
+    case dbBankAccount.account_id:
+      return dbTransaction;
+    default:
+      console.warn(`Account ${ accountId } does not exist`);
     }
   })();
 
-  let transactions = parseCsv(file).filter((t) => {
-    const parseResult = instTransaction.safeParse(t);
-    if (!parseResult.success) {
-      console.warn("Invalid transaction entry! Skipped!", t, parseResult.error);
-    }
-    return parseResult.success;
-  });
-  return z
-    .array(instTransaction)
-    .parse(transactions)
-    .map((t) => ({
-      ...t,
-      account_id: accountId,
-    }));
+  if (instTransaction){
+    let transactions = parseCsv(file).filter((t) => {
+      const parseResult = instTransaction.safeParse(t);
+      if (!parseResult.success) {
+        console.warn("Invalid transaction entry! Skipped!", t, parseResult.error);
+      }
+      return parseResult.success;
+    });
+    return z
+      .array(instTransaction)
+      .parse(transactions)
+      .map((t) => ({
+        ...t,
+        account_id: accountId,
+      }));
+  }
+  return [];
 };

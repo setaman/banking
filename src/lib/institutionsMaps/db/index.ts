@@ -23,8 +23,8 @@ export const dbTransaction = z
     );
 
     const parsedDate = t.Wert
-    ? parse(t.Wert, "dd.MM.yyyy", new Date())
-    : null;
+      ? parse(t.Wert, "dd.MM.yyyy", new Date())
+      : null;
     const amount = EURO(t.Soll).value != 0 ? EURO(t.Soll) : EURO(t.Haben);
 
     // generate a (hopefully) unique transaction id based on the transaction data hash
@@ -32,14 +32,14 @@ export const dbTransaction = z
       parsedDate ? parsedDate.toISOString() : "",
       parsedAuthDate.toISOString(),
       amount.format(),
-      t.Auftraggeber,
+      t.Auftraggeber ?? "",
       t.Verwendungszweck ?? "",
     ]);
 
     return {
       account_id: "",
       transaction_id: transaction_id,
-      amount: amount * -1,
+      amount: amount.value * -1,
       authorized_date: parsedAuthDate.toISOString(),
       date: parsedDate ? parsedDate.toISOString() : "",
       pending: false,

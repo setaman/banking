@@ -40,7 +40,7 @@ export default function Upload() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost">
                 Select a bank
-                  <ChevronDown className="ml-2 h-4 w-4" />
+                <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
@@ -52,26 +52,26 @@ export default function Upload() {
                     onClick={() => setCurrentBank(bank)}
                     key={bank.account_id}
                   >
-                      <div className="flex items-start gap-3 text-muted-foreground">
-                        <Bird className="size-5" />
-                        <div className="grid gap-0.5">
-                          <p>
-                            <span className="font-medium text-foreground">
-                              {bank.name}
-                            </span>
-                          </p>
+                    <div className="flex items-start gap-3 text-muted-foreground">
+                      <Bird className="size-5" />
+                      <div className="grid gap-0.5">
+                        <p>
+                          <span className="font-medium text-foreground">
+                            {bank.name}
+                          </span>
+                        </p>
 
-                          <p className="text-xs">{bank.institution_id}</p>
-                        </div>
+                        <p className="text-xs">{bank.institution_id}</p>
                       </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
           </DropdownMenu>
 
           {currentBank && <form action={uploadFile} className="">
-          <Card className="w-[450px]">
+            <Card className="w-[450px]">
               <CardHeader>
                 <CardTitle>Upload CSV file</CardTitle>
                 <CardDescription>
