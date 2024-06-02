@@ -5,33 +5,10 @@ import { revalidatePath } from "next/cache";
 import {
   Institution,
   StatsI,
-  TransactionI,
-  TransactionsByMonthI,
 } from "@/src/types";
 import { mapDkbCsvExportToTransactions } from "@/src/lib/institutionsMaps/dkb";
 import { hash256 } from "@/src/lib/hash256";
-import { format } from "date-fns";
-import { getExpenses, getIncome, getTotalBalance } from "@/src/statistics/calculator";
-
-const groupTransactionByDate = (transactions: TransactionI[]) => {
-  const groups: TransactionsByMonthI[] = [];
-
-  for (const t of transactions) {
-    const groupName = format(t.authorized_date, "MM.yyyy");
-    const group = groups.find((g) => g.group === groupName);
-    if (group) {
-      group.transactions.push(t);
-    } else {
-      groups.push({
-        group: groupName,
-        date: t.authorized_date,
-        transactions: [t],
-      });
-    }
-  }
-
-  return groups;
-};
+import { getExpenses, getIncome, getTotalBalance, groupTransactionByDate, groupTransactionByDay } from "@/src/statistics/calculator";
 
 export async function uploadCsvExport(formData: FormData, inst: Institution) {
   const file = formData.get("file") as File;
@@ -41,15 +18,15 @@ export async function uploadCsvExport(formData: FormData, inst: Institution) {
 
   if (!fs.existsSync(`uploads/${statsFileName}.json`)) {
     const transactions = mapDkbCsvExportToTransactions(fileContents);
-    const transactionsByMonth = groupTransactionByDate(transactions);
-    const transactionsCount = transactions.length;
+    const transactionsGroupByMonth = groupTransactionByDate(transactions);
+    const transactionsGroupByDay = groupTransactionByDay(transactions);
 
     const stats: StatsI = {
       totalBalance: getTotalBalance(transactions),
       expenses: getExpenses(transactions),
       income: getIncome(transactions),
-      transactionsByMonth: transactionsByMonth,
-      transactionsCount: transactionsCount,
+      transactionsGroupByMonth: transactionsGroupByMonth,
+      transactionsGroupByDay: transactionsGroupByDay,
     };
 
     fs.writeFileSync(`uploads/${statsFileName}.json`, JSON.stringify(stats));

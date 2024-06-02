@@ -90,7 +90,7 @@ export function DashboardModeSelector({
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={(date) => setDate(date as Date)}
                   className="rounded-md border"
                 />
               </div>

@@ -80,7 +80,7 @@ export default async function Dashboard({
         <div className="col-span-4 md:col-span-4 lg:col-span-2 xl:col-span-3">
           <Card className="h-full flex flex-col">
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Nice Chart</CardTitle>
+              <CardTitle className="text-sm font-medium">Income/Expense distribution</CardTitle>
             </CardHeader>
             <CardContent className="grow">
               <IncomeExpenseDistribution stats={stats} />

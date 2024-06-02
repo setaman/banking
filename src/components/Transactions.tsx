@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
-import { TransactionsByMonthI } from "@/src/types";
+import { TransactionsGroupI } from "@/src/types";
 import Amount from "@/src/components/Amount";
 import { format } from "date-fns";
 
@@ -24,8 +24,7 @@ export default function Transactions({
   transactions,
   count,
 }: {
-  transactions: TransactionsByMonthI[];
-  count: number;
+  transactions: TransactionsGroupI[];
 }) {
   const maxVisibleTransactions = 50;
   const collapsedTransactions = transactions.slice(0, maxVisibleTransactions);

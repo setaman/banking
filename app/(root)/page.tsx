@@ -1,15 +1,6 @@
 import { getBankById, getBanks, getBanksCount } from "@/app/bank.actions";
 import { BankAccountI } from "@/src/types";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
-import { DollarSign, ArrowDownLeft, Minus, ArrowUpRight } from "lucide-react";
-import { StatCard } from "@/src/components/StatCard";
-import Amount from "@/src/components/Amount";
 import { DashboardModeSelector } from "@/src/components/DashboardModeSelector";
 import { BankAccountSelector } from "@/src/components/BankAccountSelector";
 import Dashboard from "@/src/components/Dashboard/Dashboard";
@@ -38,7 +29,15 @@ export default async function Home({
 
   return (
     <main>
-      <Dashboard stats={{}}>
+      <Dashboard
+        stats={{
+          expenses: 0,
+          income: 0,
+          totalBalance: 0,
+          transactionsGroupByDay: [],
+          transactionsGroupByMonth: [],
+        }}
+      >
         <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Showing
         </h2>
