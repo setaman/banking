@@ -1,6 +1,6 @@
 import { JSONFileSyncPreset } from "lowdb/node";
 import { BankAccountI, UserI, TransactionI } from "@/src/types";
-import { boolean } from "zod";
+import fs from "node:fs";
 
 type Data = {
   user: UserI | null;
@@ -13,6 +13,11 @@ const defaultData: Data = {
   bankAccounts: [],
   transactions: [],
 };
+
+if (!fs.existsSync("./db/db.json")) {
+  fs.writeFileSync("./db/db.json", JSON.stringify(defaultData));
+}
+
 const db = JSONFileSyncPreset("./db/db.json", defaultData);
 
 db.read();
