@@ -3,6 +3,7 @@ import { MemorySync, LowSync } from "lowdb";
 import { BankAccountI, UserI, TransactionI } from "@/src/types";
 import fs from "node:fs";
 import path from "node:path";
+import { dbBankAccount, dkbBankAccount } from "@/src/lib/institutionsMaps/accounts";
 
 type Data = {
   user: UserI | null;
@@ -15,7 +16,7 @@ const DB_FILE_PATH = path.join(process.cwd(), "db.json");
 
 const defaultData: Data = {
   user: null,
-  bankAccounts: [],
+  bankAccounts: [dkbBankAccount, dbBankAccount],
   transactions: [],
 };
 

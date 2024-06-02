@@ -54,6 +54,7 @@ export type TransactionI = {
 
 export enum Institution {
   DKB = "DKB",
+  DeutscheBank = 'Deutsche Bank'
 }
 
 export interface TransactionsGroupI {
