@@ -22,12 +22,10 @@ import { format } from "date-fns";
 
 export default function Transactions({
   transactions,
-  count,
 }: {
   transactions: TransactionsGroupI[];
 }) {
   const maxVisibleTransactions = 50;
-  const collapsedTransactions = transactions.slice(0, maxVisibleTransactions);
 
   return (
     <div>
