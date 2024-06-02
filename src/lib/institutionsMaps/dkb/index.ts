@@ -54,7 +54,7 @@ const dkbTransaction = z
     return {
       account_id: "",
       transaction_id,
-      amount: EURO(t["Betrag (€)"]).value,
+      amount: amount * -1,
       authorized_date: parsedAuthDate.toISOString(),
       date: parsedDate ? parsedDate.toISOString() : "",
       pending: t.Status !== "Gebucht",
