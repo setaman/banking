@@ -106,16 +106,6 @@ export default function Transactions({
           </Card>
         </div>
       ))}
-      <Card>
-        <CardFooter>
-          <div className="w-full text-xs text-muted-foreground flex justify-center">
-            <span>
-              Showing <strong>{count}</strong> of{" "}
-              <strong>{count}</strong> transactions
-            </span>
-          </div>
-        </CardFooter>
-      </Card>
     </div>
   );
 }
