@@ -3,7 +3,10 @@ import { MemorySync, LowSync } from "lowdb";
 import { BankAccountI, UserI, TransactionI } from "@/src/types";
 import fs from "node:fs";
 import path from "node:path";
-import { dbBankAccount, dkbBankAccount } from "@/src/lib/institutionsMaps/accounts";
+import {
+  dbBankAccount,
+  dkbBankAccount,
+} from "@/src/lib/institutionsMaps/accounts";
 
 type Data = {
   user: UserI | null;
@@ -14,15 +17,13 @@ type Data = {
 const IS_IN_CLOUD = process.env.IS_IN_CLOUD === "true";
 const DB_FILE_PATH = path.join(process.cwd(), "db.json");
 
+console.log("=>(db.ts:21) DB_FILE_PATH", DB_FILE_PATH);
+
 const defaultData: Data = {
   user: null,
   bankAccounts: [dkbBankAccount, dbBankAccount],
   transactions: [],
 };
-
-console.log("IS_IN_CLOUD", IS_IN_CLOUD);
-console.log("DB_FILE_PATH", DB_FILE_PATH);
-console.log("process.cwd()", process.cwd());
 
 if (!IS_IN_CLOUD && !fs.existsSync(DB_FILE_PATH)) {
   fs.writeFileSync(DB_FILE_PATH, JSON.stringify(defaultData));

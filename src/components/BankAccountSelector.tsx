@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Bird } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/src/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { useState } from "react";
 import { BankAccountI } from "@/src/types";
+import Link from "next/link";
 
 export function BankAccountSelector({
   bank,
@@ -42,32 +43,25 @@ export function BankAccountSelector({
                 onClick={() => setCurrentBank(bank)}
                 key={bank.account_id}
               >
-                <div className="flex items-start gap-3 text-muted-foreground">
-                  <Bird className="size-5" />
-                  <div className="grid gap-0.5">
-                    <p>
-                      <span className="font-medium text-foreground">
-                        {bank.name}
-                      </span>
-                    </p>
-
-                    <p className="text-xs">{bank.institution_id}</p>
+                <Link href={`/${bank.account_id}`}>
+                  <div className="flex items-start gap-3 text-muted-foreground">
+                    <img
+                      className="w-8 rounded"
+                      src={bank.logo}
+                      alt="Bank logo"
+                    />
+                    <div className="grid gap-0.5">
+                      <p>
+                        <span className="font-medium text-foreground">
+                          {bank.name}
+                        </span>
+                      </p>
+                      <p className="text-xs">{bank.institution_id}</p>
+                    </div>
                   </div>
-                </div>
+                </Link>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem>
-              <div className="flex items-start gap-3 text-muted-foreground">
-                <Bird className="size-5" />
-                <div className="grid gap-0.5">
-                  <p>
-                    <span className="font-medium text-foreground">Hello</span>
-                  </p>
-
-                  <p className="text-xs">Subtext</p>
-                </div>
-              </div>
-            </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>

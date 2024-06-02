@@ -12,6 +12,7 @@ export interface BankAccountI {
   persistent_account_id?: string;
   subtype?: string;
   type?: string;
+  logo?: string;
   balances: {
     available?: number;
     current: number;
@@ -54,7 +55,7 @@ export type TransactionI = {
 
 export enum Institution {
   DKB = "DKB",
-  DeutscheBank = 'Deutsche Bank'
+  DeutscheBank = "Deutsche Bank",
 }
 
 export interface TransactionsGroupI {
