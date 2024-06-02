@@ -1,6 +1,7 @@
 import { JSONFileSyncPreset } from "lowdb/node";
 import { BankAccountI, UserI, TransactionI } from "@/src/types";
 import fs from "node:fs";
+import path from "node:path";
 
 type Data = {
   user: UserI | null;
@@ -8,17 +9,22 @@ type Data = {
   transactions: TransactionI[];
 };
 
+const DB_FILE_PATH = path.join(process.cwd(), "db.json");
+
 const defaultData: Data = {
   user: null,
   bankAccounts: [],
   transactions: [],
 };
 
-if (!fs.existsSync("./db/db.json")) {
-  fs.writeFileSync("./db/db.json", JSON.stringify(defaultData));
+console.log("DB_FILE_PATH", DB_FILE_PATH);
+console.log("process.cwd()", process.cwd());
+
+if (!fs.existsSync(DB_FILE_PATH)) {
+  fs.writeFileSync(DB_FILE_PATH, JSON.stringify(defaultData));
 }
 
-const db = JSONFileSyncPreset("./db/db.json", defaultData);
+const db = JSONFileSyncPreset(DB_FILE_PATH, defaultData);
 
 db.read();
 

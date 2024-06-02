@@ -132,4 +132,5 @@ dist
 
 uploads/*.json
 db/db.json
+db.json
 src/lib/institutionsMaps/**/*.csv
