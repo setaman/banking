@@ -1,6 +1,7 @@
 import { JSONFileSyncPreset } from "lowdb/node";
 import { BankAccountI, UserI, TransactionI } from "@/src/types";
 import fs from "node:fs";
+import { dbBankAccount, dkbBankAccount } from "@/src/lib/institutionsMaps/accounts";
 
 type Data = {
   user: UserI | null;
@@ -10,7 +11,7 @@ type Data = {
 
 const defaultData: Data = {
   user: null,
-  bankAccounts: [],
+  bankAccounts: [dkbBankAccount, dbBankAccount],
   transactions: [],
 };
 

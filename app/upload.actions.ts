@@ -3,21 +3,21 @@
 import fs from "node:fs";
 import { revalidatePath } from "next/cache";
 import {
-  Institution,
   StatsI,
 } from "@/src/types";
-import { mapDkbCsvExportToTransactions } from "@/src/lib/institutionsMaps/dkb";
 import { hash256 } from "@/src/lib/hash256";
 import { getExpenses, getIncome, getTotalBalance, groupTransactionByDate, groupTransactionByDay } from "@/src/statistics/calculator";
+import { mapCsvExportToTransactions } from "@/src/lib/institutionsMaps/mapper";
 
-export async function uploadCsvExport(formData: FormData, inst: Institution) {
+export async function uploadCsvExport(formData: FormData, accountId: string ) {
   const file = formData.get("file") as File;
 
   const fileContents = await file.text();
   const statsFileName = hash256(fileContents);
 
   if (!fs.existsSync(`uploads/${statsFileName}.json`)) {
-    const transactions = mapDkbCsvExportToTransactions(fileContents);
+    const transactions = mapCsvExportToTransactions(fileContents, accountId)
+
     const transactionsGroupByMonth = groupTransactionByDate(transactions);
     const transactionsGroupByDay = groupTransactionByDay(transactions);
 
