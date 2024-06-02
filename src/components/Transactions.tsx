@@ -4,8 +4,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
-  CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
 import {
@@ -25,10 +23,6 @@ export default function Transactions({
 }: {
   transactions: TransactionsGroupI[];
 }) {
-  const maxVisibleTransactions = 50;
-  const collapsedTransactions = transactions.slice(0, maxVisibleTransactions);
-  const transactionsCount = transactions.length;
-
   return (
     <div>
       <CardTitle className="scroll-m-20 text-2xl font-semibold tracking-tight">
@@ -105,16 +99,6 @@ export default function Transactions({
           </Card>
         </div>
       ))}
-      <Card>
-        <CardFooter>
-          <div className="w-full text-xs text-muted-foreground flex justify-center">
-            <span>
-              Showing <strong>{maxVisibleTransactions}</strong> of{" "}
-              <strong>{transactionsCount}</strong> transactions
-            </span>
-          </div>
-        </CardFooter>
-      </Card>
     </div>
   );
 }
