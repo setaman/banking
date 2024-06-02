@@ -53,9 +53,9 @@ export default async function Banks({
           </div>
         ))}
       </div>
-      <div className="mt-5">
+      {/*<div className="mt-5">
         <Transactions transactions={transactions} />
-      </div>
+      </div>*/}
     </>
   );
 }

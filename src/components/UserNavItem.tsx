@@ -70,6 +70,7 @@ export function UserNavItem() {
                       <Input
                         id="name"
                         placeholder="Name of your project"
+                        // @ts-ignore
                         onInput={(e) => setName(e.target.value)}
                         value={name}
                       />
