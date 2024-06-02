@@ -4,7 +4,7 @@ import {
   EChart,
   ReactEChartsProps,
 } from "@/src/components/Dashboard/Charts/EChart";
-import { StatsI } from "@/src/types";
+import { StatsI, TimeSeriesI } from "@/src/types";
 import { format } from "date-fns";
 
 const option: ReactEChartsProps["option"] = {
@@ -35,10 +35,18 @@ const option: ReactEChartsProps["option"] = {
 };
 
 export function IncomeExpenseDistribution({ stats }: { stats: StatsI }) {
-  const transactions = stats.transactionsByMonth[0].transactions;
-  option.series[0].data = transactions.map((t) => t.amount);
-  option.xAxis.data = transactions.map((t) =>
-    format(t.authorized_date, "dd.MM")
-  );
+  let timeSeries: TimeSeriesI[] = [];
+  stats.transactionsGroupByDay.forEach(group => {
+    let sum: number = 0;
+    group.transactions.forEach(t => sum += t.amount * -1);
+
+    timeSeries.push({
+      date: format(group.date, "dd.MM.yyyy"),
+      value: sum,
+    });
+  });
+
+  option.series[0].data = timeSeries.map((t) => t.value);
+  option.xAxis.data = timeSeries.map((t) => t.date);
   return <EChart option={option} />;
 }
