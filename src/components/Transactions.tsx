@@ -4,8 +4,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
-  CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
 import {
@@ -25,8 +23,6 @@ export default function Transactions({
 }: {
   transactions: TransactionsGroupI[];
 }) {
-  const maxVisibleTransactions = 50;
-
   return (
     <div>
       <CardTitle className="scroll-m-20 text-2xl font-semibold tracking-tight">
