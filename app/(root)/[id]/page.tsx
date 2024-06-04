@@ -1,8 +1,8 @@
 import Dashboard from "@/src/components/Dashboard/Dashboard";
 import Transactions from "@/src/components/Transactions";
 import { getBankAccountStats, getBankById, getBanks } from "@/app/bank.actions";
-import { BankAccountSelector } from "@/src/components/BankAccountSelector";
 import { DashboardModeSelector } from "@/src/components/DashboardModeSelector";
+import { DashboardBankSelector } from "@/src/components/Dashboard/DashboardBankSelector";
 
 export default async function UploadResult({
   params,
@@ -21,7 +21,7 @@ export default async function UploadResult({
             <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
               Showing
             </h2>
-            {bank && <BankAccountSelector bank={bank} banks={banks} />}
+            {bank && <DashboardBankSelector bank={bank} banks={banks} />}
             <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
               data for
             </h2>

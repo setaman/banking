@@ -16,13 +16,16 @@ export async function uploadCsvExport(
 
   const transactions = mapCsvExportToTransactions(fileContents, accountId);
 
+  const transactionsDb = new Transactions();
+
   const newTransactions = transactions.filter(
-    (t) => !Transactions.getById(t.transaction_id)
+    (t) => !transactionsDb.getById(t.transaction_id)
   );
 
-  Transactions.insertBulk(newTransactions);
+  transactionsDb.insertBulk(newTransactions);
 
   revalidatePath("/upload");
+  revalidatePath(`/${accountId}`);
 
   return {
     newTransactionsCount: newTransactions.length,
