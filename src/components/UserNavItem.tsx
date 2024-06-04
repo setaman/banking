@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { getUser, initUser, updateUser } from "@/app/user.actions";
+import { getUser, updateUser } from "@/app/user.actions";
 import {
   Card,
   CardContent,
@@ -29,7 +29,6 @@ export function UserNavItem() {
 
   useEffect(() => {
     const loadUser = async () => {
-      // await initUser();
       const user = await getUser();
       setUser(user);
       setName(user?.name ?? "");

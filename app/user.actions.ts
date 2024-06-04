@@ -18,8 +18,7 @@ export const initUser = async ({ name }: { name: string }) => {
 };
 
 export const getUser = async () => {
-  user = User.get();
-  return user;
+  return User.get();
 };
 export const updateUser = async ({ name }: { name: string }) => {
   user = { ...(user as UserI), name };

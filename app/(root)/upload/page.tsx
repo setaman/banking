@@ -1,8 +1,7 @@
 "use client";
 
 import { uploadCsvExport } from "@/app/upload.actions";
-import { BankAccountI } from "@/src/types";
-import { ChevronDown, Bird } from "lucide-react";
+import { BankAccountI, CsvTransactionImportResult } from "@/src/types";
 import {
   Card,
   CardContent,
@@ -16,96 +15,86 @@ import { Button } from "@/src/components/ui/button";
 import { useState } from "react";
 import Link from "next/link";
 import { Link as LinkIcon } from "lucide-react";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuItem } from "@/src/components/ui/dropdown-menu";
-import { dbBankAccount, dkbBankAccount } from "@/src/lib/institutionsMaps/accounts";
+import {
+  dbBankAccount,
+  dkbBankAccount,
+} from "@/src/lib/institutionsMaps/accounts";
+import { BankAccountSelector } from "@/src/components/BankAccountSelector";
 
 export default function Upload() {
-  const [id, setId] = useState("");
+  const [stats, setStats] = useState<CsvTransactionImportResult | null>();
   const supportedBanks = [dkbBankAccount, dbBankAccount];
   const [currentBank, setCurrentBank] = useState<BankAccountI | undefined>();
-  
+
   async function uploadFile(formData: FormData) {
     if (currentBank) {
-      const resId = await uploadCsvExport(formData, currentBank.account_id);
-      setId(resId);
+      const importStats = await uploadCsvExport(
+        formData,
+        currentBank.account_id
+      );
+      setStats(importStats);
     }
   }
 
   return (
     <div className="w-full mt-28 flex items-center justify-center">
-      {!id && (
+      {!stats && (
         <div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost">
-                Select a bank
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Select bank Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                {supportedBanks.map((bank) => (
-                  <DropdownMenuItem
-                    onClick={() => setCurrentBank(bank)}
-                    key={bank.account_id}
-                  >
-                    <div className="flex items-start gap-3 text-muted-foreground">
-                      <Bird className="size-5" />
-                      <div className="grid gap-0.5">
-                        <p>
-                          <span className="font-medium text-foreground">
-                            {bank.name}
-                          </span>
-                        </p>
-
-                        <p className="text-xs">{bank.institution_id}</p>
-                      </div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {currentBank && <form action={uploadFile} className="">
-            <Card className="w-[450px]">
-              <CardHeader>
-                <CardTitle>Upload CSV file</CardTitle>
-                <CardDescription>
-                  Set a user name to personalize the app
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <input
-                  name="file"
-                  className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  id="default_size"
-                  type="file"
-                />
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button type="submit">Submit</Button>
-              </CardFooter>
-            </Card>
-          </form>}
+          <BankAccountSelector
+            banks={supportedBanks}
+            onSelect={setCurrentBank}
+          />
+          {currentBank && (
+            <form action={uploadFile} className="">
+              <Card className="w-[450px]">
+                <CardHeader>
+                  <CardTitle>Upload CSV file</CardTitle>
+                  <CardDescription>
+                    Set a user name to personalize the app
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <input
+                    name="file"
+                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                    id="default_size"
+                    type="file"
+                  />
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                  <Button type="submit">Submit</Button>
+                </CardFooter>
+              </Card>
+            </form>
+          )}
         </div>
       )}
-      {id && (
+      {stats && (
         <Card className="w-[450px]">
           <CardHeader>
-            <CardTitle>Your stats are ready</CardTitle>
+            <CardTitle>Transactions importiert</CardTitle>
             <CardDescription>
-              With this link you can access generated stats any time
+              <div className="flex flex-col items-center">
+                <img
+                  style={{ width: "70px" }}
+                  src={currentBank?.logo}
+                  className="col-span-1 mt-4"
+                />
+                <p className="col-span-1 mt-4">
+                  We have found
+                  <span className="font-bold mx-1">
+                    {stats.newTransactionsCount}
+                  </span>
+                  new transactions
+                </p>
+              </div>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href={`/upload/${id}`} legacyBehavior passHref>
+            <Link href={`/${currentBank?.account_id}`} legacyBehavior passHref>
               <Button style={{ width: "100%" }}>
                 <LinkIcon />
-                <span className="ml-2">Open link</span>
+                <span className="ml-2">Go to dashboard</span>
               </Button>
             </Link>
           </CardContent>

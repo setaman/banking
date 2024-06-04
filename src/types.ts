@@ -76,3 +76,7 @@ export interface TimeSeriesI {
   date: string;
   value: number;
 }
+
+export interface CsvTransactionImportResult {
+  newTransactionsCount: number;
+}

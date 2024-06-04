@@ -16,6 +16,7 @@ export const getBanksCount = async () => {
 };
 
 export const getBankTransactions = async (accountId: string) => {
+  const bt = Transactions.getByAccountId(accountId);
   return Transactions.getByAccountId(accountId);
 };
 

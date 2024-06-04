@@ -2,38 +2,31 @@
 
 import fs from "node:fs";
 import { revalidatePath } from "next/cache";
-import {
-  StatsI,
-} from "@/src/types";
-import { hash256 } from "@/src/lib/hash256";
-import { getExpenses, getIncome, getTotalBalance, groupTransactionByDate, groupTransactionByDay } from "@/src/statistics/calculator";
+import { CsvTransactionImportResult, StatsI } from "@/src/types";
 import { mapCsvExportToTransactions } from "@/src/lib/institutionsMaps/mapper";
+import { Transactions } from "@/db/db";
 
-export async function uploadCsvExport(formData: FormData, accountId: string ) {
+export async function uploadCsvExport(
+  formData: FormData,
+  accountId: string
+): Promise<CsvTransactionImportResult> {
   const file = formData.get("file") as File;
 
   const fileContents = await file.text();
-  const statsFileName = hash256(fileContents);
 
-  if (!fs.existsSync(`uploads/${statsFileName}.json`)) {
-    const transactions = mapCsvExportToTransactions(fileContents, accountId)
+  const transactions = mapCsvExportToTransactions(fileContents, accountId);
 
-    const transactionsGroupByMonth = groupTransactionByDate(transactions);
-    const transactionsGroupByDay = groupTransactionByDay(transactions);
+  const newTransactions = transactions.filter(
+    (t) => !Transactions.getById(t.transaction_id)
+  );
 
-    const stats: StatsI = {
-      totalBalance: getTotalBalance(transactions),
-      expenses: getExpenses(transactions),
-      income: getIncome(transactions),
-      transactionsGroupByMonth: transactionsGroupByMonth,
-      transactionsGroupByDay: transactionsGroupByDay,
-    };
+  Transactions.insertBulk(newTransactions);
 
-    fs.writeFileSync(`uploads/${statsFileName}.json`, JSON.stringify(stats));
-    revalidatePath("/upload");
-  }
+  revalidatePath("/upload");
 
-  return statsFileName;
+  return {
+    newTransactionsCount: newTransactions.length,
+  };
 }
 
 export async function getUploadResult(id: string) {

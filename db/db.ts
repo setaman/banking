@@ -7,12 +7,18 @@ import {
   dbBankAccount,
   dkbBankAccount,
 } from "@/src/lib/institutionsMaps/accounts";
+import { faker } from "@faker-js/faker";
 
 type Data = {
-  user: UserI | null;
+  user: UserI;
   bankAccounts: BankAccountI[];
   transactions: TransactionI[];
 };
+
+const createDefaultUser = (): UserI => ({
+  id: faker.string.uuid(),
+  name: faker.person.fullName(),
+});
 
 const IS_IN_CLOUD = process.env.IS_IN_CLOUD === "true";
 const DB_FILE_PATH = path.join(process.cwd(), "db.json");
@@ -20,7 +26,7 @@ const DB_FILE_PATH = path.join(process.cwd(), "db.json");
 console.log("=>(db.ts:21) DB_FILE_PATH", DB_FILE_PATH);
 
 const defaultData: Data = {
-  user: null,
+  user: createDefaultUser(),
   bankAccounts: [dkbBankAccount, dbBankAccount],
   transactions: [],
 };

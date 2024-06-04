@@ -31,7 +31,7 @@ export default function TopNav() {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <Link href="/banks" legacyBehavior passHref>
+                      <Link href="/" legacyBehavior passHref>
                         <NavigationMenuLink
                           className={navigationMenuTriggerStyle()}
                         >
