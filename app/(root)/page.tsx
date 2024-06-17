@@ -1,52 +1,46 @@
-import { getBankById, getBanks, getBanksCount } from "@/app/bank.actions";
-import { BankAccountI } from "@/src/types";
-import { redirect } from "next/navigation";
-import { DashboardModeSelector } from "@/src/components/DashboardModeSelector";
-import { BankAccountSelector } from "@/src/components/BankAccountSelector";
-import Dashboard from "@/src/components/Dashboard/Dashboard";
+import { CreditCard } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
+import { getBanks } from "@/app/bank.actions";
+import Amount from "@/src/components/Amount";
+import Link from "next/link";
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
-}) {
-  const banksCount = await getBanksCount();
+export default async function Banks() {
   const banks = await getBanks();
 
-  if (banksCount === 0) {
-    redirect("/banks");
-  }
-
-  const bankAccountId = searchParams.bankAccountId;
-
-  let bank: BankAccountI | undefined = undefined;
-
-  if (bankAccountId) {
-    bank = await getBankById(bankAccountId);
-  } else {
-    bank = banks[0] as BankAccountI;
-  }
-
   return (
-    <main>
-      <Dashboard
-        stats={{
-          expenses: 0,
-          income: 0,
-          totalBalance: 0,
-          transactionsGroupByDay: [],
-          transactionsGroupByMonth: [],
-        }}
-      >
-        <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-          Showing
-        </h2>
-        {bank && <BankAccountSelector bank={bank} banks={banks} />}
-        <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-          data for
-        </h2>
-        <DashboardModeSelector />
-      </Dashboard>
-    </main>
+    <>
+      <div className="grid grid-cols-3 gap-4">
+        {banks.map((bank) => (
+          <Link
+            href={`/${bank.account_id}`}
+            legacyBehavior
+            passHref
+            key={bank.account_id}
+          >
+            <Card className="bg-primary-foreground shadow-card hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {bank.name}
+                </CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  <Amount value={bank.balances.current} />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {bank.institution_id}
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

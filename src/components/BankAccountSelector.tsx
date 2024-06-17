@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronDown, Bird } from "lucide-react";
-
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
   DropdownMenu,
@@ -14,22 +13,32 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { useState } from "react";
 import { BankAccountI } from "@/src/types";
+import Link from "next/link";
 
 export function BankAccountSelector({
   bank,
   banks,
+  onSelect,
 }: {
-  bank: BankAccountI;
+  bank?: BankAccountI;
   banks: BankAccountI[];
+  onSelect?: (bank: BankAccountI) => void;
 }) {
-  const [currentBank, setCurrentBank] = useState<BankAccountI>(bank);
+  const [currentBank, setCurrentBank] = useState<BankAccountI | undefined>(
+    bank
+  );
+
+  const selectBank = (b: BankAccountI) => {
+    setCurrentBank(b);
+    onSelect?.(b);
+  };
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost">
-            {currentBank.name}
+            {currentBank?.name ?? "Select a bank"}
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -39,35 +48,26 @@ export function BankAccountSelector({
           <DropdownMenuGroup>
             {banks.map((bank) => (
               <DropdownMenuItem
-                onClick={() => setCurrentBank(bank)}
+                onClick={() => selectBank(bank)}
                 key={bank.account_id}
               >
                 <div className="flex items-start gap-3 text-muted-foreground">
-                  <Bird className="size-5" />
+                  <img
+                    className="w-8 rounded"
+                    src={bank.logo}
+                    alt="Bank logo"
+                  />
                   <div className="grid gap-0.5">
                     <p>
                       <span className="font-medium text-foreground">
                         {bank.name}
                       </span>
                     </p>
-
                     <p className="text-xs">{bank.institution_id}</p>
                   </div>
                 </div>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem>
-              <div className="flex items-start gap-3 text-muted-foreground">
-                <Bird className="size-5" />
-                <div className="grid gap-0.5">
-                  <p>
-                    <span className="font-medium text-foreground">Hello</span>
-                  </p>
-
-                  <p className="text-xs">Subtext</p>
-                </div>
-              </div>
-            </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>

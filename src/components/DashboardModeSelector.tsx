@@ -5,7 +5,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Bird,
 } from "lucide-react";
 
 import { Button } from "@/src/components/ui/button";
@@ -69,20 +68,8 @@ export function DashboardModeSelector({
               <CreditCard className="mr-2 h-4 w-4" />
               <span>{Mode.Monthly}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setCurrentMode(Mode.Monthly)}>
-              <div className="flex items-start gap-3 text-muted-foreground">
-                <Bird className="size-5" />
-                <div className="grid gap-0.5">
-                  <p>
-                    <span className="font-medium text-foreground">Hello</span>
-                  </p>
-
-                  <p className="text-xs">Subtext</p>
-                </div>
-              </div>
-            </DropdownMenuItem>
           </DropdownMenuGroup>
-          <DropdownMenuLabel>Pick a month</DropdownMenuLabel>
+          {/*<DropdownMenuLabel>Pick a month</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem>
@@ -95,7 +82,7 @@ export function DashboardModeSelector({
                 />
               </div>
             </DropdownMenuItem>
-          </DropdownMenuGroup>
+          </DropdownMenuGroup>*/}
         </DropdownMenuContent>
       </DropdownMenu>
       {currentMode === Mode.Monthly && (

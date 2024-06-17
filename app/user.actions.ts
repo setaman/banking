@@ -14,14 +14,13 @@ const createNewUser = (): UserI => ({
 export const initUser = async ({ name }: { name: string }) => {
   user = createNewUser();
   user.name = name;
-  User.set(user);
+  new User().set(user);
 };
 
 export const getUser = async () => {
-  user = User.get();
-  return user;
+  return new User().get();
 };
 export const updateUser = async ({ name }: { name: string }) => {
   user = { ...(user as UserI), name };
-  User.set(user);
+  new User().set(user);
 };

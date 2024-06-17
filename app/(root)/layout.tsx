@@ -18,12 +18,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   return (
     <html lang="en">
       <body className={inter.className}>
