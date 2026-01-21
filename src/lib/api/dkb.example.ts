@@ -4,30 +4,30 @@
  * This demonstrates how to fetch and parse DKB transactions.
  * 
  * SECURITY NOTE: This is a LOCAL-ONLY app.
- * Token is NEVER stored - only passed as parameter and discarded.
+ * Credentials (cookie + XSRF token) are NEVER stored - only passed as parameters and discarded.
  */
 
-import { fetchAllTransactions } from './dkb';
+import { fetchAllTransactions, type DKBCredentials } from './dkb';
 import { parseDKBTransactions } from '../parsers/dkb.parser';
 
 /**
  * Example: Sync DKB transactions for an account
  * 
  * This would typically be called from a UI component where the user
- * pastes their DKB bearer token.
+ * pastes their DKB credentials (cookie + XSRF token from browser DevTools).
  * 
- * @param bearerToken - Token pasted by user (stored only in memory)
+ * @param credentials - Cookie and XSRF token pasted by user (stored only in memory)
  * @param accountId - DKB account ID to sync
  * @param targetAccountId - Our internal account ID for storage
  */
 export const syncDKBTransactions = async (
-  bearerToken: string,
+  credentials: DKBCredentials,
   accountId: string,
   targetAccountId: string
 ): Promise<void> => {
   try {
     // Step 1: Fetch all transactions from DKB API (handles pagination automatically)
-    const apiResponse = await fetchAllTransactions(bearerToken, {
+    const apiResponse = await fetchAllTransactions(credentials, {
       accountId,
       fromDate: '2024-01-01',
       toDate: '2026-12-31',
@@ -48,14 +48,14 @@ export const syncDKBTransactions = async (
     console.error('Failed to sync DKB transactions', error);
     throw error;
   }
-  // Token is now out of scope and will be garbage collected
+  // Credentials are now out of scope and will be garbage collected
 };
 
 /**
  * Example: Fetch only recent transactions (last 30 days)
  */
 export const syncRecentDKBTransactions = async (
-  bearerToken: string,
+  credentials: DKBCredentials,
   accountId: string,
   targetAccountId: string
 ): Promise<void> => {
@@ -67,7 +67,7 @@ export const syncRecentDKBTransactions = async (
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
   };
 
-  const apiResponse = await fetchAllTransactions(bearerToken, {
+  const apiResponse = await fetchAllTransactions(credentials, {
     accountId,
     fromDate: formatDate(thirtyDaysAgo),
     toDate: formatDate(today),

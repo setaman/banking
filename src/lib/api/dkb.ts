@@ -3,8 +3,8 @@
  * 
  * Fetches transactions from DKB API with pagination support.
  * 
- * SECURITY: Bearer token must ONLY be passed as function parameter.
- * Token is NEVER stored, logged, or persisted anywhere.
+ * SECURITY: Credentials (cookie, XSRF token) must ONLY be passed as function parameters.
+ * Credentials are NEVER stored, logged, or persisted anywhere.
  */
 
 import type { DKBApiResponse } from '@/types';
@@ -14,6 +14,14 @@ import type { DKBApiResponse } from '@/types';
  */
 const DKB_BASE_URL = 'https://banking.dkb.de/api';
 const DEFAULT_PAGE_SIZE = 50;
+
+/**
+ * Authentication credentials for DKB API
+ */
+export interface DKBCredentials {
+  cookie: string;      // Full cookie header from browser
+  xsrfToken: string;   // x-xsrf-token header value
+}
 
 /**
  * Parameters for fetching DKB transactions
@@ -96,13 +104,14 @@ const buildQueryParams = (params: FetchTransactionsParams): URLSearchParams => {
  */
 const fetchSinglePage = async (
   url: string,
-  bearerToken: string
+  credentials: DKBCredentials
 ): Promise<DKBApiResponse> => {
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${bearerToken}`,
+        'Cookie': credentials.cookie,
+        'x-xsrf-token': credentials.xsrfToken,
         'Accept': 'application/json',
       },
     });
@@ -132,7 +141,7 @@ const fetchSinglePage = async (
 /**
  * Fetches all transactions with automatic pagination
  * 
- * @param bearerToken - DKB API bearer token (NEVER stored or logged)
+ * @param credentials - DKB API credentials (cookie + XSRF token, NEVER stored or logged)
  * @param params - Query parameters for filtering transactions
  * @returns Complete response with all transactions from all pages
  * 
@@ -140,22 +149,25 @@ const fetchSinglePage = async (
  * 
  * @example
  * ```typescript
- * const token = getUserProvidedToken(); // From UI paste
- * const response = await fetchAllTransactions(token, {
+ * const credentials = getUserProvidedCredentials(); // From UI paste
+ * const response = await fetchAllTransactions(credentials, {
  *   accountId: '1059960000',
  *   fromDate: '2025-01-01',
  *   toDate: '2025-12-31'
  * });
- * // Token is now discarded from memory
+ * // Credentials are now discarded from memory
  * ```
  */
 export const fetchAllTransactions = async (
-  bearerToken: string,
+  credentials: DKBCredentials,
   params: FetchTransactionsParams
 ): Promise<DKBApiResponse> => {
-  // Validate bearer token
-  if (!bearerToken || bearerToken.trim() === '') {
-    throw new DKBApiError('Bearer token is required');
+  // Validate credentials
+  if (!credentials.cookie || credentials.cookie.trim() === '') {
+    throw new DKBApiError('Cookie is required');
+  }
+  if (!credentials.xsrfToken || credentials.xsrfToken.trim() === '') {
+    throw new DKBApiError('XSRF token is required');
   }
 
   // Validate parameters
@@ -167,7 +179,7 @@ export const fetchAllTransactions = async (
   const initialUrl = `${baseUrl}?${queryParams.toString()}`;
 
   // Fetch first page
-  const firstPage = await fetchSinglePage(initialUrl, bearerToken);
+  const firstPage = await fetchSinglePage(initialUrl, credentials);
 
   // If no pagination metadata or only one page, return immediately
   const totalPages = firstPage.meta?.totalPages || 1;
@@ -185,7 +197,7 @@ export const fetchAllTransactions = async (
     pageQueryParams.set('page', String(page));
     const pageUrl = `${baseUrl}?${pageQueryParams.toString()}`;
     
-    remainingPagePromises.push(fetchSinglePage(pageUrl, bearerToken));
+    remainingPagePromises.push(fetchSinglePage(pageUrl, credentials));
   }
 
   const remainingPages = await Promise.all(remainingPagePromises);

@@ -44,8 +44,9 @@ function getDefaultDateRange(): { fromDate: string; toDate: string } {
 export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogProps) {
   const defaultDates = getDefaultDateRange();
   
-  // Form state - token is ONLY stored during sync operation
-  const [bearerToken, setBearerToken] = useState('');
+  // Form state - credentials ONLY stored during sync operation
+  const [cookie, setCookie] = useState('');
+  const [xsrfToken, setXsrfToken] = useState('');
   const [accountId, setAccountId] = useState('');
   const [fromDate, setFromDate] = useState(defaultDates.fromDate);
   const [toDate, setToDate] = useState(defaultDates.toDate);
@@ -59,7 +60,8 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
    * Clears all sensitive form data
    */
   const clearSensitiveData = () => {
-    setBearerToken(''); // CRITICAL: Clear token from memory
+    setCookie(''); // CRITICAL: Clear cookie from memory
+    setXsrfToken(''); // CRITICAL: Clear XSRF token from memory
     setError(null);
     setSuccess(null);
   };
@@ -80,8 +82,13 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
    */
   const handleSync = async () => {
     // Validate inputs
-    if (!bearerToken.trim()) {
-      setError('Bearer token is required');
+    if (!cookie.trim()) {
+      setError('Cookie header is required');
+      return;
+    }
+
+    if (!xsrfToken.trim()) {
+      setError('XSRF token is required');
       return;
     }
 
@@ -106,15 +113,19 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
 
     try {
       // Fetch transactions from DKB API
-      const apiResponse = await fetchAllTransactions(bearerToken, {
+      const apiResponse = await fetchAllTransactions({
+        cookie,
+        xsrfToken,
+      }, {
         accountId,
         fromDate,
         toDate,
       });
 
-      // CRITICAL: Clear token immediately after API call
+      // CRITICAL: Clear credentials immediately after API call
       const transactionData = apiResponse.data;
-      setBearerToken(''); // Token no longer needed
+      setCookie(''); // Cookie no longer needed
+      setXsrfToken(''); // XSRF token no longer needed
 
       // Parse transactions
       const transactions = parseDKBTransactions(transactionData, accountId);
@@ -152,8 +163,9 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
       }, 1500);
 
     } catch (err) {
-      // CRITICAL: Clear token even on error
-      setBearerToken('');
+      // CRITICAL: Clear credentials even on error
+      setCookie('');
+      setXsrfToken('');
       
       setIsLoading(false);
       
@@ -183,28 +195,47 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
         <DialogHeader>
           <DialogTitle>Sync DKB Transactions</DialogTitle>
           <DialogDescription>
-            Enter your DKB bearer token and account details to sync transactions.
-            Your token is never stored or logged.
+            Copy the cookie and x-xsrf-token headers from your DKB browser session.
+            These are never stored or logged.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Bearer Token Input */}
+          {/* Cookie Header Input */}
           <div className="grid gap-2">
-            <label htmlFor="bearerToken" className="text-sm font-medium">
-              Bearer Token
+            <label htmlFor="cookie" className="text-sm font-medium">
+              Cookie Header
             </label>
             <Input
-              id="bearerToken"
+              id="cookie"
               type="password"
-              placeholder="Enter your DKB bearer token"
-              value={bearerToken}
-              onChange={(e) => setBearerToken(e.target.value)}
+              placeholder="Paste cookie header from DevTools"
+              value={cookie}
+              onChange={(e) => setCookie(e.target.value)}
               disabled={isLoading}
               autoComplete="off"
             />
             <p className="text-xs text-muted-foreground">
-              Token is cleared from memory immediately after sync
+              Copy from DevTools → Network → Request Headers → cookie
+            </p>
+          </div>
+
+          {/* XSRF Token Input */}
+          <div className="grid gap-2">
+            <label htmlFor="xsrfToken" className="text-sm font-medium">
+              XSRF Token
+            </label>
+            <Input
+              id="xsrfToken"
+              type="password"
+              placeholder="e.g., 8efaa917-0d1d-4b7e-901b-6e6bfa0d0ec8"
+              value={xsrfToken}
+              onChange={(e) => setXsrfToken(e.target.value)}
+              disabled={isLoading}
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground">
+              Copy from DevTools → Network → Request Headers → x-xsrf-token
             </p>
           </div>
 
