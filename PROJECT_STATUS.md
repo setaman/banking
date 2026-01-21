@@ -3,6 +3,7 @@
 > **Last Updated:** 2026-01-21
 > **Current Phase:** Pre-Implementation (Plan Complete)
 > **Status:** Ready to Start
+> **DKB API Sample:** Received and analyzed
 
 ---
 
@@ -251,6 +252,83 @@ Authorization: Bearer <token from DevTools>
 Accept: application/json
 ```
 
+### Response Structure (Confirmed from Sample)
+
+```json
+{
+  "data": [
+    {
+      "type": "accountTransaction",
+      "id": "2025-12-30-09.51.31.731904",
+      "attributes": {
+        "status": "booked",
+        "bookingDate": "2025-12-30",
+        "valueDate": "2025-12-30",
+        "description": "VISA Debitkartenumsatz...",
+        "endToEndId": "485363537425993",
+        "transactionType": "KARTENZAHLUNG",
+        "transactionTypeCode": "106",
+        "purposeCode": "IDCP",
+        "businessTransactionCode": "NDDT+106+9300+002",
+        "amount": {
+          "currencyCode": "EUR",
+          "value": "-7.11"
+        },
+        "creditor": {
+          "name": "MERCHANT NAME",
+          "creditorAccount": {
+            "accountNr": "...",
+            "blz": "...",
+            "iban": "DE..."
+          },
+          "agent": { "bic": "..." },
+          "intermediaryName": "DEUTSCHE KREDITBANK AG"
+        },
+        "debtor": {
+          "name": "ISSUER",
+          "debtorAccount": {
+            "accountNr": "...",
+            "blz": "...",
+            "iban": "DE..."
+          },
+          "agent": { "bic": "..." }
+        },
+        "isRevocable": false
+      }
+    }
+  ],
+  "included": []
+}
+```
+
+### Field Mapping: DKB API -> Transaction
+
+| DKB API Field | Transaction Field | Notes |
+|---------------|-------------------|-------|
+| `id` | `id` | Use as unique identifier |
+| `attributes.bookingDate` | `bookingDate` | Parse as Date |
+| `attributes.valueDate` | `valueDate` | Parse as Date |
+| `attributes.amount.value` | `amount` | Convert to cents (multiply by 100) |
+| `attributes.amount.currencyCode` | `currency` | Usually "EUR" |
+| `attributes.description` | `description` | Full description text |
+| `attributes.creditor.name` | `counterpartyName` | For outgoing payments |
+| `attributes.creditor.creditorAccount.iban` | `counterpartyIban` | Optional |
+| `attributes.transactionType` | Used for `category` | Map to category (see below) |
+| `attributes.transactionTypeCode` | Stored in `rawData` | For reference |
+| Entire object | `rawData` | Store original for debugging |
+
+### Transaction Type -> Category Mapping
+
+| transactionType | Category |
+|-----------------|----------|
+| `KARTENZAHLUNG` | Based on merchant (groceries, restaurants, etc.) |
+| `RECHNUNG` | `utilities` or `other` |
+| `ÜBERWEISUNG` | `transfer` |
+| `GEHALT` | `income` |
+| `LASTSCHRIFT` | `utilities` (direct debit) |
+| `GUTSCHRIFT` | `income` |
+| Default | `other` |
+
 ---
 
 ## Sprint Plan
@@ -345,8 +423,8 @@ Accept: application/json
 
 ## Before Starting: Required Inputs
 
-1. **DKB API Response Sample** - Copy a transaction response from DevTools Network tab (redact sensitive data) to create accurate parser
-2. **Deutsche Bank CSV Sample** - A few rows with column headers for CSV parser
+1. **DKB API Response Sample** - COMPLETED (see `dkb_api_sample.json`)
+2. **Deutsche Bank CSV Sample** - Pending (needed for Sprint 4)
 
 ---
 
