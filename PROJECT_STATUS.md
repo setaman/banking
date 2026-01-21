@@ -1,9 +1,60 @@
 # PROJECT STATUS - Finance Dashboard (Genesis)
 
-> **Last Updated:** 2026-01-21
-> **Current Phase:** Pre-Implementation (Plan Complete)
-> **Status:** Ready to Start
-> **DKB API Sample:** Received and analyzed
+> **Last Updated:** 2026-01-21 (Evening)
+> **Current Phase:** Sprint 1 Complete + Cookie Auth Migration
+> **Status:** ✅ MVP Working | Ready for Sprint 2
+> **Branch:** `vibe-coding`
+> **Latest Commit:** `4195c49` - Cookie-based authentication
+
+---
+
+## 🚀 Recent Updates
+
+### 2026-01-21 Evening: Cookie-Based Authentication Migration
+**Commit:** `4195c49`
+
+**What Changed:**
+- ✅ Switched from Bearer token to **cookie + x-xsrf-token** authentication
+- ✅ Updated `src/lib/api/dkb.ts` to use `DKBCredentials` interface
+- ✅ Updated `src/components/sync/SyncDialog.tsx` with two separate credential inputs
+- ✅ Updated README.md with new authentication instructions
+- ✅ All TypeScript errors resolved
+- ✅ Production build tested successfully
+
+**Why:** Customer confirmed DKB API uses cookie-based auth, not Bearer tokens. This makes it easier for users to copy credentials from browser DevTools.
+
+**Authentication Flow (New):**
+```
+User → DKB Banking → DevTools Network tab
+     → Copy "Cookie" header
+     → Copy "x-xsrf-token" header  
+     → Paste both into Sync Dialog
+     → API calls with cookie authentication
+     → Credentials cleared immediately after sync
+```
+
+### 2026-01-21 Afternoon: Sprint 1 MVP Complete
+**Commit:** `8349cea`
+
+**What Was Built:**
+- ✅ Vite + React 19 + TypeScript project initialized
+- ✅ Tailwind CSS + shadcn/ui components configured
+- ✅ IndexedDB schema with Dexie.js (accounts + transactions tables)
+- ✅ DKB API client with automatic pagination
+- ✅ DKB transaction parser with field mapping
+- ✅ SyncDialog component for credential paste
+- ✅ TransactionTable with currency formatting
+- ✅ Layout components (Header, Layout)
+- ✅ Zero TypeScript errors
+- ✅ Production build successful (367KB gzipped)
+- ✅ Dev server running at http://localhost:5173
+
+**Security Implemented:**
+- ✅ Credentials stored ONLY in memory during sync
+- ✅ Credentials cleared immediately after API call
+- ✅ Password input type for credential fields
+- ✅ No console logging of sensitive data
+- ✅ All data stays in IndexedDB (local-only)
 
 ---
 
@@ -31,15 +82,15 @@
 
 ## Architecture
 
-### Data Flow
+### Data Flow (Updated)
 
 ```
 1. User logs into DKB in browser
 2. Opens DevTools -> Network tab -> finds any API call
-3. Copies Authorization header (Bearer token)
-4. In Dashboard: clicks "Sync from DKB" -> pastes token
+3. Copies TWO headers: "Cookie" and "x-xsrf-token"
+4. In Dashboard: clicks "Sync from DKB" -> pastes both credentials
 5. Dashboard fetches transactions directly (client-side)
-6. Token stored ONLY in memory (discarded on page close)
+6. Credentials stored ONLY in memory (discarded immediately after sync)
 7. Transactions stored in IndexedDB (persistent)
 ```
 
@@ -246,9 +297,10 @@ GET https://banking.dkb.de/api/accounts/accounts/{accountId}/transactions
 | `expand` | `Merchant` | Include merchant data |
 | `pagesize` | `50` | Results per page |
 
-### Required Headers
+### Required Headers (Updated)
 ```
-Authorization: Bearer <token from DevTools>
+Cookie: <full cookie string from browser>
+x-xsrf-token: <UUID from request headers>
 Accept: application/json
 ```
 
@@ -333,31 +385,41 @@ Accept: application/json
 
 ## Sprint Plan
 
-### Sprint 1: Foundation (MVP)
+### Sprint 1: Foundation (MVP) - ✅ COMPLETE
 **Goal:** Basic dashboard with transaction display and DKB sync
 
 | # | Task | Agent | Status |
 |---|------|-------|--------|
-| 1.1 | Initialize Vite + React 19 + TypeScript | CoderAgent | Pending |
-| 1.2 | Setup Tailwind CSS + PostCSS | CoderAgent | Pending |
-| 1.3 | Install and configure shadcn/ui | Frontend Specialist | Pending |
-| 1.4 | Create type definitions | CoderAgent | Pending |
-| 1.5 | Setup Dexie.js + IndexedDB schema | CoderAgent | Pending |
-| 1.6 | Build Layout (Header, Sidebar) | Frontend Specialist | Pending |
-| 1.7 | Build TransactionTable component | Frontend Specialist | Pending |
-| 1.8 | Implement DKB API client | CoderAgent | Pending |
-| 1.9 | Build SyncDialog (token paste) | Frontend Specialist | Pending |
-| 1.10 | Parse DKB response -> Transaction | CoderAgent | Pending |
-| 1.11 | Write parser unit tests | TestEngineer | Pending |
-| 1.12 | Security review | CodeReviewer | Pending |
+| 1.1 | Initialize Vite + React 19 + TypeScript | CoderAgent | ✅ Done |
+| 1.2 | Setup Tailwind CSS + PostCSS | CoderAgent | ✅ Done |
+| 1.3 | Install and configure shadcn/ui | Frontend Specialist | ✅ Done |
+| 1.4 | Create type definitions | CoderAgent | ✅ Done |
+| 1.5 | Setup Dexie.js + IndexedDB schema | CoderAgent | ✅ Done |
+| 1.6 | Build Layout (Header, Layout) | Frontend Specialist | ✅ Done |
+| 1.7 | Build TransactionTable component | Frontend Specialist | ✅ Done |
+| 1.8 | Implement DKB API client | CoderAgent | ✅ Done |
+| 1.9 | Build SyncDialog (credential paste) | Frontend Specialist | ✅ Done |
+| 1.10 | Parse DKB response -> Transaction | CoderAgent | ✅ Done |
+| 1.11 | Write parser unit tests | TestEngineer | ⏳ Deferred to Sprint 2 |
+| 1.12 | Security review | CodeReviewer | ⏳ Deferred to Sprint 2 |
+| 1.13 | Switch to cookie-based auth | CoderAgent | ✅ Done |
+
+**Sprint 1 Deliverables:**
+- ✅ Working React app with DKB sync
+- ✅ Cookie + XSRF token authentication
+- ✅ Transaction display with formatting
+- ✅ IndexedDB persistence
+- ✅ Zero TypeScript errors
+- ✅ Production build tested
 
 ---
 
-### Sprint 2: Multi-Account & Analytics
+### Sprint 2: Multi-Account & Analytics - 🎯 NEXT UP
 **Goal:** Account management and basic charts
 
 | # | Task | Agent | Status |
 |---|------|-------|--------|
+| 2.0 | Write parser unit tests (from Sprint 1) | TestEngineer | Pending |
 | 2.1 | Build AccountSelector component | Frontend Specialist | Pending |
 | 2.2 | Implement account CRUD operations | CoderAgent | Pending |
 | 2.3 | Build BalanceCard component | Frontend Specialist | Pending |
@@ -366,6 +428,14 @@ Accept: application/json
 | 2.6 | Build IncomeExpenseChart | Frontend Specialist | Pending |
 | 2.7 | Implement statistics calculations | CoderAgent | Pending |
 | 2.8 | Add transaction deduplication | CoderAgent | Pending |
+| 2.9 | Security review | CodeReviewer | Pending |
+
+**Sprint 2 Goals:**
+- Multi-account support with selector UI
+- Balance visualization with time-series charts
+- Income vs Expense analysis
+- Transaction deduplication logic
+- Unit tests for parser
 
 ---
 
@@ -412,30 +482,110 @@ Accept: application/json
 
 ## Security Measures
 
-1. **Token NEVER written to localStorage/IndexedDB**
-2. **Token NEVER logged to console**
-3. **Token variable cleared after API call completes**
-4. **Dashboard runs locally (file:// or localhost)**
-5. **No analytics, no external requests**
-6. **All financial data stays in browser IndexedDB**
+1. **Credentials (cookie + XSRF token) NEVER written to localStorage/IndexedDB**
+2. **Credentials NEVER logged to console**
+3. **Credentials cleared from memory immediately after API call completes**
+4. **Password input type for credential fields in UI**
+5. **Dashboard runs locally (localhost or file://)**
+6. **No analytics, no external requests**
+7. **All financial data stays in browser IndexedDB**
+
+---
+
+## Current Project Files
+
+### Key Implementation Files
+- `src/lib/api/dkb.ts` - DKB API client with cookie auth
+- `src/lib/api/dkb.example.ts` - Example usage of API client
+- `src/lib/db/index.ts` - Dexie.js database instance
+- `src/lib/db/schema.ts` - IndexedDB schema (accounts, transactions)
+- `src/lib/parsers/dkb.parser.ts` - DKB transaction parser
+- `src/components/sync/SyncDialog.tsx` - Credential paste UI
+- `src/components/transactions/TransactionTable.tsx` - Transaction display
+- `src/components/layout/Header.tsx` - App header
+- `src/components/layout/Layout.tsx` - Main layout
+- `src/types/index.ts` - TypeScript type definitions
+- `src/App.tsx` - Main application component
+
+### Configuration Files
+- `vite.config.ts` - Vite configuration
+- `tailwind.config.ts` - Tailwind CSS configuration
+- `tsconfig.json` - TypeScript configuration
+- `package.json` - Dependencies and scripts
+
+### Documentation
+- `README.md` - User documentation (cookie auth instructions)
+- `PROJECT_STATUS.md` - This file (project status & plan)
+- `dkb_api_sample.json` - DKB API response sample
+
+---
+
+## How to Continue Tomorrow
+
+### Quick Start Commands
+```bash
+# Navigate to project
+cd F:\Projects\banking
+
+# Check current status
+git status
+git log --oneline -5
+
+# Start development server
+npm run dev        # Opens at http://localhost:5173
+
+# Run type checking
+npm run type-check
+
+# Build for production
+npm run build
+```
+
+### Context Recovery
+When starting a new session, ask the AI:
+> "Continue Finance Dashboard development. Read PROJECT_STATUS.md and README.md for context, then summarize current status and ask what I want to work on next."
+
+Or simply:
+> "What did we do so far?"
+
+### Current State Summary
+- ✅ Sprint 1 complete - MVP working
+- ✅ Cookie-based authentication implemented
+- ✅ TypeScript: Zero errors
+- ✅ Production build: Tested and working
+- 🎯 Next: Sprint 2 - Multi-account & Analytics
+
+### Branch & Commit Info
+- **Branch:** `vibe-coding`
+- **Latest Commit:** `4195c49` - Cookie auth implementation
+- **Previous Commit:** `8349cea` - Sprint 1 MVP
+- **Dev Server:** http://localhost:5173
 
 ---
 
 ## Before Starting: Required Inputs
 
-1. **DKB API Response Sample** - COMPLETED (see `dkb_api_sample.json`)
-2. **Deutsche Bank CSV Sample** - Pending (needed for Sprint 4)
+1. **DKB API Response Sample** - ✅ COMPLETED (see `dkb_api_sample.json`)
+2. **Deutsche Bank CSV Sample** - ⏳ Pending (needed for Sprint 4)
 
 ---
 
-## How to Start
+## How to Test Current Implementation
 
-To begin implementation, run:
-```
-> Start implementation
-```
+### Prerequisites
+- Active DKB banking account
+- Browser with DevTools (Chrome, Firefox, Edge)
 
-This will:
-1. Initialize the Vite + React project
-2. Set up Tailwind + shadcn/ui
-3. Begin Sprint 1 tasks with agent delegation
+### Testing Steps
+1. Start dev server: `npm run dev`
+2. Open http://localhost:5173 in browser
+3. Log into DKB Banking in another tab
+4. Open DevTools → Network tab
+5. Click any API request to `banking.dkb.de/api/`
+6. Copy "Cookie" header and "x-xsrf-token" values
+7. In the dashboard, click "Sync from DKB"
+8. Paste both credentials, enter account ID, select date range
+9. Click "Sync Transactions"
+10. Verify transactions appear in the table
+
+---
