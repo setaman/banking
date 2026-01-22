@@ -4,6 +4,7 @@ import { Layout, Header } from '@/components/layout'
 import { TransactionTable } from '@/components/transactions'
 import { TransactionFilters } from '@/components/transactions/TransactionFilters'
 import { SyncDialog } from '@/components/sync'
+import { DemoDataDialog } from '@/components/sync/DemoDataDialog'
 import { 
   AccountSelector, 
   BalanceCard, 
@@ -19,6 +20,7 @@ import type { TransactionFilters as FilterType } from '@/lib/filters'
 
 function App() {
   const [syncDialogOpen, setSyncDialogOpen] = useState(false)
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all')
   const [filters, setFilters] = useState<FilterType>(createDefaultFilters())
 
@@ -66,11 +68,16 @@ function App() {
     setSyncDialogOpen(false)
   }
 
+  const handleDemoComplete = () => {
+    setDemoDialogOpen(false)
+  }
+
   return (
     <Layout
       header={
         <Header 
           onSyncClick={() => setSyncDialogOpen(true)}
+          onDemoClick={() => setDemoDialogOpen(true)}
         />
       }
     >
@@ -106,6 +113,13 @@ function App() {
         open={syncDialogOpen}
         onOpenChange={setSyncDialogOpen}
         onSyncComplete={handleSyncComplete}
+      />
+
+      {/* Demo Data Dialog */}
+      <DemoDataDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        onComplete={handleDemoComplete}
       />
     </Layout>
   )
