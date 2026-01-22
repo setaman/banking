@@ -79,47 +79,55 @@ export function generateSampleTransactions(accountId: string): Transaction[] {
     { merchant: 'KINO', amount: -1200, category: 'entertainment' as const, type: 'KARTENZAHLUNG' },
     
     // Income
-    { merchant: 'Gehalt', amount: 325000, category: 'income' as const, type: 'GUTSCHRIFT' },
+    { merchant: 'Gehalt Arbeitgeber GmbH', amount: 325000, category: 'income' as const, type: 'GUTSCHRIFT' },
   ];
 
-  // Generate transactions over last 90 days
+  // Generate transactions over last 90 days with more frequency
   let transactionId = 1;
   for (let daysAgo = 0; daysAgo < 90; daysAgo++) {
     const date = new Date(now);
     date.setDate(date.getDate() - daysAgo);
     
-    // Income once per month
-    if (daysAgo % 30 === 0) {
+    // Income once per month (around day 27-28)
+    if (daysAgo % 30 === 27) {
       transactions.push(createTransaction(
         accountId,
-        `demo-tx-${transactionId++}`,
+        `demo-tx-${String(transactionId++).padStart(6, '0')}`,
         date,
         categories.find(c => c.category === 'income')!,
       ));
     }
     
-    // Utilities on specific days
-    if (daysAgo === 5 || daysAgo === 35 || daysAgo === 65) {
+    // Utilities on 1st, 5th and 15th of each month
+    const dayOfMonth = date.getDate();
+    if (dayOfMonth === 1 || dayOfMonth === 5 || dayOfMonth === 15) {
       categories.filter(c => c.category === 'utilities').forEach(cat => {
         transactions.push(createTransaction(
           accountId,
-          `demo-tx-${transactionId++}`,
+          `demo-tx-${String(transactionId++).padStart(6, '0')}`,
           date,
           cat,
         ));
       });
     }
     
-    // Random daily expenses (groceries, restaurants, transport)
-    if (Math.random() > 0.3) {
+    // Daily expenses - more frequent (2-4 per day)
+    const numDailyTransactions = Math.floor(Math.random() * 3) + 2; // 2-4 transactions
+    for (let i = 0; i < numDailyTransactions; i++) {
       const randomCategory = categories.filter(c => 
         ['groceries', 'restaurants', 'transport', 'shopping', 'entertainment'].includes(c.category)
       );
       const selected = randomCategory[Math.floor(Math.random() * randomCategory.length)];
+      
+      // Add some time variance to the date
+      const transactionDate = new Date(date);
+      transactionDate.setHours(Math.floor(Math.random() * 24));
+      transactionDate.setMinutes(Math.floor(Math.random() * 60));
+      
       transactions.push(createTransaction(
         accountId,
-        `demo-tx-${transactionId++}`,
-        date,
+        `demo-tx-${String(transactionId++).padStart(6, '0')}`,
+        transactionDate,
         selected,
       ));
     }
