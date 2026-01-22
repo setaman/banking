@@ -5,7 +5,7 @@
  * and switch back to real data anytime.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -39,15 +39,20 @@ export function DemoDataDialog({ open, onOpenChange, onComplete }: DemoDataDialo
   const [demoMode, setDemoMode] = useState<boolean | null>(null);
 
   // Check if demo data exists on dialog open
-  useState(() => {
+  useEffect(() => {
     if (open) {
       checkDemoMode();
     }
-  });
+  }, [open]);
 
   async function checkDemoMode() {
-    const hasDemo = await hasDemoData(db);
-    setDemoMode(hasDemo);
+    try {
+      const hasDemo = await hasDemoData(db);
+      setDemoMode(hasDemo);
+    } catch (error) {
+      console.error('Error checking demo mode:', error);
+      setDemoMode(false);
+    }
   }
 
   /**
@@ -59,20 +64,28 @@ export function DemoDataDialog({ open, onOpenChange, onComplete }: DemoDataDialo
     setMessage('Loading sample data...');
 
     try {
+      console.log('Starting demo data load...');
+      
       // Generate sample accounts
       const dkbAccount = generateSampleAccount();
       const dbAccount = generateDeutscheBankAccount();
+      console.log('Generated accounts:', dkbAccount.id, dbAccount.id);
 
       // Add accounts to database
       await db.accounts.put(dkbAccount);
       await db.accounts.put(dbAccount);
+      console.log('Accounts added to DB');
 
       // Generate transactions for DKB account
       const dkbTransactions = generateSampleTransactions(dkbAccount.id);
+      console.log('Generated transactions:', dkbTransactions.length);
+      
       const categorized = categorizeTransactions(dkbTransactions);
+      console.log('Categorized transactions:', categorized.length);
 
       // Add transactions to database
       await db.transactions.bulkPut(categorized);
+      console.log('Transactions added to DB');
 
       // Update account balances
       const dkbBalance = categorized
@@ -80,19 +93,21 @@ export function DemoDataDialog({ open, onOpenChange, onComplete }: DemoDataDialo
         .reduce((sum, t) => sum + t.amount, 0);
       
       await db.accounts.update(dkbAccount.id, { balance: dkbBalance });
+      console.log('Balance updated:', dkbBalance);
 
       setStatus('success');
       setMessage(`✅ Loaded ${categorized.length} sample transactions across 2 accounts`);
       setDemoMode(true);
+      setLoading(false);
 
       setTimeout(() => {
         onComplete?.();
         onOpenChange(false);
       }, 2000);
     } catch (error) {
+      console.error('Error in loadDemoData:', error);
       setStatus('error');
-      setMessage(`❌ Error loading demo data: ${error}`);
-    } finally {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
       setLoading(false);
     }
   }
