@@ -89,12 +89,15 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
           const value = params.value;
           const percent = params.percent;
           return `
-            <div style="padding: 8px;">
-              <div style="font-weight: 600; margin-bottom: 4px;">
-                ${params.marker} ${params.name}
+            <div style="padding: 8px 4px;">
+              <div style="font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                ${params.marker} <span>${params.name}</span>
               </div>
-              <div style="color: #666;">
-                €${value.toFixed(2)} (${percent.toFixed(1)}%)
+              <div style="font-size: 15px; font-weight: 700; color: ${params.color};">
+                €${value.toFixed(2)}
+              </div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">
+                ${percent.toFixed(1)}% of expenses
               </div>
             </div>
           `;
@@ -102,13 +105,15 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
       },
       legend: {
         orient: 'vertical',
-        right: '10%',
+        right: '5%',
         top: 'center',
         icon: 'circle',
-        itemWidth: 10,
-        itemHeight: 10,
+        itemWidth: 12,
+        itemHeight: 12,
+        itemGap: 12,
         textStyle: {
-          fontSize: 12,
+          fontSize: 13,
+          padding: [0, 0, 0, 4],
         },
         formatter: (name: string) => {
           const item = categoryData.find(d => d.name === name);
@@ -120,13 +125,17 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
         {
           name: 'Expenses',
           type: 'pie',
-          radius: ['40%', '70%'], // Donut chart
+          radius: ['50%', '80%'], // Thicker donut
           center: ['35%', '50%'],
           avoidLabelOverlap: true,
+          padAngle: 3,
           itemStyle: {
-            borderRadius: 8,
-            borderColor: '#fff',
-            borderWidth: 2,
+            borderRadius: 10,
+            borderColor: 'transparent',
+            borderWidth: 0,
+            shadowBlur: 15,
+            shadowColor: 'rgba(0, 0, 0, 0.15)',
+            shadowOffsetY: 4,
           },
           label: {
             show: false,
@@ -134,17 +143,20 @@ export function CategoryPieChart({ transactions }: CategoryPieChartProps) {
           emphasis: {
             label: {
               show: true,
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: 'bold',
+              color: '#111827',
               formatter: (params: any) => {
                 return `€${params.value.toFixed(2)}`;
               },
             },
             itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)',
+              shadowBlur: 25,
+              shadowOffsetY: 8,
+              shadowColor: 'rgba(0, 0, 0, 0.25)',
             },
+            scale: true,
+            scaleSize: 8,
           },
           labelLine: {
             show: false,

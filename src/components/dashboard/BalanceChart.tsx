@@ -137,14 +137,39 @@ export function BalanceChart({
         type: 'line',
         data: balances,
         smooth: true,
+        smoothMonotone: 'x',
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: 8,
+        showSymbol: false,
         lineStyle: {
           width: 3,
-          color: isPositiveTrend ? CHART_COLORS.income : CHART_COLORS.expense,
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 1,
+            y2: 0,
+            colorStops: [
+              {
+                offset: 0,
+                color: isPositiveTrend ? CHART_COLORS.income : CHART_COLORS.expense,
+              },
+              {
+                offset: 1,
+                color: isPositiveTrend ? CHART_COLORS.incomeLight : CHART_COLORS.expenseLight,
+              },
+            ],
+          },
+          shadowColor: isPositiveTrend ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)',
+          shadowBlur: 10,
+          shadowOffsetY: 4,
         },
         itemStyle: {
           color: isPositiveTrend ? CHART_COLORS.income : CHART_COLORS.expense,
+          borderWidth: 3,
+          borderColor: '#fff',
+          shadowColor: isPositiveTrend ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)',
+          shadowBlur: 10,
         },
         areaStyle: {
           color: {
@@ -157,20 +182,31 @@ export function BalanceChart({
               {
                 offset: 0,
                 color: isPositiveTrend 
-                  ? 'rgba(16, 185, 129, 0.3)' // green with opacity
-                  : 'rgba(239, 68, 68, 0.3)',  // red with opacity
+                  ? 'rgba(16, 185, 129, 0.4)'
+                  : 'rgba(244, 63, 94, 0.4)',
+              },
+              {
+                offset: 0.5,
+                color: isPositiveTrend 
+                  ? 'rgba(16, 185, 129, 0.2)'
+                  : 'rgba(244, 63, 94, 0.2)',
               },
               {
                 offset: 1,
                 color: isPositiveTrend 
-                  ? 'rgba(16, 185, 129, 0.05)'
-                  : 'rgba(239, 68, 68, 0.05)',
+                  ? 'rgba(16, 185, 129, 0.02)'
+                  : 'rgba(244, 63, 94, 0.02)',
               },
             ],
           },
         },
         emphasis: {
           focus: 'series',
+          scale: true,
+          itemStyle: {
+            borderWidth: 4,
+            shadowBlur: 15,
+          },
         },
       },
     ],

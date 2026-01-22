@@ -129,9 +129,30 @@ export function IncomeExpenseChart({
         type: 'bar',
         data: [incomeInEur],
         itemStyle: {
-          color: CHART_COLORS.income,
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: CHART_COLORS.incomeLight,
+              },
+              {
+                offset: 1,
+                color: CHART_COLORS.income,
+              },
+            ],
+          },
+          borderRadius: [8, 8, 0, 0],
+          shadowColor: 'rgba(16, 185, 129, 0.3)',
+          shadowBlur: 15,
+          shadowOffsetY: 5,
         },
-        barMaxWidth: 100,
+        barMaxWidth: 120,
+        barGap: '30%',
         label: {
           show: true,
           position: 'top',
@@ -144,9 +165,16 @@ export function IncomeExpenseChart({
               maximumFractionDigits: 0,
             }).format(value);
           },
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 'bold',
           color: CHART_COLORS.income,
+          distance: 10,
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 20,
+            shadowOffsetY: 8,
+          },
         },
       },
       {
@@ -154,9 +182,29 @@ export function IncomeExpenseChart({
         type: 'bar',
         data: [expenseInEur],
         itemStyle: {
-          color: CHART_COLORS.expense,
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: CHART_COLORS.expenseLight,
+              },
+              {
+                offset: 1,
+                color: CHART_COLORS.expense,
+              },
+            ],
+          },
+          borderRadius: [8, 8, 0, 0],
+          shadowColor: 'rgba(244, 63, 94, 0.3)',
+          shadowBlur: 15,
+          shadowOffsetY: 5,
         },
-        barMaxWidth: 100,
+        barMaxWidth: 120,
         label: {
           show: true,
           position: 'top',
@@ -169,9 +217,16 @@ export function IncomeExpenseChart({
               maximumFractionDigits: 0,
             }).format(value);
           },
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 'bold',
           color: CHART_COLORS.expense,
+          distance: 10,
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 20,
+            shadowOffsetY: 8,
+          },
         },
       },
     ],

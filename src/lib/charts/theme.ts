@@ -11,23 +11,45 @@
 import type { EChartsOption } from 'echarts';
 
 /**
- * Color palette for financial data
- * Optimized for readability and accessibility
+ * Modern color palette for financial data
+ * Vibrant, sleek colors optimized for visual appeal and readability
  */
 export const CHART_COLORS = {
-  // Financial colors
-  income: '#10b981',      // Green-500 (Tailwind) - for income/positive
-  expense: '#ef4444',     // Red-500 (Tailwind) - for expenses/negative
+  // Financial colors - Modern vibrant palette
+  income: '#10b981',      // Emerald-500 - for income/positive
+  incomeLight: '#34d399', // Emerald-400 - lighter shade
+  incomeDark: '#059669',  // Emerald-600 - darker shade
+  
+  expense: '#f43f5e',     // Rose-500 - for expenses/negative
+  expenseLight: '#fb7185', // Rose-400 - lighter shade
+  expenseDark: '#e11d48', // Rose-600 - darker shade
+  
   neutral: '#6b7280',     // Gray-500 - for neutral data
   
-  // Chart series colors (for multi-series charts)
-  primary: '#3b82f6',     // Blue-500 - primary series
-  secondary: '#8b5cf6',   // Violet-500 - secondary series
-  tertiary: '#f59e0b',    // Amber-500 - tertiary series
+  // Chart series colors - Modern gradient-friendly palette
+  primary: '#3b82f6',     // Blue-500
+  primaryLight: '#60a5fa', // Blue-400
+  primaryDark: '#2563eb', // Blue-600
+  
+  secondary: '#8b5cf6',   // Violet-500
+  secondaryLight: '#a78bfa', // Violet-400
+  secondaryDark: '#7c3aed', // Violet-600
+  
+  tertiary: '#f59e0b',    // Amber-500
+  tertiaryLight: '#fbbf24', // Amber-400
+  tertiaryDark: '#d97706', // Amber-600
+  
+  // Accent colors for category charts
+  accent1: '#06b6d4',     // Cyan-500
+  accent2: '#8b5cf6',     // Violet-500
+  accent3: '#ec4899',     // Pink-500
+  accent4: '#f59e0b',     // Amber-500
+  accent5: '#10b981',     // Emerald-500
+  accent6: '#6366f1',     // Indigo-500
   
   // Background colors (light/dark mode support)
-  bgLight: '#ffffff',
-  bgDark: '#1f2937',      // Gray-800
+  bgLight: 'transparent',
+  bgDark: 'transparent',
   
   // Text colors
   textLight: '#111827',   // Gray-900
@@ -35,11 +57,11 @@ export const CHART_COLORS = {
   textSecondaryLight: '#6b7280', // Gray-500
   textSecondaryDark: '#9ca3af',  // Gray-400
   
-  // Grid and border colors
-  gridLight: '#e5e7eb',   // Gray-200
-  gridDark: '#374151',    // Gray-700
-  borderLight: '#d1d5db', // Gray-300
-  borderDark: '#4b5563',  // Gray-600
+  // Grid and border colors - Subtle for modern look
+  gridLight: 'rgba(0, 0, 0, 0.05)',
+  gridDark: 'rgba(255, 255, 255, 0.1)',
+  borderLight: 'rgba(0, 0, 0, 0.1)',
+  borderDark: 'rgba(255, 255, 255, 0.15)',
 } as const;
 
 /**
@@ -90,7 +112,7 @@ export function getLightTheme(): EChartsOption {
     },
     
     grid: {
-      borderColor: CHART_COLORS.borderLight,
+      borderColor: 'transparent',
       containLabel: true,
       left: '3%',
       right: '4%',
@@ -100,27 +122,26 @@ export function getLightTheme(): EChartsOption {
     
     xAxis: {
       axisLine: {
-        lineStyle: {
-          color: CHART_COLORS.gridLight,
-        },
+        show: false,
+      },
+      axisTick: {
+        show: false,
       },
       axisLabel: {
         color: CHART_COLORS.textSecondaryLight,
         fontSize: CHART_FONTS.size.axis,
       },
       splitLine: {
-        lineStyle: {
-          color: CHART_COLORS.gridLight,
-          type: 'dashed',
-        },
+        show: false,
       },
     },
     
     yAxis: {
       axisLine: {
-        lineStyle: {
-          color: CHART_COLORS.gridLight,
-        },
+        show: false,
+      },
+      axisTick: {
+        show: false,
       },
       axisLabel: {
         color: CHART_COLORS.textSecondaryLight,
@@ -129,7 +150,7 @@ export function getLightTheme(): EChartsOption {
       splitLine: {
         lineStyle: {
           color: CHART_COLORS.gridLight,
-          type: 'dashed',
+          type: 'solid',
         },
       },
     },
@@ -142,15 +163,15 @@ export function getLightTheme(): EChartsOption {
     },
     
     tooltip: {
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: CHART_COLORS.borderLight,
+      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+      borderColor: 'rgba(0, 0, 0, 0.08)',
       borderWidth: 1,
       textStyle: {
         color: CHART_COLORS.textLight,
         fontSize: CHART_FONTS.size.tooltip,
       },
-      padding: [8, 12],
-      extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);',
+      padding: [12, 16],
+      extraCssText: 'border-radius: 8px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);',
     },
   };
 }
@@ -182,7 +203,7 @@ export function getDarkTheme(): EChartsOption {
     },
     
     grid: {
-      borderColor: CHART_COLORS.borderDark,
+      borderColor: 'transparent',
       containLabel: true,
       left: '3%',
       right: '4%',
@@ -192,27 +213,26 @@ export function getDarkTheme(): EChartsOption {
     
     xAxis: {
       axisLine: {
-        lineStyle: {
-          color: CHART_COLORS.gridDark,
-        },
+        show: false,
+      },
+      axisTick: {
+        show: false,
       },
       axisLabel: {
         color: CHART_COLORS.textSecondaryDark,
         fontSize: CHART_FONTS.size.axis,
       },
       splitLine: {
-        lineStyle: {
-          color: CHART_COLORS.gridDark,
-          type: 'dashed',
-        },
+        show: false,
       },
     },
     
     yAxis: {
       axisLine: {
-        lineStyle: {
-          color: CHART_COLORS.gridDark,
-        },
+        show: false,
+      },
+      axisTick: {
+        show: false,
       },
       axisLabel: {
         color: CHART_COLORS.textSecondaryDark,
@@ -221,7 +241,7 @@ export function getDarkTheme(): EChartsOption {
       splitLine: {
         lineStyle: {
           color: CHART_COLORS.gridDark,
-          type: 'dashed',
+          type: 'solid',
         },
       },
     },
@@ -234,15 +254,15 @@ export function getDarkTheme(): EChartsOption {
     },
     
     tooltip: {
-      backgroundColor: 'rgba(31, 41, 55, 0.95)',
-      borderColor: CHART_COLORS.borderDark,
+      backgroundColor: 'rgba(31, 41, 55, 0.96)',
+      borderColor: 'rgba(255, 255, 255, 0.1)',
       borderWidth: 1,
       textStyle: {
         color: CHART_COLORS.textDark,
         fontSize: CHART_FONTS.size.tooltip,
       },
-      padding: [8, 12],
-      extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);',
+      padding: [12, 16],
+      extraCssText: 'border-radius: 8px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);',
     },
   };
 }
