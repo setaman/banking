@@ -149,6 +149,7 @@ function createTransaction(
     description: `${template.type} - ${template.merchant}`,
     counterpartyName: template.merchant,
     category: template.category,
+    transactionType: template.type,
     merchantName: template.merchant,
     rawData: {
       type: 'accountTransaction',
