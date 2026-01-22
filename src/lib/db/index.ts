@@ -1,5 +1,49 @@
 import { FinanceDashboardDB } from './schema';
-import type { Account, Transaction } from '../../types';
+import type { Account, Transaction, TransactionCategory } from '../../types';
+
+/**
+ * Generate a unique hash for a transaction to prevent duplicates
+ * 
+ * Creates a deterministic hash based on key transaction properties.
+ * This hash can be used as the transaction ID to automatically deduplicate.
+ * 
+ * @param transaction - Transaction properties to hash
+ * @returns SHA-256 hash string
+ * 
+ * @example
+ * ```typescript
+ * const hash = await generateTransactionHash({
+ *   accountId: 'acc-123',
+ *   bookingDate: new Date('2024-01-15'),
+ *   amount: -5000,
+ *   description: 'REWE Supermarket'
+ * });
+ * // Returns: 'a3f5b9c1...' (deterministic hash)
+ * ```
+ */
+export async function generateTransactionHash(
+  transaction: Pick<Transaction, 'accountId' | 'bookingDate' | 'amount' | 'description'>
+): Promise<string> {
+  // Create a deterministic string from transaction properties
+  const bookingDateStr = transaction.bookingDate.toISOString().split('T')[0];
+  const dataString = [
+    transaction.accountId,
+    bookingDateStr,
+    transaction.amount.toString(),
+    transaction.description.trim().toLowerCase(),
+  ].join('|');
+
+  // Use Web Crypto API to generate SHA-256 hash
+  const encoder = new TextEncoder();
+  const data = encoder.encode(dataString);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // Convert to hex string
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex;
+}
 
 /**
  * Singleton database instance
@@ -47,7 +91,9 @@ export async function upsertAccounts(accounts: Account[]): Promise<string> {
 
 /**
  * Add or update a transaction (upsert)
- * Uses transaction ID as deduplication key
+ * Uses transaction ID as deduplication key.
+ * To prevent duplicates, generate transaction ID using generateTransactionHash()
+ * before calling this function.
  */
 export async function upsertTransaction(
   transaction: Transaction
@@ -57,7 +103,9 @@ export async function upsertTransaction(
 
 /**
  * Add or update multiple transactions in bulk
- * Automatically deduplicates by ID
+ * Automatically deduplicates by ID.
+ * For best results, generate transaction IDs using generateTransactionHash()
+ * before inserting to prevent duplicate transactions.
  */
 export async function upsertTransactions(
   transactions: Transaction[]
@@ -157,6 +205,31 @@ export async function clearAllData(): Promise<void> {
     await db.accounts.clear();
     await db.transactions.clear();
   });
+}
+
+/**
+ * Update transaction category
+ * 
+ * @param id - Transaction ID
+ * @param category - New category to set
+ * @returns Promise that resolves when update is complete
+ * 
+ * @example
+ * ```typescript
+ * await updateTransactionCategory('tx-123', 'groceries');
+ * ```
+ */
+export async function updateTransactionCategory(
+  id: string,
+  category: TransactionCategory
+): Promise<void> {
+  const transaction = await db.transactions.get(id);
+  
+  if (!transaction) {
+    throw new Error(`Transaction with id ${id} not found`);
+  }
+
+  await db.transactions.update(id, { category });
 }
 
 /**

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   onSyncClick: () => void;
@@ -14,13 +15,16 @@ export function Header({ onSyncClick, isSyncing = false }: HeaderProps) {
           <span className="text-sm text-muted-foreground">DKB Banking</span>
         </div>
         
-        <Button 
-          onClick={onSyncClick} 
-          disabled={isSyncing}
-          variant="default"
-        >
-          {isSyncing ? 'Syncing...' : 'Sync Transactions'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button 
+            onClick={onSyncClick} 
+            disabled={isSyncing}
+            variant="default"
+          >
+            {isSyncing ? 'Syncing...' : 'Sync Transactions'}
+          </Button>
+        </div>
       </div>
     </header>
   );
