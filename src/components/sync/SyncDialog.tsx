@@ -55,6 +55,7 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
 
   /**
    * Clears all sensitive form data
@@ -113,6 +114,7 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
 
     try {
       // Fetch transactions from DKB API
+      console.log('[Sync] Starting fetchAllTransactions');
       const apiResponse = await fetchAllTransactions({
         cookie,
         xsrfToken,
@@ -121,14 +123,18 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
         fromDate,
         toDate,
       });
+      console.log('[Sync] fetchAllTransactions returned');
 
       // CRITICAL: Clear credentials immediately after API call
       const transactionData = apiResponse.data;
+      console.log(`[Sync] Received ${transactionData.length} raw transactions`);
       setCookie(''); // Cookie no longer needed
       setXsrfToken(''); // XSRF token no longer needed
 
       // Parse transactions
       const transactions = parseDKBTransactions(transactionData, accountId);
+      console.log(`[Sync] Parsed ${transactions.length} transactions`);
+      setProgress(`Parsed ${transactions.length} transactions`);
 
       if (transactions.length === 0) {
         setSuccess('Sync completed successfully, but no transactions found for this date range.');
@@ -148,8 +154,12 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
       };
 
       // Save to IndexedDB
+      console.log('[Sync] Saving account to IndexedDB');
       await upsertAccount(account);
+      console.log('[Sync] Saving transactions to IndexedDB');
       await upsertTransactions(transactions);
+      console.log('[Sync] Transactions saved');
+      setProgress(`Saved ${transactions.length} transactions`);
 
       // Show success message
       setSuccess(`Successfully synced ${transactions.length} transaction${transactions.length !== 1 ? 's' : ''}`);
@@ -293,6 +303,12 @@ export function SyncDialog({ open, onOpenChange, onSyncComplete }: SyncDialogPro
           {success && (
             <div className="rounded-md bg-green-500/15 p-3 text-sm text-green-600 dark:text-green-400">
               {success}
+            </div>
+          )}
+          {/* Progress Message */}
+          {progress && (
+            <div className="rounded-md bg-blue-500/10 p-3 text-sm text-blue-300">
+              {progress}
             </div>
           )}
         </div>

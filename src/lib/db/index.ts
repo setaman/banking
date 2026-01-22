@@ -110,10 +110,20 @@ export async function upsertTransaction(
 export async function upsertTransactions(
   transactions: Transaction[]
 ): Promise<string> {
-  return await db.transaction('rw', db.transactions, async () => {
-    await db.transactions.bulkPut(transactions);
-    return `${transactions.length} transactions upserted`;
-  });
+  // Insert transactions in batches to avoid blocking the main thread or
+  // hitting IndexedDB transaction size limits when syncing large datasets.
+  const batchSize = 500;
+  let inserted = 0;
+
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transaction('rw', db.transactions, async () => {
+      await db.transactions.bulkPut(batch);
+    });
+    inserted += batch.length;
+  }
+
+  return `${inserted} transactions upserted`;
 }
 
 /**

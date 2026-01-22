@@ -20,14 +20,17 @@
     "dexie-react-hooks": "^1.1.7",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
+    "express": "^5.2.1",
     "lucide-react": "^0.462.0",
     "papaparse": "^5.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.5.4",
+    "vite-plugin-api-routes": "^1.2.6",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",

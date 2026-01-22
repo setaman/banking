@@ -1,26 +1,20 @@
 /**
  * DKB API Client
- * 
- * Fetches transactions from DKB API with pagination support.
- * 
+ *
+ * Fetches transactions from DKB API via server-side route.
+ *
  * SECURITY: Credentials (cookie, XSRF token) must ONLY be passed as function parameters.
  * Credentials are NEVER stored, logged, or persisted anywhere.
  */
 
-import type { DKBApiResponse } from '@/types';
-
-/**
- * DKB API endpoint configuration
- */
-const DKB_BASE_URL = 'https://banking.dkb.de/api';
-const DEFAULT_PAGE_SIZE = 50;
+import type { DKBApiResponse } from "@/types";
 
 /**
  * Authentication credentials for DKB API
  */
 export interface DKBCredentials {
-  cookie: string;      // Full cookie header from browser
-  xsrfToken: string;   // x-xsrf-token header value
+  cookie: string; // Full cookie header from browser
+  xsrfToken: string; // x-xsrf-token header value
 }
 
 /**
@@ -29,7 +23,7 @@ export interface DKBCredentials {
 interface FetchTransactionsParams {
   accountId: string;
   fromDate?: string; // Format: YYYY-MM-DD
-  toDate?: string;   // Format: YYYY-MM-DD
+  toDate?: string; // Format: YYYY-MM-DD
   pageSize?: number;
 }
 
@@ -40,10 +34,10 @@ export class DKBApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode?: number,
-    public readonly cause?: Error
+    public readonly cause?: Error,
   ) {
     super(message);
-    this.name = 'DKBApiError';
+    this.name = "DKBApiError";
   }
 }
 
@@ -51,20 +45,20 @@ export class DKBApiError extends Error {
  * Validates fetch parameters
  */
 const validateParams = (params: FetchTransactionsParams): void => {
-  if (!params.accountId || params.accountId.trim() === '') {
-    throw new DKBApiError('Account ID is required');
+  if (!params.accountId || params.accountId.trim() === "") {
+    throw new DKBApiError("Account ID is required");
   }
 
   if (params.fromDate && !isValidDateFormat(params.fromDate)) {
-    throw new DKBApiError('Invalid fromDate format. Expected: YYYY-MM-DD');
+    throw new DKBApiError("Invalid fromDate format. Expected: YYYY-MM-DD");
   }
 
   if (params.toDate && !isValidDateFormat(params.toDate)) {
-    throw new DKBApiError('Invalid toDate format. Expected: YYYY-MM-DD');
+    throw new DKBApiError("Invalid toDate format. Expected: YYYY-MM-DD");
   }
 
   if (params.pageSize && (params.pageSize < 1 || params.pageSize > 100)) {
-    throw new DKBApiError('Page size must be between 1 and 100');
+    throw new DKBApiError("Page size must be between 1 and 100");
   }
 };
 
@@ -74,79 +68,20 @@ const validateParams = (params: FetchTransactionsParams): void => {
 const isValidDateFormat = (date: string): boolean => {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(date)) return false;
-  
+
   const parsedDate = new Date(date);
   return !isNaN(parsedDate.getTime());
 };
 
 /**
- * Builds query parameters for API request
- */
-const buildQueryParams = (params: FetchTransactionsParams): URLSearchParams => {
-  const queryParams = new URLSearchParams();
-
-  if (params.fromDate) {
-    queryParams.set('filter[bookingDate][GE]', params.fromDate);
-  }
-
-  if (params.toDate) {
-    queryParams.set('filter[bookingDate][LE]', params.toDate);
-  }
-
-  queryParams.set('expand', 'Merchant');
-  queryParams.set('pagesize', String(params.pageSize || DEFAULT_PAGE_SIZE));
-
-  return queryParams;
-};
-
-/**
- * Fetches a single page of transactions
- */
-const fetchSinglePage = async (
-  url: string,
-  credentials: DKBCredentials
-): Promise<DKBApiResponse> => {
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Cookie': credentials.cookie,
-        'x-xsrf-token': credentials.xsrfToken,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new DKBApiError(
-        `DKB API request failed: ${response.statusText}`,
-        response.status
-      );
-    }
-
-    const data = await response.json();
-    return data as DKBApiResponse;
-  } catch (error) {
-    if (error instanceof DKBApiError) {
-      throw error;
-    }
-
-    throw new DKBApiError(
-      'Failed to fetch transactions from DKB API',
-      undefined,
-      error as Error
-    );
-  }
-};
-
-/**
- * Fetches all transactions with automatic pagination
- * 
+ * Fetches all transactions with automatic pagination (handled server-side)
+ *
  * @param credentials - DKB API credentials (cookie + XSRF token, NEVER stored or logged)
  * @param params - Query parameters for filtering transactions
  * @returns Complete response with all transactions from all pages
- * 
+ *
  * @throws {DKBApiError} If validation fails or API request fails
- * 
+ *
  * @example
  * ```typescript
  * const credentials = getUserProvidedCredentials(); // From UI paste
@@ -160,58 +95,56 @@ const fetchSinglePage = async (
  */
 export const fetchAllTransactions = async (
   credentials: DKBCredentials,
-  params: FetchTransactionsParams
+  params: FetchTransactionsParams,
 ): Promise<DKBApiResponse> => {
   // Validate credentials
-  if (!credentials.cookie || credentials.cookie.trim() === '') {
-    throw new DKBApiError('Cookie is required');
+  if (!credentials.cookie || credentials.cookie.trim() === "") {
+    throw new DKBApiError("Cookie is required");
   }
-  if (!credentials.xsrfToken || credentials.xsrfToken.trim() === '') {
-    throw new DKBApiError('XSRF token is required');
+  if (!credentials.xsrfToken || credentials.xsrfToken.trim() === "") {
+    throw new DKBApiError("XSRF token is required");
   }
 
   // Validate parameters
   validateParams(params);
 
-  // Build initial URL
-  const baseUrl = `${DKB_BASE_URL}/accounts/accounts/${params.accountId}/transactions`;
-  const queryParams = buildQueryParams(params);
-  const initialUrl = `${baseUrl}?${queryParams.toString()}`;
+  try {
+    // Call server-side API route (handles pagination internally)
+    const response = await fetch("/api/dkb/transactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        cookie: credentials.cookie,
+        xsrfToken: credentials.xsrfToken,
+        accountId: params.accountId,
+        fromDate: params.fromDate,
+        toDate: params.toDate,
+        pageSize: params.pageSize,
+      }),
+    });
 
-  // Fetch first page
-  const firstPage = await fetchSinglePage(initialUrl, credentials);
+    if (!response.ok) {
+      // Try to parse error message from response
+      const errorData = await response.json().catch(() => ({}));
+      throw new DKBApiError(
+        errorData.error || `API request failed: ${response.statusText}`,
+        response.status,
+      );
+    }
 
-  // If no pagination metadata or only one page, return immediately
-  const totalPages = firstPage.meta?.totalPages || 1;
-  const currentPage = firstPage.meta?.currentPage || 1;
+    const data = await response.json();
+    return data as DKBApiResponse;
+  } catch (error) {
+    if (error instanceof DKBApiError) {
+      throw error;
+    }
 
-  if (totalPages <= 1 || currentPage >= totalPages) {
-    return firstPage;
+    throw new DKBApiError(
+      "Failed to fetch transactions from DKB API",
+      undefined,
+      error as Error,
+    );
   }
-
-  // Fetch remaining pages in parallel
-  const remainingPagePromises: Promise<DKBApiResponse>[] = [];
-
-  for (let page = currentPage + 1; page <= totalPages; page++) {
-    const pageQueryParams = new URLSearchParams(queryParams);
-    pageQueryParams.set('page', String(page));
-    const pageUrl = `${baseUrl}?${pageQueryParams.toString()}`;
-    
-    remainingPagePromises.push(fetchSinglePage(pageUrl, credentials));
-  }
-
-  const remainingPages = await Promise.all(remainingPagePromises);
-
-  // Combine all transactions
-  const allTransactions = [
-    ...firstPage.data,
-    ...remainingPages.flatMap(page => page.data),
-  ];
-
-  // Return combined response
-  return {
-    data: allTransactions,
-    included: firstPage.included,
-    meta: firstPage.meta,
-  };
 };
