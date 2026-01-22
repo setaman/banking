@@ -121,37 +121,48 @@ export function DemoDataDialog({ open, onOpenChange, onComplete }: DemoDataDialo
     setMessage('Clearing demo data...');
 
     try {
+      console.log('Starting demo data clear...');
+      
       // Get all demo accounts
       const allAccounts = await db.accounts.toArray();
+      console.log('Total accounts in DB:', allAccounts.length);
+      
       const demoAccounts = allAccounts.filter(acc => isDemoAccount(acc.id));
+      console.log('Demo accounts found:', demoAccounts.map(a => a.id));
 
-      // Delete demo accounts
-      await Promise.all(
-        demoAccounts.map(acc => db.accounts.delete(acc.id))
-      );
-
-      // Delete demo transactions
+      // Delete demo transactions first (before deleting accounts)
       const allTransactions = await db.transactions.toArray();
+      console.log('Total transactions in DB:', allTransactions.length);
+      
       const demoTransactions = allTransactions.filter(tx => 
         demoAccounts.some(acc => acc.id === tx.accountId)
       );
+      console.log('Demo transactions found:', demoTransactions.length);
 
-      await Promise.all(
-        demoTransactions.map(tx => db.transactions.delete(tx.id))
-      );
+      if (demoTransactions.length > 0) {
+        await db.transactions.bulkDelete(demoTransactions.map(tx => tx.id));
+        console.log('Demo transactions deleted');
+      }
+
+      // Delete demo accounts
+      if (demoAccounts.length > 0) {
+        await db.accounts.bulkDelete(demoAccounts.map(acc => acc.id));
+        console.log('Demo accounts deleted');
+      }
 
       setStatus('success');
       setMessage(`✅ Cleared ${demoTransactions.length} demo transactions and ${demoAccounts.length} demo accounts`);
       setDemoMode(false);
+      setLoading(false);
 
       setTimeout(() => {
         onComplete?.();
         onOpenChange(false);
       }, 2000);
     } catch (error) {
+      console.error('Error in clearDemoData:', error);
       setStatus('error');
-      setMessage(`❌ Error clearing demo data: ${error}`);
-    } finally {
+      setMessage(`❌ Error clearing demo data: ${error instanceof Error ? error.message : String(error)}`);
       setLoading(false);
     }
   }
