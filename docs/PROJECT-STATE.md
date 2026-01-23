@@ -1,28 +1,28 @@
 # Project State: BanKing
 
-**Current Phase:** Phase 1 - Data Layer & Banking Interface
-**Current Sprint:** Sprint 1 (Initialization)
-**Last Session:** 2026-01-23
+**Current Phase:** Phase 1 DONE, Phase 3 NEXT (Dashboard Charts)
+**Current Sprint:** Sprint 2 (Dashboard Integration)
+**Last Session:** 2026-01-24
+**Commit:** c5cc5a3 (feat: implement phase 1 data layer and banking infrastructure)
 
 ---
 
 ## Progress Summary
 
-| Phase | Status | Progress |
-|-------|--------|----------|
-| Phase 0: Foundation | DONE | UI, theme, layout complete |
-| Phase 1: Data Layer | DONE | Types, DB, actions, stats, categories, seed |
-| Phase 2: DKB Sync | BLOCKED | Needs DKB API endpoint specs |
-| Phase 3: Charts & KPIs | NOT STARTED | - |
-| Phase 4: Filters & Pages | NOT STARTED | - |
-| Phase 5: Demo & Extended | NOT STARTED | - |
+| Phase | Status | Completion |
+|-------|--------|------------|
+| Phase 0: Foundation | DONE | 100% |
+| Phase 1: Data Layer | DONE | 100% |
+| Phase 2: DKB Sync | PENDING | 0% |
+| Phase 3: Charts & KPIs | IN PROGRESS | 0% |
+| Phase 4: Filters & Pages | PENDING | 0% |
+| Phase 5: Demo & Extended | PENDING | 0% |
 
 ---
 
 ## Current Blockers
 
-1. **DKB API Specification** - Need endpoint URLs, auth method, and sample responses
-2. **Charting library decision** - Recharts vs alternatives (can proceed in parallel)
+None - all dependencies resolved. DKB API spec documented in `docs/DKB-API-SPEC.md`. Ready for Phase 3 implementation.
 
 ---
 
@@ -45,19 +45,31 @@
 - [x] Built demo data seed generator (6 months, realistic patterns)
 - [x] Created credentials config reader
 - [x] Verified build passes
+- [x] Added DKB API spec (`docs/DKB-API-SPEC.md`) with auth, endpoints, pagination
+- [x] Updated CLAUDE.md with current architecture and workflow
+- [x] Committed Sprint 1 (c5cc5a3) to origin/rebuild
 
 ---
 
-## Next Actions (Sprint 2 - Phase 3: Dashboard)
+## Sprint 2 Plan (Phase 3: Dashboard Integration)
 
-1. Install and configure ECharts with echarts-for-react
-2. Wire dashboard to server actions (replace mock data)
-3. Build Balance History chart (area chart)
-4. Build Income vs Expenses chart (bar chart)
-5. Build Spending by Category chart (donut)
-6. Update KPI cards with real computed data
-7. Add demo mode toggle to header
-8. Receive DKB API spec from user (unblocks Phase 2)
+**Objective:** Connect dashboard to data layer and build ECharts visualizations with demo mode
+
+### Tasks
+1. ✅ ECharts already installed (echarts, echarts-for-react)
+2. Build real data integration in dashboard components
+   - Connect OverviewCards to server actions (balance, income, expenses, savings rate)
+   - Fetch transaction data for date range
+3. Implement ECharts wrappers:
+   - BalanceHistoryChart (area chart from balance snapshots)
+   - IncomeVsExpensesChart (bar chart from monthly cash flow)
+   - SpendingByCategoryChart (donut chart from category breakdown)
+4. Wire date range selector (prep for Phase 4 DateRangePicker)
+5. Add demo mode toggle to Header
+6. Test with demo data before DKB integration
+
+### Next Session
+- Phase 2 (DKB API) implementation can proceed in parallel if needed
 
 ---
 

@@ -1,12 +1,24 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working on the BanKing project.
+
+## Quick Start
+
+1. **Read `docs/PROJECT-STATE.md`** first - It tracks current phase, progress, and blockers
+2. **Current Status:** Phase 1 (Data Layer) ✅ DONE. Phase 3 (Dashboard Charts) 🔄 IN PROGRESS
+3. **Latest Commit:** `c5cc5a3` - Sprint 1 complete (data layer, server actions, statistics)
+4. **Next Sprint:** Build dashboard charts, connect to real data, add demo mode UI
+
+When finishing work:
+- Always update `docs/PROJECT-STATE.md` with progress
+- Commit with clear sprint/phase info
+- Push to `origin/rebuild`
 
 ## Project Overview
 
-BanKing — a personal banking app rebuilt with Next.js 16 (App Router) for importing and analyzing financial transactions from German bank CSV exports. Fresh rebuild from Next.js 14 to leverage React 19 and Next.js 16 features.
+BanKing — a personal banking app rebuilt with Next.js 16 (App Router) for importing and analyzing financial transactions from German bank accounts via DKB API. Built entirely locally with no cloud dependency.
 
-**Current Status:** Foundation phase with UI components and theme system. Banking features (CSV import, database, statistics) to be implemented.
+**Current Status:** Phase 1 (Data Layer) complete. Phase 2-5 (API integration, dashboard, filters, demo mode) in progress. See `docs/PROJECT-STATE.md` for detailed progress tracking.
 
 ## Build & Development Commands
 
@@ -30,21 +42,20 @@ This is a fresh Next.js 16 setup with:
 - **Theme System:** next-themes with OKLCH color space, light/dark mode support
 - **Styling:** Tailwind CSS 4 with native PostCSS integration
 
-### Planned Architecture (from Next.js 14 version)
-
-The following will be re-implemented with Next.js 16 best practices:
+### Implemented Architecture (Phase 1 Complete)
 
 #### Data Flow
 
-CSV upload → PapaParse → Bank-specific Zod schema validation → SHA256 deduplication → Database storage → Server actions → Dashboard with charts
+DKB API (cookie + CSRF token) → HTTP fetch → Zod validation → SHA256 deduplication → LowDB persistence → Server actions → Dashboard with ECharts
 
-#### Key Layers to Implement
+#### Key Layers (Complete)
 
-- **Server Actions:** Data mutations and queries (bank operations, user management, CSV processing)
-- **Database:** Local persistence with file-based or in-memory storage
-- **Institution Maps:** Bank-specific CSV parsers (DKB, Deutsche Bank)
-- **Statistics:** Balance, income, expense calculations and aggregations
-- **Dashboard:** Transaction visualization with charts
+- **Server Actions:** `src/actions/` - accounts, transactions, stats, sync, demo operations
+- **Database:** `src/lib/db/` - LowDB file-based storage with typed schema
+- **Banking Layer:** `src/lib/banking/` - Unified types, adapter interface, DKB adapter stub
+- **Statistics:** `src/lib/stats/` - 8 KPI calculations + 13-category transaction classifier
+- **Sync Engine:** `src/lib/banking/sync.ts` - Fetch → Map → Dedupe → Persist orchestration
+- **Dashboard:** `src/components/dashboard/` - Neo-Glass UI (charts pending Phase 3)
 
 ## Project Structure
 
@@ -88,14 +99,17 @@ banking/
 - **Theme:** next-themes
 - **Fonts:** Geist Sans & Geist Mono (next/font/google)
 
-### Planned Dependencies
+### Added Dependencies (Phase 1)
 
-- PapaParse (CSV parsing)
-- Zod (schema validation)
-- date-fns (date manipulation)
-- Database library (TBD, previously LowDB)
-- Charting library (TBD, previously ECharts)
-- currency.js (EUR formatting)
+- **Zod** (schema validation) ✅
+- **lowdb** (file-based persistence) ✅
+- **date-fns** (date manipulation) ✅
+- **echarts** & **echarts-for-react** (charting) ✅
+- **currency.js** (EUR formatting) ✅
+
+### Future Dependencies
+
+- PapaParse (CSV parsing - for Deutsche Bank fallback)
 
 ## Code Conventions
 
@@ -243,52 +257,87 @@ Configured to exclude:
 - IDE files (`.idea/`, `.vscode/`)
 - Banking-specific files (`/uploads/*.json`, `db.json`) — for future implementation
 
-## Future Implementation Notes
+## Implementation Phases & Progress
 
-### Banking Features (Next.js 14 → 16 Migration)
+**Phase 1: Data Layer** ✅ COMPLETE (Sprint 1)
+- Unified types, database, sync engine, server actions
+- Statistics module with 8 KPI functions
+- Demo mode with 6-month realistic sample data
+- Commit: `c5cc5a3`
 
-When implementing banking functionality, adapt the old architecture:
+**Phase 2: DKB API Integration** 🔄 PENDING
+- DKB adapter implementation (API client + mapper)
+- Pagination handling for large transaction sets
+- Credentials management (cookie + CSRF token)
+- See `docs/DKB-API-SPEC.md` for endpoint details
 
-1. **CSV Import:**
-   - Use PapaParse for parsing
-   - Bank-specific Zod schemas in `src/lib/institutionsMaps/`
-   - German date formats (DD.MM.YY for DKB, DD.MM.YYYY for Deutsche Bank)
-   - German number format (comma = decimal, period = thousands)
+**Phase 3: Dashboard Charts & KPIs** 📋 NEXT
+- Wire dashboard to real data (demo mode first)
+- ECharts integration (balance, income/expense, category breakdown)
+- KPI card updates with real calculations
+- Demo mode UI toggle
 
-2. **Database:**
-   - Consider modern alternatives to LowDB
-   - Support both file-based and in-memory modes
-   - Use server actions for all CRUD operations
+**Phase 4: Filters & Transactions Page** 📋 PLANNED
+- DateRangePicker component with presets
+- Full transactions table with filtering (date, category, account)
+- Mobile responsive refinement
 
-3. **Routing (Planned):**
+**Phase 5: Demo & Polish** 📋 PLANNED
+- Extended KPI widgets (savings rate, volatility, trends)
+- Error handling and edge cases
+- Final QA pass
 
-   ```
-   src/app/
-   ├── (dashboard)/          # Route group for authenticated pages
-   │   ├── page.tsx          # Bank accounts list
-   │   └── [id]/page.tsx     # Account dashboard
-   └── (public)/             # Route group for public pages
-       └── upload/page.tsx   # CSV upload (client component)
-   ```
+## Project Documentation
 
-4. **Server Actions:**
-   - Create `*.actions.ts` files for data operations
-   - Use `"use server"` directive
-   - Implement proper error handling and validation
+- **`docs/PRD.md`** - Product requirements (12 features + 12 KPIs)
+- **`docs/ROADMAP.md`** - Implementation phases with dependency graph
+- **`docs/PROJECT-STATE.md`** - Session progress tracking (START HERE for context)
+- **`docs/DKB-API-SPEC.md`** - DKB API endpoints, pagination, auth details
+- **`docs/samples/`** - Sample API responses (accounts, transactions)
+- **`banking.config.example.json`** - User config template
 
-5. **Statistics & Visualization:**
-   - Re-evaluate charting library (ECharts or alternatives)
-   - Use server components for data aggregation
-   - Leverage React 19 features for streaming
+## Development Workflow
 
-### Environment Variables (To Be Added)
+### When Starting Work
+1. Read `docs/PROJECT-STATE.md` to understand current phase and blockers
+2. Check git log for recent commits
+3. Review roadmap for next tasks
 
-- `IS_IN_CLOUD`: Toggle between file-based and in-memory database
-- Development/production specific configs
+### When Completing Work
+1. **Always sync progress** - Update `docs/PROJECT-STATE.md` with:
+   - Completed items (checkmarks)
+   - New blockers if any
+   - Files created/modified
+   - Next actions for following session
+2. **Commit with clear message** - Include phase/sprint info
+3. **Push to origin/rebuild** - Keep remote in sync
+
+## Configuration
+
+### DKB Credentials Setup
+
+Create `banking.config.json` (do NOT commit):
+```json
+{
+  "dkb": {
+    "cookie": "_SI_VID_1=...; wtstp_eid=...; ...",
+    "xsrfToken": "df9888bb-ec06-..."
+  }
+}
+```
+
+Extract from browser DevTools → Network tab on DKB webapp. Session expires periodically - user will need to refresh.
+
+## Data & Security
+
+- **Local Only:** All data persists to `/data/db.json` (gitignored)
+- **No Cloud:** Zero external data transmission except to DKB API
+- **No Passwords:** Credentials via session cookies, not stored plaintext
+- **Deduplication:** SHA256 hashing of transaction key fields
 
 ## Additional Notes
 
 - No test framework configured yet
 - No CI/CD pipeline configured
-- This is a personal finance app for German banking formats (EUR currency)
-- Security considerations for CSV parsing and data storage to be addressed during implementation
+- Strictly German banking format (EUR, date formats, categories)
+- Built for Next.js 16 + React 19 with TypeScript strict mode
