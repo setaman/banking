@@ -3,6 +3,15 @@
 import { motion } from "motion/react";
 import { Coffee, ShoppingCart, Zap, Home, ArrowUpRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  ItemGroup,
+  Item,
+  ItemMedia,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from "@/components/ui/item";
 
 const transactions = [
     {
@@ -63,29 +72,32 @@ export function TransactionList() {
             <CardHeader>
                 <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-                {transactions.map((tx, index) => (
-                    <motion.div
-                        key={tx.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 + 0.3 }}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${tx.bg} ${tx.color} group-hover:scale-110 transition-transform`}>
-                                <tx.icon className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-foreground">{tx.title}</p>
-                                <p className="text-xs text-muted-foreground">{tx.date}</p>
-                            </div>
-                        </div>
-                        <div className={`font-semibold ${tx.amount.startsWith('+') ? 'text-emerald-400' : 'text-foreground'}`}>
-                            {tx.amount}
-                        </div>
-                    </motion.div>
-                ))}
+            <CardContent>
+                <ItemGroup className="gap-3">
+                    {transactions.map((tx, index) => (
+                        <motion.div
+                            key={tx.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 + 0.3 }}
+                        >
+                            <Item variant="outline">
+                                <ItemMedia className={`h-10 w-10 rounded-full ${tx.bg} ${tx.color}`}>
+                                    <tx.icon className="h-5 w-5" />
+                                </ItemMedia>
+                                <ItemContent>
+                                    <ItemTitle>{tx.title}</ItemTitle>
+                                    <ItemDescription>{tx.date}</ItemDescription>
+                                </ItemContent>
+                                <ItemActions>
+                                    <span className={`font-semibold ${tx.amount.startsWith('+') ? 'text-emerald-400' : 'text-foreground'}`}>
+                                        {tx.amount}
+                                    </span>
+                                </ItemActions>
+                            </Item>
+                        </motion.div>
+                    ))}
+                </ItemGroup>
             </CardContent>
         </Card>
     );
