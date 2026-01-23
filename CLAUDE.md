@@ -1,24 +1,21 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working on the BanKing project.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Quick Start
+## Session Checkpoint Pattern
 
-1. **Read `docs/PROJECT-STATE.md`** first - It tracks current phase, progress, and blockers
-2. **Current Status:** Phase 1 (Data Layer) ✅ DONE. Phase 3 (Dashboard Charts) 🔄 IN PROGRESS
-3. **Latest Commit:** `c5cc5a3` - Sprint 1 complete (data layer, server actions, statistics)
-4. **Next Sprint:** Build dashboard charts, connect to real data, add demo mode UI
+**IMPORTANT:** After each work session, update `docs/PROJECT-STATE.md` with:
+- Current phase and sprint
+- Completed items (checkmarks)
+- Files created/modified
+- Any new blockers
+- Next actions for the following session
 
-When finishing work:
-- Always update `docs/PROJECT-STATE.md` with progress
-- Commit with clear sprint/phase info
-- Push to `origin/rebuild`
+This enables agents in the next session to **resume from the checkpoint** without needing previous context. Always start a new session by reading `docs/PROJECT-STATE.md` first.
 
 ## Project Overview
 
 BanKing — a personal banking app rebuilt with Next.js 16 (App Router) for importing and analyzing financial transactions from German bank accounts via DKB API. Built entirely locally with no cloud dependency.
-
-**Current Status:** Phase 1 (Data Layer) complete. Phase 2-5 (API integration, dashboard, filters, demo mode) in progress. See `docs/PROJECT-STATE.md` for detailed progress tracking.
 
 ## Build & Development Commands
 
@@ -42,20 +39,20 @@ This is a fresh Next.js 16 setup with:
 - **Theme System:** next-themes with OKLCH color space, light/dark mode support
 - **Styling:** Tailwind CSS 4 with native PostCSS integration
 
-### Implemented Architecture (Phase 1 Complete)
+### Implemented Architecture
 
 #### Data Flow
 
 DKB API (cookie + CSRF token) → HTTP fetch → Zod validation → SHA256 deduplication → LowDB persistence → Server actions → Dashboard with ECharts
 
-#### Key Layers (Complete)
+#### Key Layers
 
 - **Server Actions:** `src/actions/` - accounts, transactions, stats, sync, demo operations
 - **Database:** `src/lib/db/` - LowDB file-based storage with typed schema
 - **Banking Layer:** `src/lib/banking/` - Unified types, adapter interface, DKB adapter stub
-- **Statistics:** `src/lib/stats/` - 8 KPI calculations + 13-category transaction classifier
+- **Statistics:** `src/lib/stats/` - KPI calculations, transaction categorization
 - **Sync Engine:** `src/lib/banking/sync.ts` - Fetch → Map → Dedupe → Persist orchestration
-- **Dashboard:** `src/components/dashboard/` - Neo-Glass UI (charts pending Phase 3)
+- **Dashboard:** `src/components/dashboard/` - Neo-Glass UI with ECharts visualization
 
 ## Project Structure
 
@@ -99,24 +96,21 @@ banking/
 - **Theme:** next-themes
 - **Fonts:** Geist Sans & Geist Mono (next/font/google)
 
-### Added Dependencies (Phase 1)
+### Dependencies
 
-- **Zod** (schema validation) ✅
-- **lowdb** (file-based persistence) ✅
-- **date-fns** (date manipulation) ✅
-- **echarts** & **echarts-for-react** (charting) ✅
-- **currency.js** (EUR formatting) ✅
-
-### Future Dependencies
-
-- PapaParse (CSV parsing - for Deutsche Bank fallback)
+- **Zod** (schema validation)
+- **lowdb** (file-based persistence)
+- **date-fns** (date manipulation)
+- **echarts** & **echarts-for-react** (charting)
+- **currency.js** (EUR formatting)
+- **PapaParse** (optional, for CSV parsing fallback)
 
 ## Code Conventions
 
 ### Path Aliases
 
 ```typescript
-"@/*" → "./src/*"
+"@/*" // -> "./src/*"
 ```
 
 Example imports:
@@ -257,60 +251,25 @@ Configured to exclude:
 - IDE files (`.idea/`, `.vscode/`)
 - Banking-specific files (`/uploads/*.json`, `db.json`) — for future implementation
 
-## Implementation Phases & Progress
+## Implementation Phases
 
-**Phase 1: Data Layer** ✅ COMPLETE (Sprint 1)
-- Unified types, database, sync engine, server actions
-- Statistics module with 8 KPI functions
-- Demo mode with 6-month realistic sample data
-- Commit: `c5cc5a3`
+- **Phase 0:** Foundation (UI, theme, layout)
+- **Phase 1:** Data Layer (types, database, sync engine, server actions, statistics)
+- **Phase 2:** DKB API Integration (API client, mapper, pagination)
+- **Phase 3:** Dashboard Charts & KPIs (ECharts visualization, real data wiring)
+- **Phase 4:** Filters & Transactions Page (date range, filtering, table)
+- **Phase 5:** Demo Mode & Polish (extended KPIs, error handling, QA)
 
-**Phase 2: DKB API Integration** 🔄 PENDING
-- DKB adapter implementation (API client + mapper)
-- Pagination handling for large transaction sets
-- Credentials management (cookie + CSRF token)
-- See `docs/DKB-API-SPEC.md` for endpoint details
-
-**Phase 3: Dashboard Charts & KPIs** 📋 NEXT
-- Wire dashboard to real data (demo mode first)
-- ECharts integration (balance, income/expense, category breakdown)
-- KPI card updates with real calculations
-- Demo mode UI toggle
-
-**Phase 4: Filters & Transactions Page** 📋 PLANNED
-- DateRangePicker component with presets
-- Full transactions table with filtering (date, category, account)
-- Mobile responsive refinement
-
-**Phase 5: Demo & Polish** 📋 PLANNED
-- Extended KPI widgets (savings rate, volatility, trends)
-- Error handling and edge cases
-- Final QA pass
+See `docs/ROADMAP.md` for detailed phase breakdown and task dependencies.
 
 ## Project Documentation
 
 - **`docs/PRD.md`** - Product requirements (12 features + 12 KPIs)
 - **`docs/ROADMAP.md`** - Implementation phases with dependency graph
-- **`docs/PROJECT-STATE.md`** - Session progress tracking (START HERE for context)
+- **`docs/PROJECT-STATE.md`** - Current session checkpoint (read first)
 - **`docs/DKB-API-SPEC.md`** - DKB API endpoints, pagination, auth details
 - **`docs/samples/`** - Sample API responses (accounts, transactions)
 - **`banking.config.example.json`** - User config template
-
-## Development Workflow
-
-### When Starting Work
-1. Read `docs/PROJECT-STATE.md` to understand current phase and blockers
-2. Check git log for recent commits
-3. Review roadmap for next tasks
-
-### When Completing Work
-1. **Always sync progress** - Update `docs/PROJECT-STATE.md` with:
-   - Completed items (checkmarks)
-   - New blockers if any
-   - Files created/modified
-   - Next actions for following session
-2. **Commit with clear message** - Include phase/sprint info
-3. **Push to origin/rebuild** - Keep remote in sync
 
 ## Configuration
 
