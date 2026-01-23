@@ -12,33 +12,46 @@
 
 ---
 
-## 1. CUSTOMER REQUIREMENTS
-**Core Goal:** A web-based dashboard for tracking bank accounts and gaining financial insights.
+## 1. REQUIREMENTS
+**Core Goal:** A web-based dashboard for tracking personal bank accounts and gaining financial insights.
 
-**Functional Requirements:**
-* **Multi-Bank Support:** Primary focus on DKB & Deutsche Bank.
+**High-level Functional Requirements:**
+* **Multi-Bank Support:** Primary focus on DKB (multiple accounts) & Deutsche Bank.
 * **Dashboard Features:**
   * Total balance & History chart.
   * Income vs. Expenses analysis.
   * Spending categorization (groceries, bills, etc.).
   * Transaction filtering (date range, category).
+  * Date range filtering: flexible custom date selection for all metrics and visualizations (with presets like Last 7 days, Last 30 days, This Month, Last Month, This Year, Last Year).
   * Average monthly metrics.
-* **Data Input:** Read-only access. Likely processing exported CSV/JSON files or local configuration.
-
-**Non-Functional & Technical Constraints (STRICT):**
-* **Architecture:** Serverless, Database-less, Cloud-less. **Local usage only.**
-* **Security:** ZERO sensitive data transmission. All processing must happen in the browser/client-side. No password entry required.
+* **Extended Metrics:** Grounded research on common personal finance KPIs must be conducted to suggest additional valuable metrics.
 * **Design:** Modern, aesthetic, responsive (Mobile/Desktop).
 * **Scalability:** Clean architecture to add new bank parsers later.
 
+Conduct a grounded research on common personal finance KPIs to suggest additional valuable metrics beyond the core requirements to expand above
+
+**Technical Constraints (STRICT):**
+  - Next.js as full-stack framework to handle data persistence via local file system access. Use `lowdb`
+  - DKB accounts, transactions and balances are synchronized on app start via API and persisted locally using Next.js server-side capabilities.
+  - Relevant DKB API endpoints will be provided, with sample responses
+  - Auth handled manually, user will paste credentials into a local config file.
+  - Implement a stable unified interface for adding new bank integrations. Interface for transactions, accounts, balances etc. Take
+some standard like Plaid as inspiration but keep it simple.
+  - Mapping of DKB API responses to unified interface must be done in a separate module for easy extension.
+  - Uze Zod for data mapping, validation and type safety.
+  - For DKB, balances are provided as accounts info. Store balances each time they are fetched, so we can show balance history.
+  - Architecture: Serverless, Database-less, Cloud-less. **Local usage only.**
+  - Scalability: Clean architecture to add new bank parsers later.
+  - Security: ZERO sensitive data transmission. All data sync add aggregations happens on Nextjs server side. No password entry required.
+  - Add a UI to enter demo mode with sample data to explore the dashboard without connecting to DKB.
 ---
 
 ## 2. OPERATIONAL RULES (THE AGENTIC FRAMEWORK)
 * **Autonomy:** You self-organize. Delegate tasks between personas.
-* **Version Control:** Use GitHub for all artifacts. Create a `KANBAN.md` or `PROJECT_STATUS.md` to track state.
+* **Version Control:** Use GitHub for all artifacts. Commit and push your work
+* **Track progress:** Generate a detailed PRD, and maintain the progress in separate files.
 * **Budget Awareness:** Work in small, logical increments to conserve tokens. Do not attempt to code the whole app in one turn. Plan first.
-* **Cleanup:** Remove unused files, but preserve agent configuration (e.g., `.opencode`, `AGENTS.md`).
-* **Context:** Maintain a "Project State" file so we can pause/resume without amnesia.
+* **Context:** Maintain a "Project State" so we can pause/resume without amnesia.
 
 ---
 
@@ -46,14 +59,11 @@
 
 **Project Manager**, please take the floor and execute the following:
 
-1.  **Acknowledge the Request:** Confirm understanding of the "Local-Only" constraint.
-2.  **Initialize Repository:** Create a `PROJECT_STATUS.md` file to track the current phase, active tasks, and backlog.
-3.  **Architecture Review (Handoff to Architect):**
-  * Select the Tech Stack (e.g., React/Vite, Vue, Tailwind) suited for local file processing.
-  * Define how data ingestion will work without a backend (e.g., Drag & Drop CSV vs. Local File Access API).
-4.  **Proposed Roadmap:** Outline the first 3 implementation phases.
-5.  **User Clarification:** Ask the customer (me) any critical questions regarding data formats (e.g., "Do you have sample CSV exports from DKB to define the schema?").
+1.  **Acknowledge the Request:** Confirm understanding of the project requirements.
+2.  **Initialize project:** Create a detailed project specification, tasks, and backlog.
+4.  **Proposed Roadmap:** Outline the implementation phases. Divide onto backend (data handling), dashboard research for metrics, and frontend (dashboard UI/UX). Add appropriate sub-tasks for parallel work by different agents.
+5.  **User Clarification:** Ask the customer (me) any critical questions regarding data formats.
 
-**GOAL:** End this turn with a set up repository structure, a selected tech stack, and a plan for the first sprint.
+**GOAL:** End this turn with a set up project spec structure, and a plan for the first sprint.
 
 **BEGIN EXECUTION.**
