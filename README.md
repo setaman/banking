@@ -17,6 +17,15 @@ BanKing helps you manage and analyze your personal finances by importing transac
 - Responsive layout with header and footer
 - Type-safe development with TypeScript strict mode
 
+## Design & UI: Neo-Glass Theme
+
+The application features a custom "Neo-Glass" aesthetic designed to feel premium and modern.
+
+- **Dark Mode**: Deep midnight blue (`oklch(0.12 0.04 260)`) with neon accents and frosted glass cards.
+- **Light Mode**: Clean pearlescent white (`oklch(0.98 0.01 240)`) with soft, colorful shadows.
+- **Glassmorphism**: Extensive use of `backdrop-filter: blur()`, semi-transparent backgrounds, and subtle borders to create depth.
+- **Animations**: Smooth entry animations using Framer Motion.
+
 ### Planned
 
 - CSV import for DKB and Deutsche Bank transactions

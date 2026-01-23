@@ -205,6 +205,27 @@ export function Counter() {
 4. **Server vs Client:** Default to server components, use `"use client"` only when needed
 5. **Data Fetching:** Will use server actions (to be implemented)
 
+### Theme & Components System (CRITICAL)
+
+The application uses a highly customized "Neo-Glass" theme. Follow these rules strictly:
+
+1.  **Strictly Use shadcn/ui Base**:
+    -   Do not build custom UI primitives (buttons, cards, inputs, lists, etc.) from scratch.
+    -   Always install the shadcn component first: `npx shadcn@latest add [component]`.
+
+2.  **Extend to Match Theme**:
+    -   **Glass Effect**: New components often need glassmorphism. Use `bg-card` (which has opacity) + `backdrop-blur-xl`.
+    -   **Borders**: dark mode borders should be subtle (`border-white/10` or `white/5`), not the default grey.
+    -   **Padding**: Enforce standard spacing. Cards typically use `p-6` for headers and content.
+    -   **Shadows**: Use colorful shadows in light mode (`shadow-primary/20`).
+
+3.  **Do Not Break Layout**:
+    -   The base `Card` component has been relaxed (no enforced flex/gap).
+    -   You MUST handle internal layout (e.g., `flex flex-col gap-4`) when using the component.
+
+4.  **Charts & Visuals**:
+    -   Use the defined gradient tokens (`from-primary/20 to-primary`) for charts/visuals to maintain the neon aesthetic.
+
 ### File Naming
 
 - **Components:** PascalCase (e.g., `ThemeToggle.tsx`)
