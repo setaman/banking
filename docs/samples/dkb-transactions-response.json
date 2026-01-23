@@ -1,0 +1,166 @@
+{
+  "data": [
+    {
+      "type": "accountTransaction",
+      "id": "2026-01-23-09.45.00.996574",
+      "attributes": {
+        "status": "booked",
+        "bookingDate": "2026-01-23",
+        "valueDate": "2026-01-23",
+        "description": "VISA Debitkartenumsatz vom 22.01.2026",
+        "endToEndId": "486022646267855",
+        "transactionType": "KARTENZAHLUNG",
+        "transactionTypeCode": "106",
+        "purposeCode": "IDCP",
+        "businessTransactionCode": "NDDT+106+9300+002",
+        "amount": {
+          "currencyCode": "EUR",
+          "value": "-55.00"
+        },
+        "creditor": {
+          "name": "MONGOS.RESTAURANT/ESSEN",
+          "creditorAccount": {
+            "accountNr": "9005290904",
+            "blz": "12030000",
+            "iban": "DE..."
+          },
+          "agent": {
+            "bic": "BYLADEM1001"
+          },
+          "intermediaryName": "DEUTSCHE KREDITBANK AG"
+        },
+        "debtor": {
+          "name": "ISSUER",
+          "debtorAccount": {
+            "accountNr": "1059965846",
+            "blz": "12030000",
+            "iban": "DE40..."
+          },
+          "agent": {
+            "bic": "BYLADEM1001"
+          }
+        },
+        "isRevocable": false
+      }
+    },
+    {
+      "type": "accountTransaction",
+      "id": "2026-01-23-05.15.01.332486",
+      "attributes": {
+        "status": "booked",
+        "bookingDate": "2026-01-23",
+        "valueDate": "2026-01-23",
+        "description": "VISA Debitkartenumsatz vom 22.01.2026",
+        "endToEndId": "486022633472155",
+        "transactionType": "KARTENZAHLUNG",
+        "transactionTypeCode": "106",
+        "purposeCode": "IDCP",
+        "businessTransactionCode": "NDDT+106+9300+002",
+        "amount": {
+          "currencyCode": "EUR",
+          "value": "-4.50"
+        },
+        "creditor": {
+          "name": "Stadt Essen Ordnungsamt",
+          "creditorAccount": {
+            "accountNr": "9005290904",
+            "blz": "12030000",
+            "iban": "DE96..."
+          },
+          "agent": {
+            "bic": "BYLADEM1001"
+          },
+          "intermediaryName": "DEUTSCHE KREDITBANK AG"
+        },
+        "debtor": {
+          "name": "ISSUER",
+          "debtorAccount": {
+            "accountNr": "1059965846",
+            "blz": "12030000",
+            "iban": "DE40..."
+          },
+          "agent": {
+            "bic": "BYLADEM1001"
+          }
+        },
+        "isRevocable": false,
+        "merchant": {
+          "name": "Stadt Essen Ordnungsamt",
+          "category": {
+            "name": "Sonstige",
+            "imageUrl": "https://storage.googleapis.com/production-mrs-category-logos/default/general_2x.png",
+            "subCategories": ["Regierung"]
+          },
+          "logo": {
+            "url": "https://storage.googleapis.com/production-mrs-tm-logos/6656c098a3a1844f04f3f38b_2x.png",
+            "score": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "accountTransaction",
+      "id": "2026-01-23-05.14.43.115186",
+      "attributes": {
+        "status": "booked",
+        "bookingDate": "2026-01-23",
+        "valueDate": "2026-01-23",
+        "description": "VISA Debitkartenumsatz vom 22.01.2026",
+        "endToEndId": "486022574526568",
+        "transactionType": "KARTENZAHLUNG",
+        "transactionTypeCode": "106",
+        "purposeCode": "IDCP",
+        "businessTransactionCode": "NDDT+106+9300+002",
+        "amount": {
+          "currencyCode": "EUR",
+          "value": "-5.00"
+        },
+        "creditor": {
+          "name": "Stadt Essen Ordnungsamt",
+          "creditorAccount": {
+            "accountNr": "9005290904",
+            "blz": "12030000",
+            "iban": "DE96..."
+          },
+          "agent": {
+            "bic": "BYLADEM1001"
+          },
+          "intermediaryName": "DEUTSCHE KREDITBANK AG"
+        },
+        "debtor": {
+          "name": "ISSUER",
+          "debtorAccount": {
+            "accountNr": "1059965846",
+            "blz": "12030000",
+            "iban": "DE40..."
+          },
+          "agent": {
+            "bic": "BYLADEM1001"
+          }
+        },
+        "isRevocable": false,
+        "merchant": {
+          "name": "Stadt Essen Ordnungsamt",
+          "category": {
+            "name": "Sonstige",
+            "imageUrl": "https://storage.googleapis.com/production-mrs-category-logos/default/general_2x.png",
+            "subCategories": ["Regierung"]
+          },
+          "logo": {
+            "url": "https://storage.googleapis.com/production-mrs-tm-logos/6656c098a3a1844f04f3f38b_2x.png",
+            "score": 1
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": {
+      "next": "2026-01-02,2026-01-02-00.43.31.907064"
+    }
+  },
+  "links": {
+    "next": "/accounts/d5565bbe-5dea-4cc2-b2ac-459ddc675bf0/transactions?page[size]=25&page[after]=2026-01-02,2026-01-02-00.43.31.907064"
+  },
+  "included": []
+}

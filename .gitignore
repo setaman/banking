@@ -47,6 +47,8 @@ next-env.d.ts
 # Banking specific
 /uploads/*.json
 db.json
+/data/db.json
+banking.config.json
 
 # Auto Claude data directory
 .auto-claude/
