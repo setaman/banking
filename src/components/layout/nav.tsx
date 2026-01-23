@@ -5,19 +5,19 @@ export function Nav() {
     <nav className="flex items-center gap-6">
       <Link
         href="/"
-        className="text-sm font-medium transition-colors hover:text-primary"
+        className="hover:text-primary text-sm font-medium transition-colors"
       >
         Home
       </Link>
       <Link
         href="/dashboard"
-        className="text-sm font-medium transition-colors hover:text-primary"
+        className="hover:text-primary text-sm font-medium transition-colors"
       >
         Dashboard
       </Link>
       <Link
         href="/upload"
-        className="text-sm font-medium transition-colors hover:text-primary"
+        className="hover:text-primary text-sm font-medium transition-colors"
       >
         Upload
       </Link>

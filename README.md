@@ -11,12 +11,14 @@ BanKing helps you manage and analyze your personal finances by importing transac
 ## Features
 
 ### Current (v0.1.0)
+
 - Modern UI foundation with shadcn/ui components
 - Dark/light theme support with system preference detection
 - Responsive layout with header and footer
 - Type-safe development with TypeScript strict mode
 
 ### Planned
+
 - CSV import for DKB and Deutsche Bank transactions
 - Transaction deduplication using SHA256 hashing
 - Interactive dashboard with financial statistics
@@ -46,17 +48,20 @@ BanKing helps you manage and analyze your personal finances by importing transac
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd banking
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Run the development server:
+
 ```bash
 npm run dev
 ```
@@ -118,6 +123,7 @@ The project uses TypeScript path aliases for cleaner imports:
 ```
 
 Example:
+
 ```typescript
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -128,6 +134,7 @@ import { cn } from "@/lib/utils";
 The app uses Tailwind CSS 4's native theme configuration with CSS custom properties. Theme tokens are defined in `src/app/globals.css` and support both light and dark modes.
 
 Key theme features:
+
 - OKLCH color space for perceptually uniform colors
 - CSS custom properties for runtime theme switching
 - Automatic dark mode with `next-themes`
@@ -144,6 +151,7 @@ Key theme features:
 This project was rebuilt from scratch on Next.js 16. Key architectural changes:
 
 ### What's Different
+
 - **React 19:** New features and performance improvements
 - **Tailwind CSS 4:** Native CSS integration via PostCSS
 - **Simplified routing:** No route groups yet (flat structure in src/app/)
@@ -151,13 +159,16 @@ This project was rebuilt from scratch on Next.js 16. Key architectural changes:
 - **Server Components by default:** No need for explicit async markers
 
 ### What's the Same
+
 - App Router architecture
 - TypeScript strict mode
 - shadcn/ui component library
 - Dark mode with next-themes
 
 ### What's Coming
+
 The previous implementation included:
+
 - LowDB for local data persistence
 - PapaParse for CSV processing
 - Zod for schema validation

@@ -24,6 +24,7 @@ No test framework or type-check script configured yet.
 ### Current Implementation
 
 This is a fresh Next.js 16 setup with:
+
 - **UI Foundation:** shadcn/ui component library (Button, Card, Dropdown, Input, Label, Table)
 - **Layout:** Header with navigation, Footer, theme toggle
 - **Theme System:** next-themes with OKLCH color space, light/dark mode support
@@ -34,9 +35,11 @@ This is a fresh Next.js 16 setup with:
 The following will be re-implemented with Next.js 16 best practices:
 
 #### Data Flow
+
 CSV upload → PapaParse → Bank-specific Zod schema validation → SHA256 deduplication → Database storage → Server actions → Dashboard with charts
 
 #### Key Layers to Implement
+
 - **Server Actions:** Data mutations and queries (bank operations, user management, CSV processing)
 - **Database:** Local persistence with file-based or in-memory storage
 - **Institution Maps:** Bank-specific CSV parsers (DKB, Deutsche Bank)
@@ -74,6 +77,7 @@ banking/
 ## Tech Stack
 
 ### Current Dependencies
+
 - **Next.js:** 16.1.4 (App Router, React 19.2.3)
 - **TypeScript:** 5.x (strict mode enabled)
 - **Styling:** Tailwind CSS 4 with PostCSS integration
@@ -85,6 +89,7 @@ banking/
 - **Fonts:** Geist Sans & Geist Mono (next/font/google)
 
 ### Planned Dependencies
+
 - PapaParse (CSV parsing)
 - Zod (schema validation)
 - date-fns (date manipulation)
@@ -95,11 +100,13 @@ banking/
 ## Code Conventions
 
 ### Path Aliases
+
 ```typescript
 "@/*" → "./src/*"
 ```
 
 Example imports:
+
 ```typescript
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -107,18 +114,21 @@ import { ThemeProvider } from "@/components/theme-provider";
 ```
 
 ### Formatting & Linting
+
 - **Prettier:** Double quotes, trailing commas (ES5), 2-space indent, tabs disabled
 - **Prettier Plugin:** prettier-plugin-tailwindcss (auto-sorts classes)
 - **ESLint:** Flat config format with next/core-web-vitals and next/typescript presets
 - **TypeScript:** Strict mode, incremental builds, jsx: "react-jsx"
 
 ### Component Patterns
+
 - **Server Components:** Default for all components (Next.js 16 standard)
 - **Client Components:** Explicitly marked with `"use client"` directive when needed (interactive components, hooks, browser APIs)
 - **Async Components:** No need for async markers on server components unless doing data fetching
 - **Styling:** Use `cn()` utility for conditional classes
 
 ### Theme System
+
 - **Colors:** OKLCH color space defined in `globals.css`
 - **Dark Mode:** Class-based strategy (`.dark` class on `<html>`)
 - **Theme Provider:** Wraps app in `layout.tsx` with system preference detection
@@ -153,6 +163,7 @@ import { ThemeProvider } from "@/components/theme-provider";
    - No more `.eslintrc.json`
 
 ### Server Components (Default)
+
 ```tsx
 // This is a server component by default
 export default function Page() {
@@ -161,6 +172,7 @@ export default function Page() {
 ```
 
 ### Caching Example
+
 ```tsx
 "use cache"; // Opt-in to caching
 
@@ -171,6 +183,7 @@ export async function getCachedData() {
 ```
 
 ### Client Components
+
 ```tsx
 "use client"; // Explicit marker for client-side interactivity
 
@@ -193,13 +206,16 @@ export function Counter() {
 5. **Data Fetching:** Will use server actions (to be implemented)
 
 ### File Naming
+
 - **Components:** PascalCase (e.g., `ThemeToggle.tsx`)
 - **Utilities:** kebab-case (e.g., `utils.ts`)
 - **Server Actions:** kebab-case with `.actions.ts` suffix (planned)
 - **Pages:** lowercase (e.g., `page.tsx`, `layout.tsx`)
 
 ### Git Ignore
+
 Configured to exclude:
+
 - Standard Next.js build artifacts (`.next/`, `out/`)
 - Dependencies (`node_modules/`)
 - Environment files (`.env*`)
@@ -224,6 +240,7 @@ When implementing banking functionality, adapt the old architecture:
    - Use server actions for all CRUD operations
 
 3. **Routing (Planned):**
+
    ```
    src/app/
    ├── (dashboard)/          # Route group for authenticated pages
@@ -244,6 +261,7 @@ When implementing banking functionality, adapt the old architecture:
    - Leverage React 19 features for streaming
 
 ### Environment Variables (To Be Added)
+
 - `IS_IN_CLOUD`: Toggle between file-based and in-memory database
 - Development/production specific configs
 
