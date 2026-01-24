@@ -37,25 +37,38 @@
 | F10 | Average Monthly Metrics | Rolling averages for income, expenses, savings |
 | F11 | Demo Mode | UI toggle to explore dashboard with sample data (no DKB connection needed) |
 | F12 | Local Persistence | LowDB file-based storage via Next.js server actions |
+| F13 | Global Account Filter | KPIs and Charts respect a global "Account Context" (All, Single, or Multi-select) |
 
 ### 2.2 Extended KPI Metrics (Research-Driven)
 
 Based on personal finance analytics research, the following additional metrics provide significant value:
 
-| ID | Metric | Definition | Calculation |
-|----|--------|------------|-------------|
-| K1 | Monthly Cash Flow | Net surplus/deficit per month | Income - Expenses |
-| K2 | Savings Rate | % of income retained | (Income - Expenses) / Income * 100 |
-| K3 | Personal Burn Rate | Speed of spending beyond earnings | Expenses - Income (when negative cash flow) |
-| K4 | Emergency Fund Coverage | Months of expenses covered by liquid balance | Total Balance / Avg Monthly Expenses |
-| K5 | Expense Volatility | Stability of monthly spending | Std deviation of monthly expenses |
-| K6 | Income Stability | Consistency of income sources | Std deviation of monthly income |
-| K7 | Top Spending Categories | Ranked breakdown of where money goes | Category totals, sorted descending |
-| K8 | Recurring Expenses Ratio | % of spend that is fixed/recurring | Recurring / Total Expenses * 100 |
-| K9 | Discretionary Spend Ratio | % of spend that is optional | Discretionary / Total Expenses * 100 |
-| K10 | Month-over-Month Trend | Spending trajectory | (This Month - Last Month) / Last Month * 100 |
-| K11 | Largest Single Expense | Biggest transaction in period | max(transaction.amount) where amount < 0 |
-| K12 | Daily Average Spend | Average daily outflow | Total Expenses / Days in Period |
+| ID | Metric | Definition | Calculation | Visualization |
+|----|--------|------------|-------------|---------------|
+| K1 | Monthly Cash Flow | Net surplus/deficit per month | Income - Expenses | **Trend Bar Chart** (Green/Red bars) |
+| K2 | Savings Rate | % of income retained | (Income - Expenses) / Income * 100 | **Radial Progress / Donut** (Target: 20%) |
+| K3 | Personal Burn Rate | Speed of spending beyond earnings | Expenses - Income (when negative cash flow) | **Sparkline / Text Alert** (Red text) |
+| K4 | Emergency Fund Coverage | Months of expenses covered by liquid balance | Total Balance / Avg Monthly Expenses | **Gauge Widget** (Green zone > 3 months) |
+| K5 | Expense Volatility | Stability of monthly spending | Std deviation of monthly expenses | **Line Chart** (Variance area) |
+| K6 | Income Stability | Consistency of income sources | Std deviation of monthly income | **Line Chart** (Stability trend) |
+| K7 | Top Spending Categories | Ranked breakdown of where money goes | Category totals, sorted descending | **Horizontal Bar Chart / List** |
+| K8 | Recurring Expenses Ratio | % of spend that is fixed/recurring | Recurring / Total Expenses * 100 | **Stacked Bar** (Fixed vs. Variable) |
+| K9 | Discretionary Spend Ratio | % of spend that is optional | Discretionary / Total Expenses * 100 | **Pie Chart** |
+| K10 | Month-over-Month Trend | Spending trajectory | (This Month - Last Month) / Last Month * 100 | **Indicator Arrow** (Green/Red %) |
+| K11 | Largest Single Expense | Biggest transaction in period | max(transaction.amount) where amount < 0 | **Text Highight / Card** |
+| K12 | Daily Average Spend | Average daily outflow | Total Expenses / Days in Period | **Big Number Display** |
+
+### 2.3 Behavioral Insights Metrics (New)
+
+These metrics focus on user habits, timing, and financial resilience, visualized in the "Insights" view.
+
+| ID | Metric | Definition | Calculation | Visualization |
+|----|--------|------------|-------------|---------------|
+| B1 | Weekend vs. Weekday Spender | Spending intensity comparison | Sat/Sun Total vs. Mon-Fri Total (Normalized by day count) | **Bar Chart / Heatmap** (2 bars side-by-side) |
+| B2 | Financial Pulse (Payday Spike) | Spending velocity relative to income arrival | Daily spend graph overlaid with income events | **Sparkline** with peak markers |
+| B3 | Safety Net Coverage | How long you can survive on current liquidity | Total Liquid Assets / (Avg Monthly Expenses - Discretionary) | **Gauge / Shield Icon** (Months) |
+| B4 | Recurring Expense Ratio | "Subscription Bloat" indicator | (Recurring Transactions + Subscriptions) / Total Expenses | **Stacked Bar** (Fixed vs. Variable) |
+| B5 | Impulse Purchase Potential | High-value transactions in "Wants" categories | Count/Sum of transactions > X EUR in discretionary categories | **Scatter Plot** (Amount vs. Time) |
 
 ### 2.3 Demo Mode
 
@@ -252,7 +265,7 @@ The following DKB API endpoints are needed (user to provide specifics):
 ┌────────────────────────────────────────────────┐
 │  Header: Logo | Nav | Demo Toggle | Theme      │
 ├────────────────────────────────────────────────┤
-│  Date Range Picker (presets + custom)          │
+│  Date Range Picker | Account Context Selector  │
 ├────────────────────────────────────────────────┤
 │  KPI Cards Row:                                │
 │  [Balance] [Income] [Expenses] [Savings Rate]  │
@@ -275,6 +288,50 @@ The following DKB API endpoints are needed (user to provide specifics):
 - shadcn/ui components as base
 - Responsive: Mobile-first, 1-col stacked on small screens
 - Animations: Framer Motion for entrance effects
+
+### 5.3 App Structure & Navigation
+
+The application uses a sidebar navigation (desktop) / bottom tab bar (mobile) structure:
+
+1.  **Dashboard (Home)**
+    *   *Primary Goal:* Instant financial health check.
+    *   *Included KPIs:*
+        *   **K1 Monthly Cash Flow** (Trend Bar)
+        *   **K2 Savings Rate** (Radial)
+        *   **K10 MoM Trend** (Indicator)
+        *   **K12 Daily Average** (Stat card)
+    *   *Components:* Total Balance Chart, Recent Activity List.
+2.  **Accounts**
+    *   *Primary Goal:* Manage sources of funds.
+    *   *Components:* List of bank connections, individual account balances/details.
+3.  **Transactions**
+    *   *Primary Goal:* Deep dive and categorization.
+    *   *Included KPIs:*
+        *   **K7 Top Spending Categories** (Filter view)
+        *   **K11 Largest Single Expense** (Highlight)
+    *   *Components:* Searchable table, filters (Date, Category, Account), Bulk editing.
+4.  **Insights (New)**
+    *   *Primary Goal:* Behavioral analysis and trends.
+    *   *Included KPIs:*
+        *   **K3 Personal Burn Rate**
+        *   **K4 Emergency Fund Coverage** (Gauge)
+        *   **K5 Expense Volatility**
+        *   **K6 Income Stability**
+        *   **K8 Recurring Expenses Ratio**
+        *   **K9 Discretionary Spend Ratio**
+        *   **B1-B5** (All Behavioral Metrics: Weekend vs Weekday, Financial Pulse, etc.)
+    *   *Components:* Weekend vs Weekday analysis, Category Breakdown (3D Donut), Recurring Expenses list, Safety Net Gauge.
+5.  **Settings**
+    *   *Primary Goal:* Configuration.
+    *   *Components:* App Preferences, Data Management (Reset/Export), Theme Toggle.
+
+### 5.4 UI Mockups
+
+**Dashboard Concept**
+![Dashboard Mockup](assets/dashboard-mockup.png)
+
+**Insights & Analytics Concept**
+![Insights Mockup](assets/insights-mockup.png)
 
 ---
 

@@ -1,9 +1,9 @@
 # Project State: BanKing
 
-**Current Phase:** Phase 1 DONE, Phase 3 NEXT (Dashboard Charts)
-**Current Sprint:** Sprint 2 (Dashboard Integration)
+**Current Phase:** Phase 2 DONE, Phase 3 NEXT (Dashboard Charts)
+**Current Sprint:** Sprint 2.5 (Dashboard Integration)
 **Last Session:** 2026-01-24
-**Commit:** c5cc5a3 (feat: implement phase 1 data layer and banking infrastructure)
+**Commit:** Pending (feat: implement phase 2 DKB API integration and sync)
 
 ---
 
@@ -13,8 +13,8 @@
 |-------|--------|------------|
 | Phase 0: Foundation | DONE | 100% |
 | Phase 1: Data Layer | DONE | 100% |
-| Phase 2: DKB Sync | PENDING | 0% |
-| Phase 3: Charts & KPIs | IN PROGRESS | 0% |
+| Phase 2: DKB Sync | DONE | 100% |
+| Phase 3: Charts & KPIs | PENDING | 0% |
 | Phase 4: Filters & Pages | PENDING | 0% |
 | Phase 5: Demo & Extended | PENDING | 0% |
 
@@ -22,36 +22,43 @@
 
 ## Current Blockers
 
-None - all dependencies resolved. DKB API spec documented in `docs/DKB-API-SPEC.md`. Ready for Phase 3 implementation.
+None - all dependencies resolved. Ready for Phase 3 dashboard integration.
 
 ---
 
-## Completed This Session
+## Completed This Session (Phase 2: DKB API Integration)
 
-- [x] Explored current codebase state
-- [x] Researched personal finance KPIs
-- [x] Created PRD (`docs/PRD.md`)
-- [x] Created Roadmap (`docs/ROADMAP.md`)
-- [x] Created Project State tracker (`docs/PROJECT-STATE.md`)
-- [x] Installed dependencies (zod, lowdb, date-fns, echarts, echarts-for-react, currency.js)
-- [x] Defined unified banking types with Zod schemas (`src/lib/banking/types.ts`)
-- [x] Set up LowDB database layer (`src/lib/db/index.ts`, `schema.ts`)
-- [x] Created BankAdapter interface and adapter registry
-- [x] Created DKB adapter stub with mapper (awaiting API spec)
-- [x] Built sync orchestrator with SHA256 deduplication
-- [x] Created server actions (accounts, transactions, stats, sync, demo)
-- [x] Implemented stats calculations module (12 KPIs)
-- [x] Created category classification system (13 categories, German keywords)
-- [x] Built demo data seed generator (6 months, realistic patterns)
-- [x] Created credentials config reader
-- [x] Verified build passes
-- [x] Added DKB API spec (`docs/DKB-API-SPEC.md`) with auth, endpoints, pagination
-- [x] Updated CLAUDE.md with current architecture and workflow
-- [x] Committed Sprint 1 (c5cc5a3) to origin/rebuild
+**Parallel Agent Swarm Execution - 4 agents in parallel:**
+
+- [x] **Agent 1:** Created DKB API client (`src/lib/banking/adapters/dkb/api.ts`)
+  - Full HTTP client with native fetch
+  - Complete pagination support (auto-loops through all pages)
+  - Comprehensive error handling (auth, network, API errors)
+  - Zod schemas for all DKB API responses
+- [x] **Agent 2:** Updated DKB mapper schemas (`src/lib/banking/adapters/dkb/mapper.ts`)
+  - Real DKB API structure (nested data[].attributes)
+  - String-to-number amount parsing
+  - Counterparty extraction (creditor/debtor logic)
+  - Product type mapping (checking-account-private, etc.)
+- [x] **Agent 3:** Created sync API route (`src/app/api/sync/route.ts`)
+  - POST handler for triggering synchronization
+  - Credential loading and validation
+  - Sync metadata response
+  - Comprehensive error handling (400, 500)
+- [x] **Agent 4:** Wired DKB adapter implementation (`src/lib/banking/adapters/dkb/index.ts`)
+  - Connected API client to adapter methods
+  - Implemented fetchAccounts, fetchTransactions, fetchBalances
+  - ID format handling (dkb_ prefix stripping)
+  - Date filtering for transactions
+- [x] Fixed type compatibility issues (optional fields)
+- [x] Verified build passes (`npm run build`)
+- [x] Updated PROJECT-STATE.md checkpoint
+
+**Phase 2 Complete:** All DKB API integration and sync functionality implemented and ready to use.
 
 ---
 
-## Sprint 2 Plan (Phase 3: Dashboard Integration)
+## Next Session: Sprint 3 (Phase 3: Dashboard Integration)
 
 **Objective:** Connect dashboard to data layer and build ECharts visualizations with demo mode
 
@@ -68,8 +75,7 @@ None - all dependencies resolved. DKB API spec documented in `docs/DKB-API-SPEC.
 5. Add demo mode toggle to Header
 6. Test with demo data before DKB integration
 
-### Next Session
-- Phase 2 (DKB API) implementation can proceed in parallel if needed
+**Ready to proceed:** Phase 2 complete, all dependencies resolved
 
 ---
 
@@ -85,28 +91,38 @@ None - all dependencies resolved. DKB API spec documented in `docs/DKB-API-SPEC.
 
 ---
 
-## Files Created/Modified This Sprint
+## Files Created/Modified This Sprint (Phase 2)
 
 ```
-docs/PRD.md                              - Product Requirements Document
-docs/ROADMAP.md                          - Implementation phases and sprint plan
-docs/PROJECT-STATE.md                    - This file (progress tracker)
-src/lib/banking/types.ts                 - Unified Zod schemas (Account, Transaction, Balance)
-src/lib/banking/utils.ts                 - SHA256 transaction ID generator
-src/lib/banking/sync.ts                  - Sync orchestrator (fetch → map → dedupe → persist)
-src/lib/banking/adapters/index.ts        - Adapter registry
-src/lib/banking/adapters/dkb/index.ts    - DKB adapter stub
-src/lib/banking/adapters/dkb/mapper.ts   - DKB → Unified mapper (Zod transforms)
-src/lib/db/index.ts                      - LowDB setup (singleton, file-based)
-src/lib/db/schema.ts                     - Database schema with defaults
-src/lib/db/seed.ts                       - Demo data generator (6 months)
-src/lib/stats/calculations.ts            - 8 KPI calculation functions
-src/lib/stats/categories.ts              - 13 categories with German keyword rules
-src/actions/accounts.actions.ts          - Account queries (list, balance, history)
-src/actions/transactions.actions.ts      - Transaction queries with filters
-src/actions/stats.actions.ts             - Dashboard stats aggregation
-src/actions/sync.actions.ts              - Trigger bank sync
-src/actions/demo.actions.ts              - Demo mode toggle
-src/config/credentials.ts               - Config file reader (banking.config.json)
-.gitignore                               - Added data/db.json, banking.config.json
+src/lib/banking/adapters/dkb/api.ts      - NEW: DKB API HTTP client with pagination
+src/lib/banking/adapters/dkb/mapper.ts   - UPDATED: Real DKB response schemas + mappers
+src/lib/banking/adapters/dkb/index.ts    - UPDATED: Wired adapter with API client
+src/app/api/sync/route.ts                - NEW: Sync API endpoint (POST)
+docs/PROJECT-STATE.md                    - UPDATED: Phase 2 checkpoint
 ```
+
+### Key Implementation Details
+
+**DKB API Client (`api.ts`):**
+- Base URL: `https://banking.dkb.de/api`
+- Authentication: Cookie + x-xsrf-token headers
+- Pagination: Auto-loops using `page[after]` cursor until `meta.page.next` is absent
+- Error classes: DkbAuthError, DkbNetworkError, DkbApiError
+- Complete Zod validation for all responses
+
+**DKB Mapper (`mapper.ts`):**
+- Nested structure parsing: `data[].attributes`
+- Amount conversion: string `"-55.00"` → number `-55.00`
+- Counterparty logic: creditor.name (debits) or debtor.name (credits)
+- Product type mapping: `checking-account-private` → `checking`, etc.
+
+**Sync API Route (`/api/sync`):**
+- POST endpoint to trigger DKB synchronization
+- Loads credentials from `banking.config.json`
+- Returns sync metadata (accounts synced, transactions fetched, etc.)
+
+**DKB Adapter (`index.ts`):**
+- `fetchAccounts()`: Fetches and maps all DKB accounts
+- `fetchTransactions()`: Fetches with pagination, maps, filters by date
+- `fetchBalances()`: Gets current balance from account data
+- ID handling: Strips `dkb_` prefix for external API calls

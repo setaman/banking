@@ -81,6 +81,8 @@
 | 3.6 | Create Spending by Category chart (donut) | Frontend | 3.1, 3.3 |
 | 3.7 | Update KPI cards with real calculations | Frontend | 3.2 |
 | 3.8 | Wire dashboard page to server actions | Frontend | 1.6, 3.4-3.7 |
+| 3.9 | Implement "Weekend vs Weekday" calculation logic | Dev | 3.2 |
+| 3.10 | Implement "Recurring Expense" detection logic | Dev | 3.3 |
 
 ### Deliverables
 - `src/lib/stats/calculations.ts` - All KPI formulas
@@ -111,24 +113,24 @@
 
 ---
 
-## Phase 5: Demo Mode & Extended Metrics
+## Phase 5: Banking Insights & Demo Mode
 
-**Goal:** Demo data generator, extended KPI widgets, final polish.
+**Goal:** Advanced behavioral analytics ("Insights" view), demo data generator, and final polish.
 
 ### Tasks
 
-| ID | Task | Agent | Dependencies |
-|----|------|-------|-------------|
 | 5.1 | Create demo data seed generator (realistic 6-month dataset) | Data Eng | 1.2 |
 | 5.2 | Add demo mode toggle (header UI + state) | Frontend | 5.1 |
-| 5.3 | Implement extended KPIs (savings rate, burn rate, volatility, etc.) | Dev | 3.2 |
-| 5.4 | Create extended KPI widget row | Frontend | 5.3 |
-| 5.5 | Add month-over-month trend indicators | Frontend | 3.2 |
-| 5.6 | Final QA pass (error handling, edge cases) | QA | All |
+| 5.3 | Implement "Insights" page layout (Neo-Glass grid) | Frontend | 5.2 |
+| 5.4 | Build "Weekend vs Weekday" visualization (Heatmap/Bar) | Frontend | 3.9, 5.3 |
+| 5.5 | Build "Safety Net" Gauge widget | Frontend | 3.2, 5.3 |
+| 5.6 | Build "Recurring Expenses" stack widget | Frontend | 3.10, 5.3 |
+| 5.7 | Final QA pass (error handling, edge cases) | QA | All |
 
 ### Deliverables
+- `src/app/(dashboard)/insights/page.tsx` - New Insights Page
 - `src/lib/db/seed.ts` - Demo data generator
-- Extended KPI dashboard section
+- Behavioral Analytics Widgets
 - Demo mode toggle in header
 
 ---

@@ -26,7 +26,8 @@
       "Bash(npx prettier --check .)",
       "Bash(npx prettier --write .)",
       "Bash(timeout 10 npm run dev:*)",
-      "WebFetch(domain:execviva.com)"
+      "WebFetch(domain:execviva.com)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
