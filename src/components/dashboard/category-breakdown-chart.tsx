@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import { motion } from "motion/react";
+import { useTheme } from "next-themes";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { calculateTopCategories } from "@/lib/stats/calculations";
 import type { UnifiedTransaction } from "@/lib/banking/types";
@@ -14,24 +15,45 @@ interface CategoryBreakdownChartProps {
   limit?: number;
 }
 
-// Vibrant category colors for Neo-Glass theme
-const CATEGORY_COLORS = [
-  "rgba(139, 92, 246, 1)", // Electric Indigo
-  "rgba(217, 70, 239, 1)", // Purple
-  "rgba(20, 184, 166, 1)", // Teal
-  "rgba(251, 146, 60, 1)", // Orange
-  "rgba(244, 114, 182, 1)", // Pink
-  "rgba(34, 211, 238, 1)", // Cyan
-  "rgba(253, 224, 71, 1)", // Yellow
-  "rgba(167, 139, 250, 1)", // Violet
-  "rgba(74, 222, 128, 1)", // Green
-  "rgba(251, 191, 36, 1)", // Amber
-];
+// Theme-aware category colors matching Neo-Glass design from globals.css
+// These are approximations of the OKLCH values converted to RGB
+const getCategoryColors = (isDark: boolean) => {
+  if (isDark) {
+    return [
+      "rgb(139, 92, 246)",   // chart-1: Blue-Purple
+      "rgb(217, 70, 239)",   // chart-2: Magenta
+      "rgb(20, 184, 166)",   // chart-3: Teal
+      "rgb(251, 146, 60)",   // chart-4: Orange
+      "rgb(244, 114, 182)",  // chart-5: Pink
+      "rgb(167, 139, 250)",  // Additional: Violet
+      "rgb(74, 222, 128)",   // Additional: Green
+      "rgb(251, 191, 36)",   // Additional: Amber
+      "rgb(34, 211, 238)",   // Additional: Cyan
+      "rgb(253, 224, 71)",   // Additional: Yellow
+    ];
+  } else {
+    return [
+      "rgb(109, 40, 217)",   // chart-1: Deeper Blue-Purple
+      "rgb(192, 38, 211)",   // chart-2: Deeper Magenta
+      "rgb(13, 148, 136)",   // chart-3: Deeper Teal
+      "rgb(234, 88, 12)",    // chart-4: Deeper Orange
+      "rgb(219, 39, 119)",   // chart-5: Deeper Pink
+      "rgb(124, 58, 237)",   // Additional: Deeper Violet
+      "rgb(22, 163, 74)",    // Additional: Deeper Green
+      "rgb(217, 119, 6)",    // Additional: Deeper Amber
+      "rgb(6, 182, 212)",    // Additional: Deeper Cyan
+      "rgb(202, 138, 4)",    // Additional: Deeper Yellow
+    ];
+  }
+};
 
 export function CategoryBreakdownChart({
   transactions,
   limit = 10,
 }: CategoryBreakdownChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const categoryData = useMemo(
     () => calculateTopCategories(transactions, limit),
     [transactions, limit],
@@ -42,30 +64,37 @@ export function CategoryBreakdownChart({
   const chartOption = useMemo(() => {
     if (!hasData) return null;
 
+    const colors = getCategoryColors(isDark);
+
     return {
       tooltip: {
         trigger: "item",
-        backgroundColor: "rgba(30, 41, 59, 0.95)",
-        borderColor: "rgba(255, 255, 255, 0.15)",
+        backgroundColor: isDark
+          ? "rgba(30, 41, 59, 0.95)"
+          : "rgba(255, 255, 255, 0.95)",
+        borderColor: isDark
+          ? "rgba(255, 255, 255, 0.15)"
+          : "rgba(0, 0, 0, 0.1)",
         borderWidth: 1,
         textStyle: {
-          color: "rgba(241, 245, 249, 1)",
-          fontSize: 14,
+          color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
+          fontSize: 12,
         },
+        padding: [8, 12],
         formatter: (params: any) => {
           const category = params.name;
           const value = params.value;
           const percentage = params.percent;
           return `
-            <div style="padding: 4px 8px;">
-              <div style="font-weight: 600; margin-bottom: 4px;">${category}</div>
-              <div style="display: flex; justify-content: space-between; gap: 16px;">
-                <span style="color: rgba(148, 163, 184, 1);">Amount:</span>
-                <span style="font-weight: 500;">€${value.toFixed(2)}</span>
+            <div style="padding: 4px 0;">
+              <div style="font-weight: 600; margin-bottom: 6px;">${category}</div>
+              <div style="display: flex; justify-content: space-between; gap: 16px; margin-top: 4px;">
+                <span style="color: ${isDark ? "rgba(148, 163, 184, 1)" : "rgba(100, 116, 139, 1)"};">Amount:</span>
+                <span style="font-weight: 600;">€${value.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; gap: 16px;">
-                <span style="color: rgba(148, 163, 184, 1);">Share:</span>
-                <span style="font-weight: 500; color: ${params.color};">${percentage.toFixed(1)}%</span>
+              <div style="display: flex; justify-content: space-between; gap: 16px; margin-top: 4px;">
+                <span style="color: ${isDark ? "rgba(148, 163, 184, 1)" : "rgba(100, 116, 139, 1)"};">Share:</span>
+                <span style="font-weight: 600; color: ${params.color};">${percentage.toFixed(1)}%</span>
               </div>
             </div>
           `;
@@ -73,15 +102,15 @@ export function CategoryBreakdownChart({
       },
       legend: {
         orient: "vertical",
-        right: "10%",
+        right: "8%",
         top: "center",
         textStyle: {
-          color: "rgba(148, 163, 184, 1)",
-          fontSize: 13,
+          color: isDark ? "rgba(226, 232, 240, 1)" : "rgba(100, 116, 139, 1)",
+          fontSize: 12,
         },
-        itemWidth: 12,
-        itemHeight: 12,
-        itemGap: 10,
+        itemWidth: 10,
+        itemHeight: 10,
+        itemGap: 14,
         formatter: (name: string) => {
           const item = categoryData.find((cat) => cat.category === name);
           return item ? `${name}  ${item.formatted}` : name;
@@ -91,13 +120,13 @@ export function CategoryBreakdownChart({
         {
           name: "Spending by Category",
           type: "pie",
-          radius: ["45%", "70%"],
+          radius: ["50%", "75%"],
           center: ["35%", "50%"],
           avoidLabelOverlap: true,
           itemStyle: {
-            borderRadius: 8,
-            borderColor: "oklch(0.12 0.04 260)",
-            borderWidth: 2,
+            borderRadius: 2,
+            borderColor: isDark ? "rgba(18, 24, 38, 0.8)" : "rgba(255, 255, 255, 0.8)",
+            borderWidth: 1,
           },
           label: {
             show: false,
@@ -105,19 +134,18 @@ export function CategoryBreakdownChart({
           emphasis: {
             label: {
               show: true,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: "bold",
-              color: "rgba(241, 245, 249, 1)",
+              color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
               formatter: "{d}%",
             },
             itemStyle: {
-              color: "inherit",
-              shadowBlur: 20,
+              shadowBlur: 12,
               shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
+              shadowColor: "rgba(0, 0, 0, 0.3)",
             },
             scale: true,
-            scaleSize: 8,
+            scaleSize: 5,
           },
           labelLine: {
             show: false,
@@ -126,9 +154,7 @@ export function CategoryBreakdownChart({
             value: cat.amount,
             name: cat.category,
             itemStyle: {
-              color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-              shadowBlur: 10,
-              shadowColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+              color: colors[index % colors.length],
             },
           })),
           animationType: "scale",
@@ -137,7 +163,7 @@ export function CategoryBreakdownChart({
         },
       ],
     };
-  }, [categoryData, hasData]);
+  }, [categoryData, hasData, isDark]);
 
   if (!hasData) {
     return (

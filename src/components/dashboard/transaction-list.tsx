@@ -4,13 +4,13 @@ import { motion } from "motion/react";
 import { Coffee, ShoppingCart, Zap, Home, ArrowUpRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
-  ItemGroup,
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
+    ItemGroup,
+    Item,
+    ItemMedia,
+    ItemContent,
+    ItemTitle,
+    ItemDescription,
+    ItemActions,
 } from "@/components/ui/item";
 
 const transactions = [
@@ -73,7 +73,7 @@ export function TransactionList() {
                 <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
-                <ItemGroup className="gap-3">
+                <ItemGroup className="gap-2.5">
                     {transactions.map((tx, index) => (
                         <motion.div
                             key={tx.id}
@@ -81,16 +81,16 @@ export function TransactionList() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 + 0.3 }}
                         >
-                            <Item variant="outline">
-                                <ItemMedia className={`h-10 w-10 rounded-full ${tx.bg} ${tx.color}`}>
+                            <Item variant="outline" size="sm">
+                                <ItemMedia className={`h-11 w-11 rounded-xl ${tx.bg} ${tx.color} flex items-center justify-center`}>
                                     <tx.icon className="h-5 w-5" />
                                 </ItemMedia>
                                 <ItemContent>
                                     <ItemTitle>{tx.title}</ItemTitle>
-                                    <ItemDescription>{tx.date}</ItemDescription>
+                                    <ItemDescription className="text-xs">{tx.date}</ItemDescription>
                                 </ItemContent>
                                 <ItemActions>
-                                    <span className={`font-semibold ${tx.amount.startsWith('+') ? 'text-emerald-400' : 'text-foreground'}`}>
+                                    <span className={`text-lg font-bold tabular-nums ${tx.amount.startsWith('+') ? 'text-emerald-500 dark:text-emerald-400' : 'text-foreground'}`}>
                                         {tx.amount}
                                     </span>
                                 </ItemActions>

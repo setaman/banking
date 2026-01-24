@@ -10,6 +10,17 @@ import {
   ChevronsUpDown,
   Filter,
   X,
+  ShoppingCart,
+  Home,
+  CreditCard,
+  Bus,
+  Film,
+  Heart,
+  ShoppingBag,
+  Coffee,
+  Repeat,
+  TrendingUp,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   Table,
@@ -319,6 +330,34 @@ function TransactionsPageContent() {
     if (amount < 0) return "text-red-500 dark:text-red-400";
     if (amount > 0) return "text-green-500 dark:text-green-400";
     return "text-foreground";
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const iconClass = "h-4 w-4";
+    switch (category) {
+      case "Groceries":
+        return <ShoppingCart className={iconClass} />;
+      case "Rent":
+        return <Home className={iconClass} />;
+      case "Bills":
+        return <CreditCard className={iconClass} />;
+      case "Transport":
+        return <Bus className={iconClass} />;
+      case "Entertainment":
+        return <Film className={iconClass} />;
+      case "Healthcare":
+        return <Heart className={iconClass} />;
+      case "Shopping":
+        return <ShoppingBag className={iconClass} />;
+      case "Dining":
+        return <Coffee className={iconClass} />;
+      case "Subscriptions":
+        return <Repeat className={iconClass} />;
+      case "Income":
+        return <TrendingUp className={iconClass} />;
+      default:
+        return <MoreHorizontal className={iconClass} />;
+    }
   };
 
   return (
@@ -646,12 +685,6 @@ function TransactionsPageContent() {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer select-none hover:bg-accent/50"
-                      onClick={() => handleSort("counterparty")}
-                    >
-                      Counterparty{getSortIcon("counterparty")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none hover:bg-accent/50"
                       onClick={() => handleSort("category")}
                     >
                       Category{getSortIcon("category")}
@@ -662,45 +695,42 @@ function TransactionsPageContent() {
                     >
                       Amount{getSortIcon("amount")}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none hover:bg-accent/50"
-                      onClick={() => handleSort("account")}
-                    >
-                      Account{getSortIcon("account")}
-                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedTransactions.map((tx) => {
                     const category = categorizeTransaction(tx);
-                    const account = accountMap.get(tx.accountId);
 
                     return (
                       <TableRow
                         key={tx.id}
-                        className="border-white/10 hover:bg-accent/30 dark:border-white/5"
+                        className="border-white/10 hover:bg-accent/30 dark:border-white/5 transition-colors"
                       >
-                        <TableCell className="whitespace-nowrap font-medium">
+                        <TableCell className="whitespace-nowrap font-medium text-sm">
                           {format(new Date(tx.date), "MMM dd, yyyy")}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {tx.description}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {tx.counterparty || "-"}
+                        <TableCell className="max-w-md">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium text-sm truncate">{tx.description}</span>
+                            {tx.counterparty && (
+                              <span className="text-xs text-muted-foreground truncate">
+                                {tx.counterparty}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <span className="bg-primary/10 text-primary inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium">
-                            {category}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              {getCategoryIcon(category)}
+                            </div>
+                            <span className="text-sm font-medium">{category}</span>
+                          </div>
                         </TableCell>
                         <TableCell
-                          className={`text-right font-semibold ${getAmountColor(tx.amount)}`}
+                          className={`text-right text-base font-bold tabular-nums ${getAmountColor(tx.amount)}`}
                         >
                           {formatCurrency(tx.amount)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {account?.name || "Unknown"}
                         </TableCell>
                       </TableRow>
                     );

@@ -36,7 +36,7 @@ const itemVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        outline: "border border-white/10 dark:border-white/5",
+        outline: "border border-border/40 hover:border-border/60 hover:bg-accent/30",
         muted: "bg-muted/50",
       },
       size: {
@@ -121,7 +121,7 @@ function ItemTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="item-title"
       className={cn(
-        "flex w-fit items-center gap-2 text-sm leading-snug font-medium",
+        "flex w-fit items-center gap-2 text-base leading-snug font-semibold",
         className
       )}
       {...props}
@@ -134,7 +134,7 @@ function ItemDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="item-description"
       className={cn(
-        "text-muted-foreground line-clamp-2 text-sm leading-normal font-normal text-balance",
+        "text-muted-foreground/90 line-clamp-2 text-sm leading-normal font-normal text-balance",
         "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
         className
       )}
