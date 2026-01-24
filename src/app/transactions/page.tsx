@@ -322,7 +322,7 @@ function TransactionsPageContent() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold tracking-tight text-glow">
