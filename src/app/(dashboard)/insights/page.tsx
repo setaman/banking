@@ -455,7 +455,7 @@ export default function InsightsPage() {
   const hasData = transactions.length > 0;
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold tracking-tight text-glow">

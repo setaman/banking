@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
     return (
-        <div className="w-full space-y-8">
+        <div className="container mx-auto max-w-7xl pt-24 px-4 pb-8 space-y-8">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
