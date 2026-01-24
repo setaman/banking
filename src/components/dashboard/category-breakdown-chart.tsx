@@ -67,6 +67,7 @@ export function CategoryBreakdownChart({
     const colors = getCategoryColors(isDark);
 
     return {
+      backgroundColor: "transparent",
       tooltip: {
         trigger: "item",
         backgroundColor: isDark

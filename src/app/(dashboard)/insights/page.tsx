@@ -165,6 +165,7 @@ export default function InsightsPage() {
   const weekendChartOption = useMemo((): EChartsOption => {
     return {
       animation: true,
+      backgroundColor: "transparent",
       grid: {
         left: "5%",
         right: "5%",
@@ -175,19 +176,26 @@ export default function InsightsPage() {
       tooltip: {
         trigger: "axis",
         backgroundColor: isDark
-          ? "oklch(0.16 0.05 260 / 0.95)"
-          : "oklch(1 0 0 / 0.95)",
+          ? "rgba(30, 41, 59, 0.95)"
+          : "rgba(255, 255, 255, 0.95)",
         borderColor: isDark
-          ? "oklch(0.3 0.05 260 / 0.3)"
-          : "oklch(0.92 0.02 260 / 0.6)",
+          ? "rgba(255, 255, 255, 0.15)"
+          : "rgba(0, 0, 0, 0.1)",
+        borderWidth: 1,
         textStyle: {
-          color: isDark ? "oklch(0.95 0.02 260)" : "oklch(0.15 0.04 260)",
+          color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
+          fontSize: 12,
         },
+        padding: [8, 12],
         formatter: (params: any) => {
           const data = params[0];
-          return `<div style="padding: 4px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${data.name}</div>
-            <div>Avg/Day: <strong>${formatCurrency(data.value)}</strong></div>
+          return `<div style="padding: 4px 0;">
+            <div style="font-weight: 600; margin-bottom: 6px;">${data.name}</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: rgba(139, 92, 246, 1);"></span>
+              <span style="flex: 1;">Avg/Day:</span>
+              <span style="font-weight: 600;">${formatCurrency(data.value)}</span>
+            </div>
           </div>`;
         },
       },
@@ -260,11 +268,12 @@ export default function InsightsPage() {
 
     return {
       animation: true,
+      backgroundColor: "transparent",
       grid: {
         left: "5%",
         right: "5%",
-        bottom: "10%",
-        top: "10%",
+        bottom: "5%",
+        top: "5%",
         containLabel: true,
       },
       tooltip: {
@@ -277,6 +286,22 @@ export default function InsightsPage() {
           : "rgba(0, 0, 0, 0.1)",
         textStyle: {
           color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
+          fontSize: 12,
+        },
+        padding: [8, 12],
+        formatter: (params: any) => {
+          if (!Array.isArray(params) || params.length === 0) return "";
+          const param = params[0];
+          return `
+            <div style="padding: 4px 0;">
+              <div style="font-weight: 600; margin-bottom: 6px;">${param.name}</div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: rgba(251, 146, 60, 1);"></span>
+                <span style="flex: 1;">Total Expenses:</span>
+                <span style="font-weight: 600;">${formatCurrency(param.value)}</span>
+              </div>
+            </div>
+          `;
         },
       },
       xAxis: {
@@ -341,32 +366,45 @@ export default function InsightsPage() {
 
     return {
       animation: true,
+      backgroundColor: "transparent",
       grid: {
         left: "5%",
         right: "5%",
-        bottom: "5%",
-        top: "5%",
+        bottom: "10%",
+        top: "10%",
         containLabel: true,
       },
       tooltip: {
         trigger: "axis",
         backgroundColor: isDark
-          ? "oklch(0.16 0.05 260 / 0.95)"
-          : "oklch(1 0 0 / 0.95)",
+          ? "rgba(30, 41, 59, 0.95)"
+          : "rgba(255, 255, 255, 0.95)",
         borderColor: isDark
-          ? "oklch(0.3 0.05 260 / 0.3)"
-          : "oklch(0.92 0.02 260 / 0.6)",
+          ? "rgba(255, 255, 255, 0.15)"
+          : "rgba(0, 0, 0, 0.1)",
+        borderWidth: 1,
         textStyle: {
           color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
+          fontSize: 12,
         },
+        padding: [8, 12],
         formatter: (params: any) => {
           const data = params[0];
           const dayData = last30Days[data.dataIndex];
           const dateStr = format(parseISO(dayData.date), "MMM dd");
-          return `<div style="padding: 4px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${dateStr}</div>
-            <div>Expenses: ${formatCurrency(dayData.expenses)}</div>
-            ${dayData.income > 0 ? `<div style="color: rgba(20, 184, 166, 1);">Income: ${formatCurrency(dayData.income)}</div>` : ""}
+          return `<div style="padding: 4px 0;">
+            <div style="font-weight: 600; margin-bottom: 6px;">${dateStr}</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: rgba(244, 114, 182, 1);"></span>
+              <span style="flex: 1;">Expenses:</span>
+              <span style="font-weight: 600;">${formatCurrency(dayData.expenses)}</span>
+            </div>
+            ${dayData.income > 0 ? `
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: rgba(20, 184, 166, 1);"></span>
+              <span style="flex: 1;">Income:</span>
+              <span style="font-weight: 600;">${formatCurrency(dayData.income)}</span>
+            </div>` : ""}
           </div>`;
         },
       },

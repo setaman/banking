@@ -60,6 +60,7 @@ export function IncomeExpensesChart({
       animation: true,
       animationDuration: 1000,
       animationEasing: "cubicOut",
+      backgroundColor: "transparent",
       grid: {
         left: "3%",
         right: "4%",
@@ -313,7 +314,6 @@ export function IncomeExpensesChart({
               style={{ height: "100%", width: "100%" }}
               notMerge={true}
               lazyUpdate={true}
-              theme={isDark ? "dark" : "light"}
             />
           </div>
         )}

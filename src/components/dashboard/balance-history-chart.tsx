@@ -120,6 +120,7 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
       animation: true,
       animationDuration: 1000,
       animationEasing: "cubicOut",
+      backgroundColor: "transparent",
       grid: {
         left: "3%",
         right: "4%",
@@ -144,20 +145,25 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
         formatter: (params: any) => {
           if (!Array.isArray(params)) return "";
           const date = format(new Date(params[0].value[0]), "dd MMM yyyy");
-          let content = `<div style="font-weight: 600; margin-bottom: 4px;">${date}</div>`;
+          let items = "";
           params.forEach((param: any) => {
             const value = new Intl.NumberFormat("de-DE", {
               style: "currency",
               currency: "EUR",
               minimumFractionDigits: 2,
             }).format(param.value[1]);
-            content += `<div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+            items += `<div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${param.color};"></span>
               <span style="flex: 1;">${param.seriesName}:</span>
               <span style="font-weight: 600;">${value}</span>
             </div>`;
           });
-          return content;
+          return `
+            <div style="padding: 4px 0;">
+              <div style="font-weight: 600; margin-bottom: 6px;">${date}</div>
+              ${items}
+            </div>
+          `;
         },
       },
       xAxis: {
@@ -255,7 +261,6 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
               style={{ height: "100%", width: "100%" }}
               notMerge={true}
               lazyUpdate={true}
-              theme={isDark ? "dark" : "light"}
             />
           </div>
         )}
