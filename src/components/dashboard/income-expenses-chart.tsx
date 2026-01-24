@@ -33,21 +33,21 @@ export function IncomeExpensesChart({
 
   // Theme colors for income (green) and expenses (red)
   const incomeColor = isDark
-    ? "oklch(0.75 0.18 150)"
-    : "oklch(0.7 0.18 150)"; // Teal/Green
+    ? "rgba(20, 184, 166, 1)"
+    : "rgba(13, 148, 136, 1)"; // Teal/Green
   const expensesColor = isDark
-    ? "oklch(0.7 0.2 20)"
-    : "oklch(0.65 0.2 20)"; // Red/Orange-Red
+    ? "rgba(244, 63, 94, 1)"
+    : "rgba(225, 29, 72, 1)"; // Red/Orange-Red
   const netColor = isDark
-    ? "oklch(0.65 0.22 260)"
-    : "oklch(0.6 0.2 260)"; // Primary Purple
+    ? "rgba(167, 139, 250, 1)"
+    : "rgba(124, 58, 237, 1)"; // Primary Purple
 
   const textColor = isDark
-    ? "oklch(0.7 0.05 260)"
-    : "oklch(0.55 0.05 260)";
+    ? "rgba(226, 232, 240, 1)"
+    : "rgba(100, 116, 139, 1)";
   const gridColor = isDark
-    ? "oklch(0.3 0.05 260 / 0.2)"
-    : "oklch(0.92 0.02 260 / 0.4)";
+    ? "rgba(255, 255, 255, 0.1)"
+    : "rgba(0, 0, 0, 0.1)";
 
   const getOption = (): EChartsOption => {
     // Prepare data arrays
@@ -78,14 +78,14 @@ export function IncomeExpensesChart({
           },
         },
         backgroundColor: isDark
-          ? "oklch(0.16 0.05 260 / 0.95)"
-          : "oklch(1 0 0 / 0.95)",
+          ? "rgba(30, 41, 59, 0.95)"
+          : "rgba(255, 255, 255, 0.95)",
         borderColor: isDark
-          ? "oklch(0.3 0.05 260 / 0.3)"
-          : "oklch(0.92 0.02 260 / 0.6)",
+          ? "rgba(255, 255, 255, 0.15)"
+          : "rgba(0, 0, 0, 0.1)",
         borderWidth: 1,
         textStyle: {
-          color: isDark ? "oklch(0.95 0.02 260)" : "oklch(0.15 0.04 260)",
+          color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
           fontSize: 12,
         },
         padding: [8, 12],
@@ -120,7 +120,7 @@ export function IncomeExpensesChart({
                 <span style="flex: 1;">Expenses:</span>
                 <span style="font-weight: 600; color: ${expensesColor};">${formatEUR(expenses)}</span>
               </div>
-              <div style="border-top: 1px solid ${isDark ? "oklch(0.3 0.05 260 / 0.3)" : "oklch(0.92 0.02 260)"}; margin-top: 4px; padding-top: 4px;">
+              <div style="border-top: 1px solid ${isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}; margin-top: 4px; padding-top: 4px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="display: inline-block; width: 10px; height: 2px; background: ${netColor};"></span>
                   <span style="flex: 1;">Net:</span>
@@ -199,7 +199,7 @@ export function IncomeExpensesChart({
               y2: 1,
               colorStops: [
                 { offset: 0, color: incomeColor },
-                { offset: 1, color: incomeColor.replace(")", " / 0.6)") },
+                { offset: 1, color: incomeColor.replace(", 1)", ", 0.6)") },
               ],
             },
             borderRadius: [4, 4, 0, 0],
@@ -209,6 +209,7 @@ export function IncomeExpensesChart({
           },
           emphasis: {
             itemStyle: {
+              color: "inherit",
               shadowBlur: 15,
               shadowColor: incomeColor.replace(")", " / 0.4)"),
             },
@@ -229,7 +230,7 @@ export function IncomeExpensesChart({
               y2: 1,
               colorStops: [
                 { offset: 0, color: expensesColor },
-                { offset: 1, color: expensesColor.replace(")", " / 0.6)") },
+                { offset: 1, color: expensesColor.replace(", 1)", ", 0.6)") },
               ],
             },
             borderRadius: [4, 4, 0, 0],
@@ -239,6 +240,7 @@ export function IncomeExpensesChart({
           },
           emphasis: {
             itemStyle: {
+              color: "inherit",
               shadowBlur: 15,
               shadowColor: expensesColor.replace(")", " / 0.4)"),
             },
@@ -255,7 +257,7 @@ export function IncomeExpensesChart({
             width: 3,
             color: netColor,
             shadowBlur: 10,
-            shadowColor: netColor.replace(")", " / 0.3)"),
+            shadowColor: netColor.replace(", 1)", ", 0.3)"),
           },
           itemStyle: {
             color: netColor,
@@ -265,9 +267,10 @@ export function IncomeExpensesChart({
           emphasis: {
             focus: "series",
             itemStyle: {
+              color: "inherit",
               borderWidth: 3,
               shadowBlur: 12,
-              shadowColor: netColor.replace(")", " / 0.5)"),
+              shadowColor: netColor.replace(", 1)", ", 0.5)"),
             },
             lineStyle: {
               width: 4,

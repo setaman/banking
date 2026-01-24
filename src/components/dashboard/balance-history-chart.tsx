@@ -52,15 +52,15 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
 
   // Generate chart colors from theme
   const isDark = resolvedTheme === "dark";
-  const primaryColor = isDark ? "oklch(0.7 0.2 260)" : "oklch(0.6 0.2 260)";
-  const chart2Color = isDark ? "oklch(0.7 0.2 310)" : "oklch(0.65 0.2 310)";
-  const chart3Color = isDark ? "oklch(0.75 0.18 150)" : "oklch(0.7 0.18 150)";
-  const chart4Color = isDark ? "oklch(0.85 0.15 80)" : "oklch(0.8 0.15 80)";
-  const chart5Color = isDark ? "oklch(0.75 0.2 340)" : "oklch(0.7 0.2 340)";
+  const primaryColor = isDark ? "rgba(139, 92, 246, 1)" : "rgba(124, 58, 237, 1)";
+  const chart2Color = isDark ? "rgba(217, 70, 239, 1)" : "rgba(192, 38, 211, 1)";
+  const chart3Color = isDark ? "rgba(20, 184, 166, 1)" : "rgba(13, 148, 136, 1)";
+  const chart4Color = isDark ? "rgba(244, 63, 94, 1)" : "rgba(225, 29, 72, 1)";
+  const chart5Color = isDark ? "rgba(236, 72, 153, 1)" : "rgba(219, 39, 119, 1)";
   const accountColors = [primaryColor, chart2Color, chart3Color, chart4Color, chart5Color];
 
-  const textColor = isDark ? "oklch(0.7 0.05 260)" : "oklch(0.55 0.05 260)";
-  const gridColor = isDark ? "oklch(0.3 0.05 260 / 0.2)" : "oklch(0.92 0.02 260 / 0.4)";
+  const textColor = isDark ? "rgba(226, 232, 240, 1)" : "rgba(100, 116, 139, 1)";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
 
   // Build ECharts option
   const getOption = (): EChartsOption => {
@@ -82,8 +82,8 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: color.replace(")", " / 0.2)") },
-              { offset: 1, color: color.replace(")", " / 0.05)") },
+              { offset: 0, color: color.replace(", 1)", ", 0.2)") },
+              { offset: 1, color: color.replace(", 1)", ", 0.05)") },
             ],
           },
         },
@@ -99,9 +99,14 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
         emphasis: {
           focus: "series" as const,
           itemStyle: {
+            color: "inherit",
             borderWidth: 3,
-            shadowBlur: 10,
-            shadowColor: color.replace(")", " / 0.3)"),
+          },
+          lineStyle: {
+            color: "inherit",
+          },
+          areaStyle: {
+            color: "inherit",
           },
         },
         data: accountBalances.map((b) => [
@@ -125,14 +130,14 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
       tooltip: {
         trigger: "axis",
         backgroundColor: isDark
-          ? "oklch(0.16 0.05 260 / 0.95)"
-          : "oklch(1 0 0 / 0.95)",
+          ? "rgba(30, 41, 59, 0.95)"
+          : "rgba(255, 255, 255, 0.95)",
         borderColor: isDark
-          ? "oklch(0.3 0.05 260 / 0.3)"
-          : "oklch(0.92 0.02 260 / 0.6)",
+          ? "rgba(255, 255, 255, 0.15)"
+          : "rgba(0, 0, 0, 0.1)",
         borderWidth: 1,
         textStyle: {
-          color: isDark ? "oklch(0.95 0.02 260)" : "oklch(0.15 0.04 260)",
+          color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
           fontSize: 12,
         },
         padding: [8, 12],
@@ -202,15 +207,15 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
       legend:
         accountIds.length > 1
           ? {
-              show: true,
-              top: 0,
-              right: 0,
-              textStyle: {
-                color: textColor,
-                fontSize: 12,
-              },
-              itemGap: 16,
-            }
+            show: true,
+            top: 0,
+            right: 0,
+            textStyle: {
+              color: textColor,
+              fontSize: 12,
+            },
+            itemGap: 16,
+          }
           : undefined,
     };
   };

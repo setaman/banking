@@ -218,13 +218,18 @@ export default function InsightsPage() {
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: "oklch(0.7 0.2 260)" },
-                { offset: 1, color: "oklch(0.65 0.2 310)" },
+                { offset: 0, color: "rgba(139, 92, 246, 1)" },
+                { offset: 1, color: "rgba(217, 70, 239, 1)" },
               ],
             },
             borderRadius: [8, 8, 0, 0],
           },
           barWidth: "60%",
+          emphasis: {
+            itemStyle: {
+              color: "inherit",
+            },
+          },
           label: {
             show: true,
             position: "top",
@@ -265,13 +270,13 @@ export default function InsightsPage() {
       tooltip: {
         trigger: "axis",
         backgroundColor: isDark
-          ? "oklch(0.16 0.05 260 / 0.95)"
-          : "oklch(1 0 0 / 0.95)",
+          ? "rgba(30, 41, 59, 0.95)"
+          : "rgba(255, 255, 255, 0.95)",
         borderColor: isDark
-          ? "oklch(0.3 0.05 260 / 0.3)"
-          : "oklch(0.92 0.02 260 / 0.6)",
+          ? "rgba(255, 255, 255, 0.15)"
+          : "rgba(0, 0, 0, 0.1)",
         textStyle: {
-          color: isDark ? "oklch(0.95 0.02 260)" : "oklch(0.15 0.04 260)",
+          color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
         },
       },
       xAxis: {
@@ -296,10 +301,21 @@ export default function InsightsPage() {
           smooth: true,
           lineStyle: {
             width: 3,
-            color: "oklch(0.8 0.15 80)",
+            color: "rgba(251, 146, 60, 1)", // orange-400 equivalent
           },
           itemStyle: {
-            color: "oklch(0.8 0.15 80)",
+            color: "rgba(251, 146, 60, 1)",
+          },
+          emphasis: {
+            itemStyle: {
+              color: "inherit",
+            },
+            lineStyle: {
+              color: "inherit",
+            },
+            areaStyle: {
+              color: "inherit",
+            },
           },
           areaStyle: {
             color: {
@@ -309,8 +325,8 @@ export default function InsightsPage() {
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: "oklch(0.8 0.15 80 / 0.3)" },
-                { offset: 1, color: "oklch(0.8 0.15 80 / 0.05)" },
+                { offset: 0, color: "rgba(251, 146, 60, 0.3)" },
+                { offset: 1, color: "rgba(251, 146, 60, 0.05)" },
               ],
             },
           },
@@ -341,7 +357,7 @@ export default function InsightsPage() {
           ? "oklch(0.3 0.05 260 / 0.3)"
           : "oklch(0.92 0.02 260 / 0.6)",
         textStyle: {
-          color: isDark ? "oklch(0.95 0.02 260)" : "oklch(0.15 0.04 260)",
+          color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
         },
         formatter: (params: any) => {
           const data = params[0];
@@ -350,7 +366,7 @@ export default function InsightsPage() {
           return `<div style="padding: 4px;">
             <div style="font-weight: 600; margin-bottom: 4px;">${dateStr}</div>
             <div>Expenses: ${formatCurrency(dayData.expenses)}</div>
-            ${dayData.income > 0 ? `<div style="color: oklch(0.7 0.18 150);">Income: ${formatCurrency(dayData.income)}</div>` : ""}
+            ${dayData.income > 0 ? `<div style="color: rgba(20, 184, 166, 1);">Income: ${formatCurrency(dayData.income)}</div>` : ""}
           </div>`;
         },
       },
@@ -373,7 +389,18 @@ export default function InsightsPage() {
           showSymbol: false,
           lineStyle: {
             width: 2,
-            color: "oklch(0.7 0.2 340)",
+            color: "rgba(244, 114, 182, 1)", // pink-400 equivalent
+          },
+          emphasis: {
+            itemStyle: {
+              color: "inherit",
+            },
+            lineStyle: {
+              color: "inherit",
+            },
+            areaStyle: {
+              color: "inherit",
+            },
           },
           areaStyle: {
             color: {
@@ -383,8 +410,8 @@ export default function InsightsPage() {
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: "oklch(0.7 0.2 340 / 0.3)" },
-                { offset: 1, color: "oklch(0.7 0.2 340 / 0.05)" },
+                { offset: 0, color: "rgba(244, 114, 182, 0.3)" },
+                { offset: 1, color: "rgba(244, 114, 182, 0.05)" },
               ],
             },
           },
@@ -395,10 +422,15 @@ export default function InsightsPage() {
             .map((d, idx) => (d.income > 0 ? [idx, d.expenses] : null))
             .filter((d) => d !== null),
           symbolSize: 8,
+          emphasis: {
+            itemStyle: {
+              color: "inherit",
+            },
+          },
           itemStyle: {
-            color: "oklch(0.7 0.18 150)",
+            color: "rgba(20, 184, 166, 1)",
             shadowBlur: 5,
-            shadowColor: "oklch(0.7 0.18 150 / 0.5)",
+            shadowColor: "rgba(20, 184, 166, 0.5)",
           },
         },
       ],

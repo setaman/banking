@@ -16,16 +16,16 @@ interface CategoryBreakdownChartProps {
 
 // Vibrant category colors for Neo-Glass theme
 const CATEGORY_COLORS = [
-  "oklch(0.6 0.2 260)", // Electric Indigo
-  "oklch(0.65 0.2 310)", // Purple
-  "oklch(0.7 0.18 150)", // Teal
-  "oklch(0.8 0.15 80)", // Orange
-  "oklch(0.7 0.2 340)", // Pink
-  "oklch(0.75 0.18 190)", // Cyan
-  "oklch(0.72 0.16 50)", // Yellow
-  "oklch(0.68 0.22 280)", // Violet
-  "oklch(0.78 0.14 120)", // Green
-  "oklch(0.82 0.13 40)", // Amber
+  "rgba(139, 92, 246, 1)", // Electric Indigo
+  "rgba(217, 70, 239, 1)", // Purple
+  "rgba(20, 184, 166, 1)", // Teal
+  "rgba(251, 146, 60, 1)", // Orange
+  "rgba(244, 114, 182, 1)", // Pink
+  "rgba(34, 211, 238, 1)", // Cyan
+  "rgba(253, 224, 71, 1)", // Yellow
+  "rgba(167, 139, 250, 1)", // Violet
+  "rgba(74, 222, 128, 1)", // Green
+  "rgba(251, 191, 36, 1)", // Amber
 ];
 
 export function CategoryBreakdownChart({
@@ -45,11 +45,11 @@ export function CategoryBreakdownChart({
     return {
       tooltip: {
         trigger: "item",
-        backgroundColor: "oklch(0.16 0.05 260 / 0.95)",
-        borderColor: "oklch(0.3 0.05 260 / 0.3)",
+        backgroundColor: "rgba(30, 41, 59, 0.95)",
+        borderColor: "rgba(255, 255, 255, 0.15)",
         borderWidth: 1,
         textStyle: {
-          color: "oklch(0.95 0.02 260)",
+          color: "rgba(241, 245, 249, 1)",
           fontSize: 14,
         },
         formatter: (params: any) => {
@@ -60,11 +60,11 @@ export function CategoryBreakdownChart({
             <div style="padding: 4px 8px;">
               <div style="font-weight: 600; margin-bottom: 4px;">${category}</div>
               <div style="display: flex; justify-content: space-between; gap: 16px;">
-                <span style="color: oklch(0.7 0.05 260);">Amount:</span>
+                <span style="color: rgba(148, 163, 184, 1);">Amount:</span>
                 <span style="font-weight: 500;">€${value.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; gap: 16px;">
-                <span style="color: oklch(0.7 0.05 260);">Share:</span>
+                <span style="color: rgba(148, 163, 184, 1);">Share:</span>
                 <span style="font-weight: 500; color: ${params.color};">${percentage.toFixed(1)}%</span>
               </div>
             </div>
@@ -76,7 +76,7 @@ export function CategoryBreakdownChart({
         right: "10%",
         top: "center",
         textStyle: {
-          color: "oklch(0.7 0.05 260)",
+          color: "rgba(148, 163, 184, 1)",
           fontSize: 13,
         },
         itemWidth: 12,
@@ -107,10 +107,11 @@ export function CategoryBreakdownChart({
               show: true,
               fontSize: 16,
               fontWeight: "bold",
-              color: "oklch(0.95 0.02 260)",
+              color: "rgba(241, 245, 249, 1)",
               formatter: "{d}%",
             },
             itemStyle: {
+              color: "inherit",
               shadowBlur: 20,
               shadowOffsetX: 0,
               shadowColor: "rgba(0, 0, 0, 0.5)",
