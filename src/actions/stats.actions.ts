@@ -3,11 +3,11 @@
 import { getTransactions, type TransactionFilters } from "./transactions.actions";
 import {
   calculateMonthlyCashFlow,
-  calculateSavingsRate,
+  calculateSavingsRateLegacy,
   calculateCategoryBreakdown,
   calculateIncomeVsExpenses,
   calculateDailyAverageSpend,
-  calculateExpenseVolatility,
+  calculateExpenseVolatilityLegacy,
   calculateMonthOverMonthTrend,
   calculateEmergencyFundCoverage,
 } from "@/lib/stats/calculations";
@@ -46,11 +46,11 @@ export async function getDashboardStats(
     totalBalance,
     totalIncome: income,
     totalExpenses: expenses,
-    savingsRate: calculateSavingsRate(income, expenses),
+    savingsRate: calculateSavingsRateLegacy(income, expenses),
     monthlyCashFlow: calculateMonthlyCashFlow(transactions),
     categoryBreakdown: calculateCategoryBreakdown(transactions),
     dailyAverageSpend: calculateDailyAverageSpend(transactions, filters?.startDate, filters?.endDate),
-    expenseVolatility: calculateExpenseVolatility(transactions),
+    expenseVolatility: calculateExpenseVolatilityLegacy(transactions),
     monthOverMonthTrend: calculateMonthOverMonthTrend(transactions),
     emergencyFundCoverage: calculateEmergencyFundCoverage(totalBalance, expenses, transactions),
   };

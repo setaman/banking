@@ -1,9 +1,4 @@
-import {
-  subDays,
-  subMonths,
-  format,
-  addDays,
-} from "date-fns";
+import { subMonths, format, addDays } from "date-fns";
 import type {
   UnifiedAccount,
   UnifiedBalance,
@@ -12,6 +7,7 @@ import type {
 import { classifyTransaction } from "@/lib/stats/categories";
 import { createTransactionId } from "@/lib/banking/utils";
 import type { Database } from "./schema";
+import { getDb } from "./index";
 
 const DEMO_ACCOUNTS: UnifiedAccount[] = [
   {
@@ -336,4 +332,16 @@ function createTransaction(
   };
   tx.id = createTransactionId(tx);
   return tx;
+}
+
+/**
+ * Seeds the database with demo data.
+ * Generates 6 months of realistic transactions and writes to db.json.
+ */
+export async function seedDemoData(): Promise<void> {
+  const db = await getDb();
+  const demoData = generateDemoData();
+
+  db.data = demoData;
+  await db.write();
 }
