@@ -266,14 +266,16 @@ export default function Home() {
       </MotionDiv>
 
       {/* Charts Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 items-stretch">
         {/* Balance History Chart */}
         <MotionDiv
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
+          className="h-full"
         >
           <BalanceHistoryChart
+            className="h-full"
             accountId={selectedAccountId === "all" ? undefined : selectedAccountId}
           />
         </MotionDiv>
@@ -283,6 +285,7 @@ export default function Home() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.25 }}
+          className="h-full"
         >
           <CategoryBreakdownChart
             transactions={filteredTransactions}

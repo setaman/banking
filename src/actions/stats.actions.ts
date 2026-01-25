@@ -17,6 +17,8 @@ export interface DashboardStats {
   totalBalance: number;
   totalIncome: number;
   totalExpenses: number;
+  netCashFlow: number;
+  expenseToIncomeRatio: number;
   savingsRate: number;
   monthlyCashFlow: { month: string; income: number; expenses: number; net: number }[];
   categoryBreakdown: { category: string; amount: number; percentage: number }[];
@@ -47,6 +49,8 @@ export async function getDashboardStats(
     totalBalance,
     totalIncome: income,
     totalExpenses: expenses,
+    netCashFlow: income - expenses,
+    expenseToIncomeRatio: income > 0 ? (expenses / income) * 100 : 0,
     savingsRate: calculateSavingsRateLegacy(income, expenses),
     monthlyCashFlow: calculateMonthlyCashFlow(transactions),
     categoryBreakdown: calculateCategoryBreakdown(transactions),

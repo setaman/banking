@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Coins } from "lucide-react";
 import { motion } from "motion/react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +23,20 @@ interface CardData {
 
 interface OverviewCardsProps {
   filters?: TransactionFilters;
+}
+
+interface DashboardStats {
+  totalBalance: number;
+  totalIncome: number;
+  totalExpenses: number;
+  monthlyCashFlow: {
+    month: string;
+    net: number;
+    income: number;
+    expenses: number;
+  }[];
+  expenseToIncomeRatio: number;
+  savingsRate: number;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -56,6 +70,12 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
         let incomeChange = "0.0%";
         let expenseTrend: "up" | "down" | "neutral" = "neutral";
         let expenseChange = "0.0%";
+        let cashFlowTrend: "up" | "down" | "neutral" = "neutral";
+        let cashFlowChange = "0.0%";
+        let ratioTrend: "up" | "down" | "neutral" = "neutral";
+        let ratioChange = "0.0%";
+        let savingsTrend: "up" | "down" | "neutral" = "neutral";
+        let savingsChange = "0.0%";
 
         if (monthlyCashFlow.length >= 2) {
           const currentMonth = monthlyCashFlow[monthlyCashFlow.length - 1];
@@ -66,6 +86,8 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
             const netChange = ((currentMonth.net - previousMonth.net) / Math.abs(previousMonth.net)) * 100;
             balanceTrend = netChange > 0 ? "up" : netChange < 0 ? "down" : "neutral";
             balanceChange = formatPercentage(netChange);
+            cashFlowTrend = balanceTrend;
+            cashFlowChange = balanceChange;
           }
 
           if (previousMonth.income !== 0) {
@@ -79,6 +101,24 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
             // For expenses, down is good (less spending)
             expenseTrend = expChange > 0 ? "up" : expChange < 0 ? "down" : "neutral";
             expenseChange = formatPercentage(expChange);
+          }
+
+          // Ratio Trend
+          const currentRatio = currentMonth.income > 0 ? (currentMonth.expenses / currentMonth.income) * 100 : 0;
+          const prevRatio = previousMonth.income > 0 ? (previousMonth.expenses / previousMonth.income) * 100 : 0;
+          if (prevRatio !== 0) {
+            const ratioChangeVal = ((currentRatio - prevRatio) / prevRatio) * 100;
+            ratioTrend = ratioChangeVal > 0 ? "up" : ratioChangeVal < 0 ? "down" : "neutral";
+            ratioChange = formatPercentage(ratioChangeVal);
+          }
+
+          // Savings Rate Trend
+          const currentSavings = currentMonth.income > 0 ? ((currentMonth.income - currentMonth.expenses) / currentMonth.income) * 100 : 0;
+          const prevSavings = previousMonth.income > 0 ? ((previousMonth.income - previousMonth.expenses) / previousMonth.income) * 100 : 0;
+          if (prevSavings !== 0) {
+             const savingsChangeVal = ((currentSavings - prevSavings) / Math.abs(prevSavings)) * 100;
+             savingsTrend = savingsChangeVal > 0 ? "up" : savingsChangeVal < 0 ? "down" : "neutral";
+             savingsChange = formatPercentage(savingsChangeVal);
           }
         }
 
@@ -112,6 +152,36 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
             gradient: "from-rose-500/20 to-orange-500/20",
             border: "border-rose-500/20",
             textGradient: "from-rose-400 to-orange-400",
+          },
+          {
+            title: "Net Cash Flow",
+            amount: formatCurrency(stats.netCashFlow),
+            change: cashFlowChange,
+            trend: cashFlowTrend,
+            icon: Coins,
+            gradient: "from-cyan-500/20 to-blue-500/20",
+            border: "border-cyan-500/20",
+            textGradient: "from-cyan-400 to-blue-400",
+          },
+          {
+            title: "Savings Rate",
+            amount: stats.savingsRate.toFixed(1) + "%",
+            change: savingsChange,
+            trend: savingsTrend,
+            icon: PiggyBank,
+            gradient: "from-green-500/20 to-emerald-500/20",
+            border: "border-green-500/20",
+            textGradient: "from-green-400 to-emerald-400",
+          },
+          {
+            title: "Expense-to-Income Ratio",
+            amount: stats.expenseToIncomeRatio.toFixed(1) + "%",
+            change: ratioChange,
+            trend: ratioTrend,
+            icon: Percent,
+            gradient: "from-orange-500/20 to-red-500/20",
+            border: "border-orange-500/20",
+            textGradient: "from-orange-400 to-red-400",
           },
         ];
 
@@ -165,7 +235,8 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
     <div className="grid gap-6 md:grid-cols-3">
       {cards!.map((card, index) => {
         const TrendIcon = card.trend === "up" ? TrendingUp : card.trend === "down" ? TrendingDown : null;
-        const trendColor = card.title === "Expenses"
+        const isBadIfUp = card.title === "Expenses" || card.title === "Expense-to-Income Ratio";
+        const trendColor = isBadIfUp
           ? (card.trend === "down" ? "text-emerald-400" : card.trend === "up" ? "text-rose-400" : "text-muted-foreground")
           : (card.trend === "up" ? "text-emerald-400" : card.trend === "down" ? "text-rose-400" : "text-muted-foreground");
 

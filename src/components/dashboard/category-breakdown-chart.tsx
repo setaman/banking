@@ -2,8 +2,22 @@
 
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "next-themes";
+import {
+  ShoppingBasket,
+  ReceiptText,
+  Home,
+  Bus,
+  Gamepad2,
+  Activity,
+  ShoppingBag,
+  UtensilsCrossed,
+  RefreshCw,
+  ArrowUpRight,
+  Layers,
+  TrendingDown
+} from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { calculateTopCategories } from "@/lib/stats/calculations";
 import type { UnifiedTransaction } from "@/lib/banking/types";
@@ -14,6 +28,20 @@ interface CategoryBreakdownChartProps {
   transactions: UnifiedTransaction[];
   limit?: number;
 }
+
+const categoryIconMap: Record<string, any> = {
+  Groceries: ShoppingBasket,
+  Bills: ReceiptText,
+  Rent: Home,
+  Transport: Bus,
+  Entertainment: Gamepad2,
+  Healthcare: Activity,
+  Shopping: ShoppingBag,
+  Dining: UtensilsCrossed,
+  Subscriptions: RefreshCw,
+  Income: ArrowUpRight,
+  Other: Layers,
+};
 
 // Theme-aware category colors matching Neo-Glass design from globals.css
 // These are approximations of the OKLCH values converted to RGB
@@ -59,12 +87,12 @@ export function CategoryBreakdownChart({
     [transactions, limit],
   );
 
+  const colors = useMemo(() => getCategoryColors(isDark), [isDark]);
+
   const hasData = categoryData.length > 0;
 
   const chartOption = useMemo(() => {
     if (!hasData) return null;
-
-    const colors = getCategoryColors(isDark);
 
     return {
       backgroundColor: "transparent",
@@ -83,109 +111,73 @@ export function CategoryBreakdownChart({
         },
         padding: [8, 12],
         formatter: (params: any) => {
-          const category = params.name;
-          const value = params.value;
-          const percentage = params.percent;
+          const value = new Intl.NumberFormat("de-DE", {
+            style: "currency",
+            currency: "EUR",
+            minimumFractionDigits: 2,
+          }).format(params.value);
+
           return `
             <div style="padding: 4px 0;">
-              <div style="font-weight: 600; margin-bottom: 6px;">${category}</div>
-              <div style="display: flex; justify-content: space-between; gap: 16px; margin-top: 4px;">
-                <span style="color: ${isDark ? "rgba(148, 163, 184, 1)" : "rgba(100, 116, 139, 1)"};">Amount:</span>
-                <span style="font-weight: 600;">€${value.toFixed(2)}</span>
+              <div style="font-weight: 600; margin-bottom: 6px;">${params.name}</div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${params.color};"></span>
+                <span style="flex: 1; opacity: 0.8;">Amount:</span>
+                <span style="font-weight: 600;">${value}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; gap: 16px; margin-top: 4px;">
-                <span style="color: ${isDark ? "rgba(148, 163, 184, 1)" : "rgba(100, 116, 139, 1)"};">Share:</span>
-                <span style="font-weight: 600; color: ${params.color};">${percentage.toFixed(1)}%</span>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent;"></span>
+                <span style="flex: 1; opacity: 0.8;">Share:</span>
+                <span style="font-weight: 600;">${params.percent.toFixed(1)}%</span>
               </div>
             </div>
           `;
         },
       },
       legend: {
-        orient: "vertical",
-        right: "8%",
-        top: "center",
-        textStyle: {
-          color: isDark ? "rgba(226, 232, 240, 1)" : "rgba(100, 116, 139, 1)",
-          fontSize: 12,
-        },
-        itemWidth: 10,
-        itemHeight: 10,
-        itemGap: 14,
-        formatter: (name: string) => {
-          const item = categoryData.find((cat) => cat.category === name);
-          return item ? `${name}  ${item.formatted}` : name;
-        },
+        show: false,
       },
       series: [
         {
-          name: "Spending by Category",
+          name: "Spending",
           type: "pie",
-          radius: ["50%", "75%"],
-          center: ["35%", "50%"],
+          radius: ["60%", "85%"],
+          center: ["50%", "50%"],
           avoidLabelOverlap: true,
           itemStyle: {
-            borderRadius: 2,
-            borderColor: isDark ? "rgba(18, 24, 38, 0.8)" : "rgba(255, 255, 255, 0.8)",
-            borderWidth: 1,
+            borderRadius: 6,
+            borderColor: isDark ? "rgba(18, 24, 38, 1)" : "rgba(255, 255, 255, 1)",
+            borderWidth: 2,
           },
           label: {
             show: false,
           },
           emphasis: {
-            label: {
-              show: true,
-              fontSize: 14,
-              fontWeight: "bold",
-              color: isDark ? "rgba(241, 245, 249, 1)" : "rgba(30, 41, 59, 1)",
-              formatter: "{d}%",
-            },
-            itemStyle: {
-              shadowBlur: 12,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.3)",
-            },
             scale: true,
             scaleSize: 5,
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: "rgba(0, 0, 0, 0.2)",
+            },
           },
-          labelLine: {
-            show: false,
-          },
-          data: categoryData.map((cat, index) => ({
-            value: cat.amount,
-            name: cat.category,
+          data: categoryData.map((item, index) => ({
+            name: item.category,
+            value: item.amount,
             itemStyle: {
               color: colors[index % colors.length],
             },
           })),
-          animationType: "scale",
-          animationEasing: "elasticOut",
-          animationDelay: (idx: number) => idx * 50,
         },
       ],
     };
-  }, [categoryData, hasData, isDark]);
+  }, [hasData, isDark, categoryData, colors]);
 
   if (!hasData) {
     return (
-      <MotionCard
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="flex flex-col h-full"
-      >
-        <CardHeader>
-          <CardTitle>Spending by Category</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex items-center justify-center min-h-[400px]">
-          <div className="text-center text-muted-foreground">
-            <p className="text-lg font-medium">No expense data available</p>
-            <p className="text-sm mt-2">
-              Add transactions to see category breakdown
-            </p>
-          </div>
-        </CardContent>
-      </MotionCard>
+      <Card className="h-[400px] flex flex-col items-center justify-center text-muted-foreground">
+        <TrendingDown className="h-10 w-10 mb-4 opacity-20" />
+        <p>No transaction data available for this period.</p>
+      </Card>
     );
   }
 
@@ -193,35 +185,74 @@ export function CategoryBreakdownChart({
     <MotionCard
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="flex flex-col h-full relative overflow-hidden border-primary/10"
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="overflow-hidden h-full"
     >
-      {/* Gradient background accent */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 opacity-50 pointer-events-none" />
-
-      <CardHeader className="relative z-10">
+      <CardHeader className="flex flex-col gap-2 p-6">
         <CardTitle>Spending by Category</CardTitle>
+        <p className="text-muted-foreground text-sm">
+          Showing top {categoryData.length} categories
+        </p>
       </CardHeader>
 
-      <CardContent className="flex-1 relative z-10 min-h-[400px]">
-        <ReactECharts
-          option={chartOption!}
-          style={{ height: "100%", width: "100%" }}
-          opts={{ renderer: "canvas" }}
-          notMerge={true}
-          lazyUpdate={true}
-        />
-      </CardContent>
+      <CardContent className="p-6 pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-[300px] sm:h-[350px] md:h-[400px]">
+          {/* Chart Section */}
+          <div className="h-full relative">
+            <ReactECharts
+              option={chartOption}
+              style={{ height: "100%", width: "100%" }}
+            />
+            {/* Center Text for Doughnut */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-muted-foreground text-[10px] uppercase tracking-wider font-semibold">Total</span>
+              <span className="text-xl font-bold">
+                €{categoryData.reduce((sum, item) => sum + item.amount, 0).toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          </div>
 
-      {/* Loading state overlay */}
-      {!chartOption && (
-        <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm z-20">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">Loading chart...</p>
+          {/* Legend Section */}
+          <div className="flex flex-col gap-2 h-full overflow-y-auto pr-2 custom-scrollbar">
+            {categoryData.slice(0, limit).map((item, index) => {
+              const Icon = categoryIconMap[item.category] || Layers;
+              const color = colors[index % colors.length];
+
+              return (
+                <motion.div
+                  key={item.category}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default border border-transparent hover:border-border/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="p-1.5 rounded-md"
+                      style={{ backgroundColor: `${color}15` }}
+                    >
+                      <Icon className="h-3.5 w-3.5" style={{ color }} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium">
+                        {item.category}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {item.percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold">
+                      {item.formatted}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
-      )}
+      </CardContent>
     </MotionCard>
   );
 }
