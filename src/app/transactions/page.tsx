@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear, subMonths, subYears } from "date-fns";
 import {
   Search,
   ChevronUp,
@@ -35,17 +35,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { getTransactions } from "@/actions/transactions.actions";
 import { getAccounts } from "@/actions/accounts.actions";
 import { categorizeTransaction, CATEGORIES } from "@/lib/stats/categories";
 import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { cn } from "@/lib/utils";
+import type { DateRangePreset } from "@/hooks/use-date-range";
 
 type SortField = "date" | "description" | "counterparty" | "category" | "amount" | "account";
 type SortDirection = "asc" | "desc";
@@ -58,6 +55,12 @@ function TransactionsPageContent() {
   const [accounts, setAccounts] = useState<UnifiedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const itemsPerPage = 50;
+
+  // add local preset state for the DateRangePicker
+  const [pickerPreset, setPickerPreset] = useState<DateRangePreset>(
+    // default to custom if URL already has dateFrom/dateTo, otherwise allTime (unset)
+    (searchParams.get("dateFrom") || searchParams.get("dateTo")) ? "custom" : "allTime"
+  );
 
   // URL-based state
   const searchQuery = searchParams.get("search") || "";
@@ -80,7 +83,6 @@ function TransactionsPageContent() {
   // Local state for filter inputs
   const [minAmountInput, setMinAmountInput] = useState(minAmount?.toString() || "");
   const [maxAmountInput, setMaxAmountInput] = useState(maxAmount?.toString() || "");
-  const [dateRangeOpen, setDateRangeOpen] = useState(false);
 
   // Helper function to update URL params
   const updateParams = (updates: Record<string, string | undefined>) => {
@@ -294,6 +296,7 @@ function TransactionsPageContent() {
   const clearAllFilters = () => {
     setMinAmountInput("");
     setMaxAmountInput("");
+    setPickerPreset("allTime");
     router.push("/transactions");
   };
 
@@ -360,7 +363,108 @@ function TransactionsPageContent() {
     }
   };
 
-  return (
+  // NOTE: we intentionally avoid forcing pickerPreset from URL on every searchParams change
+  // Initial state is already derived from search params; when the user picks a preset we set
+  // the local pickerPreset and update the URL. When clearing filters we reset to the default.
+
+    // Compute the range to pass into the DateRangePicker: prefer URL values, otherwise derive from the selected preset
+    const pickerRange = useMemo(() => {
+    if (dateFrom || dateTo) {
+      return {
+        from: dateFrom ? new Date(dateFrom) : new Date(),
+        to: dateTo ? new Date(dateTo) : new Date(),
+      };
+    }
+
+    const now = new Date();
+    switch (pickerPreset) {
+      case "last7days":
+        return { from: subDays(now, 7), to: now };
+      case "last30days":
+        return { from: subDays(now, 30), to: now };
+      case "thisMonth":
+        return { from: startOfMonth(now), to: endOfMonth(now) };
+      case "lastMonth": {
+        const lastMonth = subMonths(now, 1);
+        return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+      }
+      case "thisYear":
+        return { from: startOfYear(now), to: endOfYear(now) };
+      case "lastYear": {
+        const lastYear = subYears(now, 1);
+        return { from: startOfYear(lastYear), to: endOfYear(lastYear) };
+      }
+      case "allTime":
+        // 'All Time' represents no active date filter; DateRangePicker shows the preset label
+        return { from: now, to: now };
+      default:
+        // If no preset chosen, default to a neutral same-day range (picker will show preset label if not custom)
+        return { from: now, to: now };
+    }
+    }, [dateFrom, dateTo, pickerPreset]);
+
+    // localRange mirrors pickerRange but updates immediately when user picks a preset/custom range
+    const [localRange, setLocalRange] = useState(pickerRange);
+
+    // sync localRange whenever derived pickerRange changes (e.g., after navigation completes)
+    useEffect(() => {
+    setLocalRange(pickerRange);
+    }, [pickerRange.from.getTime(), pickerRange.to.getTime()]);
+
+    // Map preset -> actual from/to dates and update URL
+    const handlePresetChange = (preset: DateRangePreset) => {
+    const now = new Date();
+    let from: Date | undefined = undefined;
+    let to: Date | undefined = undefined;
+
+    switch (preset) {
+      case "last7days":
+        from = subDays(now, 7);
+        to = now;
+        break;
+      case "last30days":
+        from = subDays(now, 30);
+        to = now;
+        break;
+      case "thisMonth":
+        from = startOfMonth(now);
+        to = endOfMonth(now);
+        break;
+      case "lastMonth": {
+        const lastMonth = subMonths(now, 1);
+        from = startOfMonth(lastMonth);
+        to = endOfMonth(lastMonth);
+        break;
+      }
+      case "thisYear":
+        from = startOfYear(now);
+        to = endOfYear(now);
+        break;
+      case "lastYear": {
+        const lastYear = subYears(now, 1);
+        from = startOfYear(lastYear);
+        to = endOfYear(lastYear);
+        break;
+      }
+      case "allTime":
+        // 'All Time' should clear the date filters (no dateFrom/dateTo in URL)
+        from = undefined;
+        to = undefined;
+        break;
+      default:
+        from = undefined;
+        to = undefined;
+    }
+
+    // update local picker preset so the picker shows the selected preset label
+    setPickerPreset(preset);
+    // update localRange immediately so the picker updates without waiting for router push
+    setLocalRange({ from: from || new Date(), to: to || new Date() });
+
+    handleDateRangeChange(from, to);
+    };
+
+    return (
     <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
       <div className="flex flex-col gap-2">
@@ -494,47 +598,21 @@ function TransactionsPageContent() {
                 </PopoverContent>
               </Popover>
 
-              {/* Date Range Filter */}
-              <Popover open={dateRangeOpen} onOpenChange={setDateRangeOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      "bg-card/50 backdrop-blur-xl border-white/10 dark:border-white/5",
-                      "hover:bg-card/70 hover:border-primary/20",
-                      "transition-all duration-200",
-                      (dateFrom || dateTo) && "border-primary/30"
-                    )}
-                  >
-                    <Filter className="mr-2 h-4 w-4 text-primary" />
-                    {dateFrom && dateTo
-                      ? `${format(new Date(dateFrom), "MMM dd")} - ${format(new Date(dateTo), "MMM dd")}`
-                      : "Date Range"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className={cn(
-                    "w-auto p-4",
-                    "bg-card/95 backdrop-blur-xl border-white/10 dark:border-white/5",
-                    "shadow-xl shadow-primary/5"
-                  )}
-                  align="start"
-                >
-                  <DateRangePicker
-                    range={{
-                      from: dateFrom ? new Date(dateFrom) : new Date(),
-                      to: dateTo ? new Date(dateTo) : new Date(),
-                    }}
-                    preset="custom"
-                    onPresetChange={() => { }}
-                    onCustomRangeChange={(range) => {
-                      handleDateRangeChange(range.from, range.to);
-                      setDateRangeOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+              {/* Date Range Filter - render the dashboard picker directly (it manages its own popover) */}
+              <div>
+                <DateRangePicker
+                  range={localRange}
+                  preset={pickerPreset}
+                  onPresetChange={handlePresetChange}
+                  onCustomRangeChange={(range) => {
+                    // update localRange immediately and mark as custom
+                    setLocalRange({ from: range.from || new Date(), to: range.to || new Date() });
+                    setPickerPreset("custom");
+                    handleDateRangeChange(range.from, range.to);
+                    // Do not close anything here; the picker keeps the popover open for adjustments
+                  }}
+                />
+              </div>
 
               {/* Amount Range Filter */}
               <Popover>
