@@ -7,7 +7,7 @@
 
 ## Authentication
 
-**Method:** Session Cookies + CSRF Token (from DKB webapp)
+**Method:** Session Cookies (from DKB webapp)
 
 The DKB API requires session credentials obtained by reverse-engineering the main DKB web app via browser DevTools.
 
@@ -17,25 +17,21 @@ The DKB API requires session credentials obtained by reverse-engineering the mai
    - Example: `_SI_VID_1.a3b974920e00011b510a49bb=d2c284950b656d2c00ecc5ab; wtstp_eid=2176876632097778123; UC_NT=false; ...`
    - Contains multiple session identifiers
 
-2. **x-xsrf-token** - CSRF token from DKB webapp
-   - Example: `df9888bb-ec06-...`
-   - Protects against cross-site request forgery
+**Note:** The X-XSRF-TOKEN / CSRF header is not required for the API calls used by this project; only the `Cookie` header is necessary.
 
 **User Setup:**
 1. Open DKB webapp in browser and log in
 2. Open DevTools (F12) → Network tab
 3. Make any API call (fetch accounts, transactions, etc.)
 4. Copy the `Cookie` header value
-5. Copy the `x-xsrf-token` header value
-6. Paste both into `banking.config.json` (see example below)
+5. Paste it into `banking.config.json` (see example below)
 
 **Config Format:**
 
 ```json
 {
   "dkb": {
-    "cookie": "_SI_VID_1.a3b974920e00011b510a49bb=d2c284950b656d2c00ecc5ab; wtstp_eid=2176876632097778123; ...",
-    "xsrfToken": "df9888bb-ec06-..."
+    "cookie": "_SI_VID_1.a3b974920e00011b510a49bb=d2c284950b656d2c00ecc5ab; wtstp_eid=2176876632097778123; ..."
   }
 }
 ```
@@ -125,7 +121,7 @@ The DKB API requires session credentials obtained by reverse-engineering the mai
 
 ### 2. Transactions for Account
 
-**Endpoint:** `GET /accounts/accounts/{accountId}/transactions?expand=Merchant&page[size]=25`
+**Endpoint:** `GET /accounts/accounts/{accountId}/transactions?expand=Merchant` (do NOT set `page[size]` when attempting multi-year or full syncs)
 
 **Description:** Fetch transactions for a specific account with pagination.
 
@@ -134,14 +130,36 @@ The DKB API requires session credentials obtained by reverse-engineering the mai
 
 **Query Parameters:**
 - `expand=Merchant` - Include merchant information in response
-- `page[size]=25` - Items per page (default/recommended: 25)
 - `page[after]=<cursor>` - Pagination cursor from previous response (optional, for fetching next page)
+- `filter[bookingDate][GE]=YYYY-MM-DD` - Optional booking date lower bound
+- `filter[bookingDate][LE]=YYYY-MM-DD` - Optional booking date upper bound
+
+**Important:**
+- Do NOT include `page[size]` when performing year-by-year or multi-year initial syncs — setting `page[size]` can cause the API to return empty responses beyond the 2-year default window.
 
 **Pagination:**
 - Response includes `meta.page.next` with cursor value
 - Use `page[after]=<cursor>` to fetch next page
 - Cursor format: `YYYY-MM-DD,YYYY-MM-DD-HH.MM.SS.milliseconds`
 - Iterate until `meta.page.next` is absent
+
+**Initial sync strategy (recommended):**
+- The DKB API only returns up to the most recent 2 years by default when requesting transactions without an explicit booking date range. To reliably sync all historical data, request transactions one calendar year at a time.
+
+Algorithm:
+1. Start with the current year (e.g., today is 2026-01-25 → first range `2026-01-01` to `2026-12-31`).
+2. For each year, request `GET /accounts/accounts/{id}/transactions?expand=Merchant&filter[bookingDate][GE]={year}-01-01&filter[bookingDate][LE]={year}-12-31`.
+3. Follow pagination within that year using `page[after]=<cursor>` while `meta.page.next` is present.
+4. If a year returns zero transactions, stop — we've reached the beginning of available data.
+5. Continue to previous years until an empty year is encountered or a configured maximum lookback is reached (recommended default max: 30 years).
+
+**Example:**
+```
+Year 2026: GET /accounts/accounts/{id}/transactions?expand=Merchant&filter[bookingDate][GE]=2026-01-01&filter[bookingDate][LE]=2026-12-31
+  -> Follow meta.page.next pages until exhausted
+If non-empty, proceed to Year 2025: ...
+Stop when a year returns zero transactions
+```
 
 **Response Schema:**
 

@@ -39,10 +39,37 @@ export const dkbAdapter: BankAdapter = {
       ? accountId.slice(4)
       : accountId;
 
-    const dkbTransactions = await fetchDkbTransactions(
-      externalAccountId,
-      credentials,
-    );
+    let dkbTransactions: DkbTransaction[] = [];
+
+    // Helper: format YYYY-MM-DD
+    const formatDate = (y: number, m: number, d: number) =>
+      new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10);
+
+    if (since) {
+      // Subsequent sync: fetch from last sync date until today
+      const from = since.toISOString().slice(0, 10);
+      const to = new Date().toISOString().slice(0, 10);
+      dkbTransactions = await fetchDkbTransactions(externalAccountId, credentials, { from, to });
+    } else {
+      // Initial sync: fetch per calendar year starting with current year and going back until an empty year
+      const currentYear = new Date().getUTCFullYear();
+      const MAX_YEARS = 30; // safety cap
+
+      for (let offset = 0; offset < MAX_YEARS; offset++) {
+        const year = currentYear - offset;
+        const from = `${year}-01-01`;
+        const to = `${year}-12-31`;
+
+        const yearTx = await fetchDkbTransactions(externalAccountId, credentials, { from, to });
+
+        if (!yearTx || yearTx.length === 0) {
+          // Stop on first empty year per spec
+          break;
+        }
+
+        dkbTransactions.push(...yearTx);
+      }
+    }
 
     // Map all transactions to unified format
     const mappedTransactions = dkbTransactions.map((tx) =>

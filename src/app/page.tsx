@@ -60,15 +60,35 @@ export default function Home() {
       setLoading(true);
       setError(null);
 
-      // Build filters
+      // Build filters. If preset is 'allTime', omit date filters to fetch all transactions
+      const isAllTime = preset === "allTime";
       const filters = {
-        startDate,
-        endDate,
+        ...(isAllTime ? {} : { startDate, endDate }),
         ...(selectedAccountId !== "all" && { accountId: selectedAccountId }),
       };
 
-      // Fetch transactions with filters
-      const transactionsData = await getTransactions(filters);
+      // Fetch transactions with filters, excluding internal transfers by default
+      const transactionsData = await getTransactions(filters, { excludeInternal: true });
+
+      // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
+      if (isAllTime && transactionsData && transactionsData.length > 0) {
+        // Compute min/max bookingDate or date
+        const dates = transactionsData
+          .map((t) => t.bookingDate || t.date)
+          .filter(Boolean)
+          .map((d) => new Date(d));
+
+        if (dates.length > 0) {
+          const min = new Date(Math.min(...dates.map((d) => d.getTime())));
+          const max = new Date(Math.max(...dates.map((d) => d.getTime())));
+          // Only update if dates are valid
+          if (!isNaN(min.getTime()) && !isNaN(max.getTime())) {
+            setCustomRange({ from: min, to: max });
+          }
+        }
+      }
+
+      // Set transactions
       setTransactions(transactionsData);
     } catch (err) {
       console.error("Failed to fetch transactions:", err);

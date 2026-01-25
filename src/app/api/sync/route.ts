@@ -42,7 +42,6 @@ export async function POST() {
     // Prepare credentials
     const credentials: BankCredentials = {
       cookie: config.dkb.cookie,
-      xsrfToken: config.dkb.xsrfToken,
     };
 
     // Execute sync

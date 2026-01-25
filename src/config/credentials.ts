@@ -6,7 +6,7 @@ const CONFIG_PATH = join(process.cwd(), "banking.config.json");
 
 const BankCredentialSchema = z.object({
   cookie: z.string(),
-  xsrfToken: z.string(),
+  xsrfToken: z.string().optional(),
 });
 
 const ConfigSchema = z.object({

@@ -98,13 +98,12 @@ To sync real data from your DKB account:
 
 #### Step 1: Extract Session Credentials
 
-1. Open [https://banking.dkb.de](https://banking.dkb.de) in your browser and log in
+1. Open https://banking.dkb.de in your browser and log in
 2. Open DevTools (F12) → Network tab
 3. Refresh the page or click on any account
 4. Find any API request to `banking.dkb.de/api/accounts/`
 5. Click on the request → Headers tab
 6. Copy the **Cookie** header value (full string)
-7. Copy the **x-xsrf-token** header value
 
 #### Step 2: Create Configuration File
 
@@ -113,8 +112,7 @@ Create a file named `banking.config.json` in the project root (do NOT commit thi
 ```json
 {
   "dkb": {
-    "cookie": "YOUR_COOKIE_STRING_HERE",
-    "xsrfToken": "YOUR_XSRF_TOKEN_HERE"
+    "cookie": "YOUR_COOKIE_STRING_HERE"
   }
 }
 ```
@@ -124,8 +122,7 @@ Create a file named `banking.config.json` in the project root (do NOT commit thi
 ```json
 {
   "dkb": {
-    "cookie": "_SI_VID_1.a3b974920e00011b510a49bb=...; wtstp_eid=...; ...",
-    "xsrfToken": "df9888bb-ec06-4a9c-8f1c-..."
+    "cookie": "_SI_VID_1.a3b974920e00011b510a49bb=...; wtstp_eid=...; ..."
   }
 }
 ```
@@ -201,8 +198,8 @@ banking/
 
 The project uses TypeScript path aliases for cleaner imports:
 
-```typescript
-"@/*" → "./src/*"
+```text
+"@/*" -> "./src/*"
 ```
 
 Example:

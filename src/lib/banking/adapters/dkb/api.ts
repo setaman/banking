@@ -5,7 +5,7 @@ import type { BankCredentials } from "../../types";
  * DKB API Client
  *
  * Provides functions to interact with DKB Banking API endpoints.
- * Requires session cookies and CSRF token from DKB webapp.
+ * Requires session cookies from DKB webapp. X-XSRF-TOKEN / CSRF header is not required for these API calls.
  *
  * Base URL: https://banking.dkb.de/api
  */
@@ -205,7 +205,6 @@ export class DkbNetworkError extends DkbApiError {
 function buildHeaders(credentials: BankCredentials): HeadersInit {
   return {
     Cookie: credentials.cookie,
-    "x-xsrf-token": credentials.xsrfToken,
     Accept: "application/json, text/plain, */*",
   };
 }
@@ -242,6 +241,8 @@ async function fetchWithErrorHandling(
     } catch {
       errorBody = await response.text();
     }
+
+    console.log(errorBody)
 
     throw new DkbApiError(
       `DKB API request failed: HTTP ${response.status} ${response.statusText}`,
@@ -305,6 +306,8 @@ export async function fetchDkbAccounts(
 export async function fetchDkbTransactions(
   accountId: string,
   credentials: BankCredentials,
+  // Optional date range to restrict transactions (ISO date strings: YYYY-MM-DD)
+  range?: { from?: string; to?: string },
 ): Promise<DkbTransaction[]> {
   const allTransactions: DkbTransaction[] = [];
   let nextCursor: string | undefined;
@@ -314,12 +317,21 @@ export async function fetchDkbTransactions(
   do {
     pageCount++;
 
-    // Build URL with pagination
-    const params = new URLSearchParams({
-      expand: "Merchant",
-      "page[size]": "25",
-    });
+    // Build URL with pagination and optional date filters
+    const params = new URLSearchParams();
 
+    // Always request expanded merchant info
+    params.set("expand", "Merchant");
+
+    // Apply optional booking date filters when provided. Use bookingDate for analytics and grouping.
+    if (range?.from) {
+      params.set("filter[bookingDate][GE]", range.from);
+    }
+    if (range?.to) {
+      params.set("filter[bookingDate][LE]", range.to);
+    }
+
+    // Follow pagination cursor when present
     if (nextCursor) {
       params.set("page[after]", nextCursor);
     }

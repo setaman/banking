@@ -67,7 +67,7 @@ export type Institution = z.infer<typeof InstitutionSchema>;
 
 export interface BankCredentials {
   cookie: string;
-  xsrfToken: string;
+  xsrfToken?: string;
 }
 
 export interface BankAdapter {

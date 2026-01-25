@@ -68,7 +68,9 @@ export async function getTransactions(
   }
 
   if (options?.excludeInternal) {
-    transactions = transactions.filter((t) => t.category !== "internal-transfer");
+    transactions = transactions.filter((t) =>
+      t.category !== "internal-transfer" && !(t.raw && (t.raw as any).__internalTransfer),
+    );
   }
 
   return transactions.sort((a, b) => b.date.localeCompare(a.date));
