@@ -6,6 +6,7 @@ import type {
   UnifiedTransaction,
 } from "@/lib/banking/types";
 import { fetchDkbAccounts, fetchDkbTransactions } from "./api";
+import type { DkbTransaction } from "./api";
 import { mapDkbAccount, mapDkbTransaction, mapDkbBalance } from "./mapper";
 
 /**

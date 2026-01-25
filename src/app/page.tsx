@@ -70,6 +70,8 @@ export default function Home() {
       // Fetch transactions with filters, excluding internal transfers by default
       const transactionsData = await getTransactions(filters, { excludeInternal: true });
 
+      console.log(transactionsData);
+
       // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
       if (isAllTime && transactionsData && transactionsData.length > 0) {
         // Compute min/max bookingDate or date

@@ -23,6 +23,8 @@ export const UnifiedAccountSchema = z.object({
   type: AccountType,
   currency: z.string().default("EUR"),
   iban: z.string().optional(),
+  // Optional holder name (populated by some adapters like DKB)
+  holderName: z.string().optional(),
   lastSyncedAt: z.string().datetime().optional(),
 });
 export type UnifiedAccount = z.infer<typeof UnifiedAccountSchema>;

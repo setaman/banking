@@ -64,7 +64,7 @@ export default function InsightsPage() {
       try {
         setLoading(true);
         const [txData, balanceData] = await Promise.all([
-          getTransactions(),
+          getTransactions(undefined, { excludeInternal: true }),
           getTotalBalance(),
         ]);
         setTransactions(txData);

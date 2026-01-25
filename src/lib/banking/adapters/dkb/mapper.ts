@@ -115,6 +115,8 @@ export function mapDkbAccount(
     type: mapAccountType(attributes.product.type),
     currency: attributes.currencyCode,
     iban: attributes.iban,
+    // include holderName so sync can use it for internal transfer detection
+    holderName: attributes.holderName,
   };
 }
 

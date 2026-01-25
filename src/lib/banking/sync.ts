@@ -4,6 +4,7 @@ import type {
   BankCredentials,
   SyncMetadata,
   UnifiedTransaction,
+  UnifiedAccount,
 } from "@/lib/banking/types";
 import { createTransactionId } from "@/lib/banking/utils";
 
@@ -26,6 +27,8 @@ export async function syncBank(
     // Build lookup maps for owned account identifiers (IBAN and accountNr)
     const ownAccountIdsByIban = new Map<string, string>();
     const ownAccountIdsByAccountNr = new Map<string, string>();
+    // Build holder name lookup for name-based detection (normalized lowercase)
+    const holderNameToAccountIds = new Map<string, string[]>();
 
     for (const acc of accounts) {
       // acc.iban may be present on attributes
@@ -50,6 +53,15 @@ export async function syncBank(
       const possibleAccountNr = (acc as any).accountNumber || (acc as any).accountNr;
       if (possibleAccountNr) {
         ownAccountIdsByAccountNr.set(String(possibleAccountNr), acc.id);
+      }
+
+      // Holder name mapping (normalize: trim + collapse spaces + lowercase)
+      const holderName = (acc as any).holderName || (acc as any).name || undefined;
+      if (holderName) {
+        const n = String(holderName).replace(/\s+/g, " ").trim().toLowerCase();
+        const existing = holderNameToAccountIds.get(n) || [];
+        existing.push(acc.id);
+        holderNameToAccountIds.set(n, existing);
       }
     }
 
@@ -98,7 +110,7 @@ export async function syncBank(
       // Helper: detect and tag internal transfers using raw attributes from DKB
       function detectAndTagInternalTransfer(
         tx: UnifiedTransaction,
-        currentAccountId: string,
+        currentAccount: UnifiedAccount,
       ): boolean {
         try {
           if (!TAG_INTERNAL_TRANSFERS) return false;
@@ -107,37 +119,20 @@ export async function syncBank(
           const attrs = raw?.attributes;
           if (!attrs) return false;
 
-          const creditorAccount = attrs.creditor?.creditorAccount;
-          const debtorAccount = attrs.debtor?.debtorAccount;
+          // Simplified logic: consider it an internal transfer if both creditor and debtor names
+          // exactly match the current account's holder name (or account.name) after normalization.
+          const credName = attrs.creditor?.name;
+          const debName = attrs.debtor?.name;
+          if (!credName || !debName) return false;
 
-          // If either side missing account identifiers, do not tag (Option C)
-          if (!creditorAccount?.iban && !creditorAccount?.accountNr) return false;
-          if (!debtorAccount?.iban && !debtorAccount?.accountNr) return false;
+          const normalize = (s: string) => String(s).replace(/\s+/g, " ").trim().toLowerCase();
 
-          // Normalize
-          const credIban = creditorAccount?.iban
-            ? String(creditorAccount.iban).replace(/\s+/g, "").toUpperCase()
-            : undefined;
-          const debIban = debtorAccount?.iban
-            ? String(debtorAccount.iban).replace(/\s+/g, "").toUpperCase()
-            : undefined;
-          const credAcctNr = creditorAccount?.accountNr || creditorAccount?.accountNumber;
-          const debAcctNr = debtorAccount?.accountNr || debtorAccount?.accountNumber;
+          const acctHolder = (currentAccount as any).holderName || currentAccount.name || "";
+          const nAcct = normalize(acctHolder);
+          const nCred = normalize(credName);
+          const nDeb = normalize(debName);
 
-          const credOwnerId = credIban
-            ? ownAccountIdsByIban.get(credIban)
-            : credAcctNr
-            ? ownAccountIdsByAccountNr.get(String(credAcctNr))
-            : undefined;
-          const debOwnerId = debIban
-            ? ownAccountIdsByIban.get(debIban)
-            : debAcctNr
-            ? ownAccountIdsByAccountNr.get(String(debAcctNr))
-            : undefined;
-
-          // Both sides must resolve to owned accounts and not be the same account as current
-          if (credOwnerId && debOwnerId) {
-            // Mark transaction as internal transfer
+          if (nCred === nAcct && nDeb === nAcct) {
             tx.category = tx.category || "internal-transfer";
             tx.raw = { ...tx.raw, __internalTransfer: true } as Record<string, unknown>;
             return true;
@@ -163,7 +158,7 @@ export async function syncBank(
         }
 
         // Detect and tag internal transfers using raw attributes
-        detectAndTagInternalTransfer(tx, account.id);
+        detectAndTagInternalTransfer(tx, account);
 
         db.data.transactions.push(tx);
       }
