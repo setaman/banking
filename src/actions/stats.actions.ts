@@ -30,7 +30,8 @@ export async function getDashboardStats(
   filters?: TransactionFilters,
 ): Promise<DashboardStats> {
   const [transactions, totalBalance] = await Promise.all([
-    getTransactions(filters),
+    // Exclude internal transfers from KPI calculations by default
+    getTransactions(filters, { excludeInternal: true }),
     getTotalBalance(),
   ]);
 

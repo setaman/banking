@@ -51,7 +51,7 @@ export const DkbTransactionResponseSchema = z.object({
     status: z.string(), // "booked", "pending"
     bookingDate: z.string(), // YYYY-MM-DD
     valueDate: z.string(), // YYYY-MM-DD
-    description: z.string(),
+    description: z.string().optional(),
     endToEndId: z.string().optional(),
     transactionType: z.string().optional(), // e.g. "KARTENZAHLUNG", "UEBERWEISUNG"
     transactionTypeCode: z.string().optional(),
@@ -138,7 +138,7 @@ export function mapDkbTransaction(
     bookingDate: attributes.bookingDate,
     amount,
     currency: attributes.amount.currencyCode,
-    description: attributes.description,
+    description: attributes.description ?? "",
     counterparty,
     direction: isDebit ? "debit" : "credit",
     raw: raw as unknown as Record<string, unknown>,

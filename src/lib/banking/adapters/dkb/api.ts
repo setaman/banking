@@ -126,7 +126,7 @@ const DkbTransactionAttributesSchema = z.object({
   status: z.string(),
   bookingDate: z.string(),
   valueDate: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   endToEndId: z.string().optional(),
   transactionType: z.string().optional(),
   transactionTypeCode: z.string().optional(),
@@ -206,8 +206,7 @@ function buildHeaders(credentials: BankCredentials): HeadersInit {
   return {
     Cookie: credentials.cookie,
     "x-xsrf-token": credentials.xsrfToken,
-    Accept: "application/json",
-    "Content-Type": "application/json",
+    Accept: "application/json, text/plain, */*",
   };
 }
 

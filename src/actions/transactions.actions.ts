@@ -14,8 +14,13 @@ export interface TransactionFilters {
   search?: string;
 }
 
+export interface GetTransactionsOptions {
+  excludeInternal?: boolean; // if true, filter out transactions with category 'internal-transfer'
+}
+
 export async function getTransactions(
   filters?: TransactionFilters,
+  options?: GetTransactionsOptions,
 ): Promise<UnifiedTransaction[]> {
   const db = await getDb();
   let transactions = [...db.data.transactions];
@@ -62,12 +67,17 @@ export async function getTransactions(
     }
   }
 
+  if (options?.excludeInternal) {
+    transactions = transactions.filter((t) => t.category !== "internal-transfer");
+  }
+
   return transactions.sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export async function getTransactionCount(
   filters?: TransactionFilters,
+  options?: GetTransactionsOptions,
 ): Promise<number> {
-  const transactions = await getTransactions(filters);
+  const transactions = await getTransactions(filters, options);
   return transactions.length;
 }

@@ -1,51 +1,58 @@
 # BanKing
 
-A personal banking application for importing and analyzing financial transactions from German bank CSV exports.
-
-> **Note:** This is a fresh rebuild from Next.js 14 to Next.js 16. Banking features (CSV import, database, statistics) will be implemented in upcoming iterations.
+A personal banking application for importing and analyzing financial transactions from German bank accounts. Built with Next.js 16 for local-first data management with zero cloud dependency.
 
 ## Overview
 
-BanKing helps you manage and analyze your personal finances by importing transaction data from German banks. The app currently supports DKB and Deutsche Bank CSV formats, with plans to add more institutions.
+BanKing helps you manage and analyze your personal finances by connecting directly to your bank's API (currently DKB) to import transactions automatically. All data is stored locally on your machine with no external transmission.
 
 ## Features
 
-### Current (v0.1.0)
+### Core Functionality
 
-- Modern UI foundation with shadcn/ui components
-- Dark/light theme support with system preference detection
-- Responsive layout with header and footer
-- Type-safe development with TypeScript strict mode
+- **DKB API Integration**: Direct connection to DKB banking API for automatic transaction sync
+- **Multi-Account Support**: Manage multiple bank accounts in one dashboard
+- **Local Data Storage**: File-based database (LowDB) with SHA256 deduplication
+- **Interactive Dashboard**: Real-time balance history, income vs expenses, spending categories
+- **Advanced Filtering**: Filter transactions by date range, account, category, amount, and search
+- **Transaction Management**: Full table view with sorting, pagination, and export-ready data
+- **Financial Insights**: 17 KPI metrics including savings rate, burn rate, cash flow analysis
+- **Demo Mode**: Test the app with realistic sample data before connecting your bank
+- **Automatic Categorization**: Smart transaction categorization into 11 categories
 
-## Design & UI: Neo-Glass Theme
+### Design & UI: Neo-Glass Theme
 
-The application features a custom "Neo-Glass" aesthetic designed to feel premium and modern.
+The application features a custom "Neo-Glass" aesthetic designed to feel premium and modern:
 
-- **Dark Mode**: Deep midnight blue (`oklch(0.12 0.04 260)`) with neon accents and frosted glass cards.
-- **Light Mode**: Clean pearlescent white (`oklch(0.98 0.01 240)`) with soft, colorful shadows.
-- **Glassmorphism**: Extensive use of `backdrop-filter: blur()`, semi-transparent backgrounds, and subtle borders to create depth.
-- **Animations**: Smooth entry animations using Framer Motion.
-
-### Planned
-
-- CSV import for DKB and Deutsche Bank transactions
-- Transaction deduplication using SHA256 hashing
-- Interactive dashboard with financial statistics
-- Income/expense analysis and visualization
-- Transaction categorization and filtering
-- Multiple bank account management
+- **Dark Mode**: Deep midnight blue (`oklch(0.12 0.04 260)`) with neon accents and frosted glass cards
+- **Light Mode**: Clean pearlescent white (`oklch(0.98 0.01 240)`) with soft, colorful shadows
+- **Glassmorphism**: Extensive use of `backdrop-filter: blur()`, semi-transparent backgrounds, and subtle borders
+- **Animations**: Smooth entry animations using Framer Motion
+- **Responsive**: Mobile-first design from 320px to 1920px viewports
 
 ## Tech Stack
 
-- **Framework:** Next.js 16.1.4 (App Router)
+### Core Framework
+- **Framework:** Next.js 16.1.4 (App Router, React 19)
 - **React:** 19.2.3
-- **TypeScript:** 5.x (strict mode)
-- **Styling:** Tailwind CSS 4 with custom theme configuration
-- **UI Components:** shadcn/ui (Radix UI primitives)
+- **TypeScript:** 5.x (strict mode enabled)
+- **Node.js:** 20.x or later
+
+### UI & Styling
+- **Styling:** Tailwind CSS 4 with PostCSS integration
+- **Components:** shadcn/ui (Radix UI primitives)
 - **Icons:** Lucide React
-- **Animations:** Motion (Framer Motion successor)
-- **Theme:** next-themes for dark mode support
-- **Fonts:** Geist Sans & Geist Mono (optimized via next/font)
+- **Animations:** Motion (Framer Motion v12)
+- **Theme:** next-themes with OKLCH color space
+- **Fonts:** Geist Sans & Geist Mono (next/font)
+
+### Data & Backend
+- **Database:** LowDB (file-based JSON storage)
+- **Validation:** Zod (runtime schema validation)
+- **Charts:** ECharts + echarts-for-react
+- **Dates:** date-fns (date manipulation)
+- **Currency:** Intl.NumberFormat (EUR formatting)
+- **Banking API:** DKB REST API with cookie + CSRF auth
 
 ## Getting Started
 
@@ -53,6 +60,7 @@ The application features a custom "Neo-Glass" aesthetic designed to feel premium
 
 - Node.js 20.x or later
 - npm, yarn, pnpm, or bun
+- DKB bank account (for live data sync) or use demo mode
 
 ### Installation
 
@@ -75,12 +83,71 @@ npm install
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Option 1: Use Demo Mode (Recommended for First-Time Users)
+
+1. Open [http://localhost:3000](http://localhost:3000) in your browser
+2. Toggle **Demo Mode** in the header (flask icon with switch)
+3. Sample data with 6 months of realistic transactions will be generated automatically
+4. Explore all features with demo data
+
+### Option 2: Connect Your DKB Account
+
+To sync real data from your DKB account:
+
+#### Step 1: Extract Session Credentials
+
+1. Open [https://banking.dkb.de](https://banking.dkb.de) in your browser and log in
+2. Open DevTools (F12) → Network tab
+3. Refresh the page or click on any account
+4. Find any API request to `banking.dkb.de/api/accounts/`
+5. Click on the request → Headers tab
+6. Copy the **Cookie** header value (full string)
+7. Copy the **x-xsrf-token** header value
+
+#### Step 2: Create Configuration File
+
+Create a file named `banking.config.json` in the project root (do NOT commit this file):
+
+```json
+{
+  "dkb": {
+    "cookie": "YOUR_COOKIE_STRING_HERE",
+    "xsrfToken": "YOUR_XSRF_TOKEN_HERE"
+  }
+}
+```
+
+**Example:**
+
+```json
+{
+  "dkb": {
+    "cookie": "_SI_VID_1.a3b974920e00011b510a49bb=...; wtstp_eid=...; ...",
+    "xsrfToken": "df9888bb-ec06-4a9c-8f1c-..."
+  }
+}
+```
+
+See `docs/samples/banking.config.example.json` for a template.
+
+#### Step 3: Trigger Sync
+
+Make sure the dev server is running, then trigger a sync:
+
+```bash
+curl -X POST http://localhost:3000/api/sync
+```
+
+Your data will be imported and stored locally in `/data/db.json`. Refresh the dashboard to see your real transactions.
+
+**Note:** DKB session credentials expire after 15-30 minutes of inactivity. When you get authentication errors, repeat Step 1 to extract fresh credentials.
 
 ### Development Commands
 
 ```bash
-npm run dev      # Start development server
+npm run dev      # Start development server (localhost:3000)
 npm run build    # Build for production
 npm run start    # Start production server
 npm run lint     # Run ESLint
@@ -91,34 +158,41 @@ npm run lint     # Run ESLint
 ```
 banking/
 ├── src/
-│   ├── app/                    # Next.js App Router pages
+│   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # Root layout with theme provider
-│   │   ├── page.tsx            # Home page
-│   │   ├── globals.css         # Global styles and theme variables
-│   │   └── favicon.ico         # App icon
+│   │   ├── page.tsx            # Dashboard with charts and KPIs
+│   │   ├── globals.css         # Theme variables + Tailwind
+│   │   ├── transactions/       # Transactions table with filters
+│   │   ├── insights/           # Financial insights and analytics
+│   │   └── api/sync/           # DKB sync API endpoint
 │   ├── components/
-│   │   ├── ui/                 # shadcn/ui components
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── dropdown-menu.tsx
-│   │   │   ├── input.tsx
-│   │   │   ├── label.tsx
-│   │   │   └── table.tsx
-│   │   ├── layout/             # Layout components
-│   │   │   ├── header.tsx      # App header with navigation
-│   │   │   ├── nav.tsx         # Navigation component
-│   │   │   └── footer.tsx      # App footer
+│   │   ├── ui/                 # shadcn/ui components (15+)
+│   │   ├── layout/             # Header, Nav, Footer
+│   │   ├── dashboard/          # Charts and KPI cards
 │   │   ├── theme-provider.tsx  # next-themes wrapper
 │   │   └── theme-toggle.tsx    # Dark/light mode toggle
-│   └── lib/
-│       └── utils.ts            # Utility functions (cn helper)
-├── .claude/                    # Claude Code agents configuration
+│   ├── actions/                # Server actions
+│   │   ├── accounts.actions.ts # Account queries
+│   │   ├── transactions.actions.ts # Transaction queries
+│   │   ├── stats.actions.ts    # KPI calculations
+│   │   └── sync.actions.ts     # DKB sync orchestration
+│   ├── lib/
+│   │   ├── db/                 # LowDB database layer
+│   │   ├── banking/            # Banking adapters and sync
+│   │   │   └── adapters/dkb/   # DKB API client
+│   │   ├── stats/              # Statistics calculations
+│   │   └── utils.ts            # Utility functions
+│   └── contexts/               # React contexts
+├── docs/                       # Documentation
+│   ├── PROJECT-STATE.md        # Current state checkpoint
+│   ├── PRD.md                  # Product requirements
+│   ├── DKB-API-SPEC.md         # DKB API docs
+│   └── samples/                # Sample API responses
+├── data/                       # Local database (gitignored)
 ├── next.config.ts              # Next.js configuration
 ├── tsconfig.json               # TypeScript configuration
 ├── eslint.config.mjs           # ESLint configuration
-├── postcss.config.mjs          # PostCSS configuration
-├── .prettierrc                 # Prettier configuration
-└── package.json                # Dependencies and scripts
+└── package.json                # Dependencies
 ```
 
 ## Configuration
@@ -155,43 +229,13 @@ Key theme features:
 - **ESLint:** Next.js recommended config with TypeScript support
 - **TypeScript:** Strict mode enabled with path aliases
 
-## Migration from Next.js 14
+## Data & Security
 
-This project was rebuilt from scratch on Next.js 16. Key architectural changes:
-
-### What's Different
-
-- **React 19:** New features and performance improvements
-- **Tailwind CSS 4:** Native CSS integration via PostCSS
-- **Simplified routing:** No route groups yet (flat structure in src/app/)
-- **Modern ESLint:** Flat config format (eslint.config.mjs)
-- **Server Components by default:** No need for explicit async markers
-
-### What's the Same
-
-- App Router architecture
-- TypeScript strict mode
-- shadcn/ui component library
-- Dark mode with next-themes
-
-### What's Coming
-
-The previous implementation included:
-
-- LowDB for local data persistence
-- PapaParse for CSV processing
-- Zod for schema validation
-- ECharts for data visualization
-- date-fns for date manipulation
-- Server actions for data mutations
-
-These will be re-implemented with Next.js 16 best practices.
-
-## Environment Variables
-
-Currently, no environment variables are required. Future implementation will include:
-
-- `IS_IN_CLOUD`: Switch database between file-based and in-memory mode
+- **Local Only:** All data persists to `/data/db.json` (gitignored)
+- **No Cloud:** Zero external data transmission except direct API calls to DKB
+- **No Passwords Stored:** Authentication via session cookies (not stored in database)
+- **Deduplication:** SHA256 hashing prevents duplicate transactions
+- **Privacy First:** No analytics, no tracking, no third-party services
 
 ## Contributing
 
