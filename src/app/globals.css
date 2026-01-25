@@ -132,9 +132,9 @@
   --secondary: oklch(0.95 0.03 260);
   --secondary-foreground: oklch(0.35 0.1 260);
 
-  /* Muted Text */
+  /* Muted Text - Higher contrast */
   --muted: oklch(0.96 0.01 260);
-  --muted-foreground: oklch(0.55 0.05 260);
+  --muted-foreground: oklch(0.45 0.05 260);
 
   /* Accents */
   --accent: oklch(0.94 0.04 260);
@@ -149,15 +149,10 @@
 
   /* Charts - Vivid Gradient Feel */
   --chart-1: oklch(0.6 0.2 260);
-  /* Blue */
   --chart-2: oklch(0.65 0.2 310);
-  /* Purple */
   --chart-3: oklch(0.7 0.18 150);
-  /* Teal */
   --chart-4: oklch(0.8 0.15 80);
-  /* Orange */
   --chart-5: oklch(0.7 0.2 340);
-  /* Pink */
 
   /* Sidebar */
   --sidebar: oklch(0.97 0.02 260);
@@ -173,7 +168,6 @@
 .dark {
   /* Neo-Glass Dark Theme - Deep Midnight */
   --background: oklch(0.12 0.04 260);
-  /* Deep Blue-Black */
   --foreground: oklch(0.95 0.02 260);
 
   /* Dark Glass */
@@ -191,8 +185,9 @@
   --secondary: oklch(0.25 0.08 260);
   --secondary-foreground: oklch(0.9 0.02 260);
 
+  /* Muted Text - Higher contrast */
   --muted: oklch(0.2 0.05 260);
-  --muted-foreground: oklch(0.7 0.05 260);
+  --muted-foreground: oklch(0.85 0.05 260);
 
   --accent: oklch(0.25 0.08 260);
   --accent-foreground: oklch(0.95 0.02 260);

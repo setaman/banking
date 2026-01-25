@@ -156,10 +156,10 @@ export default function InsightsPage() {
   }, [transactions]);
 
   const isDark = resolvedTheme === "dark";
-  const textColor = isDark ? "oklch(0.7 0.05 260)" : "oklch(0.55 0.05 260)";
+  const textColor = isDark ? "rgba(241, 245, 249, 0.9)" : "rgba(30, 41, 59, 0.8)";
   const gridColor = isDark
-    ? "oklch(0.3 0.05 260 / 0.2)"
-    : "oklch(0.92 0.02 260 / 0.4)";
+    ? "rgba(255, 255, 255, 0.12)"
+    : "rgba(0, 0, 0, 0.12)";
 
   // Weekend vs Weekday Chart
   const weekendChartOption = useMemo((): EChartsOption => {
@@ -476,11 +476,13 @@ export default function InsightsPage() {
   }, [dailySpending, isDark]);
 
   // Safety Net Gauge
-  const safetyNetColor = useMemo(() => {
-    if (emergencyFund.months >= 6) return "oklch(0.7 0.18 150)"; // Green
-    if (emergencyFund.months >= 3) return "oklch(0.8 0.15 80)"; // Orange
-    return "oklch(0.7 0.2 340)"; // Pink/Red
+  const safetyNetBaseColor = useMemo(() => {
+    if (emergencyFund.months >= 6) return "0.7 0.18 150"; // Green
+    if (emergencyFund.months >= 3) return "0.8 0.15 80"; // Orange
+    return "0.7 0.2 340"; // Pink/Red
   }, [emergencyFund.months]);
+
+  const safetyNetColor = `oklch(${safetyNetBaseColor})`;
 
   if (loading) {
     return (
@@ -664,18 +666,18 @@ export default function InsightsPage() {
                     Avg Monthly Expenses: {formatCurrency(emergencyFund.avgMonthlyExpenses)}
                   </p>
                   <Badge
-                    className="mt-3"
+                    className="mt-4 px-3 py-1 font-semibold"
                     style={{
-                      backgroundColor: safetyNetColor + "20",
-                      color: safetyNetColor,
-                      borderColor: safetyNetColor + "40",
+                      backgroundColor: `oklch(${safetyNetBaseColor} / 0.15)`,
+                      color: isDark ? `oklch(0.9 ${safetyNetBaseColor.split(' ').slice(1).join(' ')})` : `oklch(0.4 ${safetyNetBaseColor.split(' ').slice(1).join(' ')})`,
+                      borderColor: `oklch(${safetyNetBaseColor} / 0.3)`,
                     }}
                   >
                     {emergencyFund.months >= 6
-                      ? "Excellent"
+                      ? "Excellent Coverage"
                       : emergencyFund.months >= 3
-                        ? "Good"
-                        : "Build Up"}
+                        ? "Good Coverage"
+                        : "Building Funds"}
                   </Badge>
                 </div>
               </div>
@@ -715,44 +717,46 @@ export default function InsightsPage() {
               ) : (
                 <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2">
                   {recurringExpenses.slice(0, 10).map((group, idx) => {
-                    const categoryColor = [
-                      "oklch(0.6 0.2 260)",
-                      "oklch(0.65 0.2 310)",
-                      "oklch(0.7 0.18 150)",
-                      "oklch(0.8 0.15 80)",
-                      "oklch(0.7 0.2 340)",
-                    ][idx % 5];
+                    const baseColors = [
+                      "0.6 0.2 260",  // Blue
+                      "0.65 0.2 310", // Magenta
+                      "0.7 0.18 150", // Green
+                      "0.8 0.15 80",  // Orange
+                      "0.7 0.2 340",  // Pink
+                    ];
+                    const baseColor = baseColors[idx % 5];
+                    const [L, C, H] = baseColor.split(' ');
 
                     return (
                       <div
                         key={idx}
-                        className="glass-panel flex items-center justify-between p-3 rounded-lg border border-white/5"
+                        className="glass-panel flex items-center justify-between p-4 rounded-xl border border-white/5 bg-card/30 hover:bg-card/50 transition-all duration-200"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-foreground font-medium truncate">
+                          <p className="text-foreground font-semibold text-base truncate">
                             {group.counterparty}
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-3 mt-1.5">
                             <Badge
-                              className="text-xs"
+                              className="text-xs font-bold px-2 py-0.5"
                               style={{
-                                backgroundColor: categoryColor + "20",
-                                color: categoryColor,
-                                borderColor: categoryColor + "40",
+                                backgroundColor: `oklch(${L} ${C} ${H} / 0.15)`,
+                                color: isDark ? `oklch(0.9 ${C} ${H})` : `oklch(0.4 ${C} ${H})`,
+                                borderColor: `oklch(${L} ${C} ${H} / 0.3)`,
                               }}
                             >
                               {group.category}
                             </Badge>
-                            <span className="text-muted-foreground text-xs">
+                            <span className="text-muted-foreground/90 text-xs font-medium">
                               ~{Math.round(group.averageInterval)} days
                             </span>
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <p className="text-foreground font-semibold">
+                          <p className="text-foreground font-bold text-lg">
                             {formatCurrency(group.averageAmount)}
                           </p>
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-muted-foreground/80 text-xs mt-0.5 font-medium">
                             {group.transactions.length}× occurrences
                           </p>
                         </div>

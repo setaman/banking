@@ -59,7 +59,9 @@ export function BalanceHistoryChart({ accountId, className }: BalanceHistoryChar
   const chart5Color = isDark ? "rgba(236, 72, 153, 1)" : "rgba(219, 39, 119, 1)";
   const accountColors = [primaryColor, chart2Color, chart3Color, chart4Color, chart5Color];
 
-  const textColor = isDark ? "rgba(226, 232, 240, 1)" : "rgba(100, 116, 139, 1)";
+  const textColor = isDark
+    ? "rgba(226, 232, 240, 1)"
+    : "rgba(71, 85, 105, 1)"; // slate-700 instead of slate-400 equivalent
   const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
 
   // Build ECharts option

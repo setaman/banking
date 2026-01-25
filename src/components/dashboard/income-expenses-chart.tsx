@@ -44,7 +44,7 @@ export function IncomeExpensesChart({
 
   const textColor = isDark
     ? "rgba(226, 232, 240, 1)"
-    : "rgba(100, 116, 139, 1)";
+    : "rgba(71, 85, 105, 1)";
   const gridColor = isDark
     ? "rgba(255, 255, 255, 0.1)"
     : "rgba(0, 0, 0, 0.1)";
