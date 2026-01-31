@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { getDb, invalidateDbCache } from "@/lib/db";
 import type {
   BankAdapter,
   BankCredentials,
@@ -10,7 +10,7 @@ import { createTransactionId } from "@/lib/banking/utils";
 
 export async function syncBank(
   adapter: BankAdapter,
-  credentials: BankCredentials,
+  credentials: BankCredentials
 ): Promise<SyncMetadata> {
   const db = await getDb();
   const startTime = new Date();
@@ -34,7 +34,9 @@ export async function syncBank(
       // acc.iban may be present on attributes
       // acc likely matches UnifiedAccount shape produced by the adapter
       if ((acc as any).iban) {
-        const iban = String((acc as any).iban).replace(/\s+/g, "").toUpperCase();
+        const iban = String((acc as any).iban)
+          .replace(/\s+/g, "")
+          .toUpperCase();
         ownAccountIdsByIban.set(iban, acc.id);
       }
 
@@ -50,13 +52,15 @@ export async function syncBank(
       }
 
       // Some adapters may expose account number directly on the unified account under `externalId` or similar; attempt to capture common keys
-      const possibleAccountNr = (acc as any).accountNumber || (acc as any).accountNr;
+      const possibleAccountNr =
+        (acc as any).accountNumber || (acc as any).accountNr;
       if (possibleAccountNr) {
         ownAccountIdsByAccountNr.set(String(possibleAccountNr), acc.id);
       }
 
       // Holder name mapping (normalize: trim + collapse spaces + lowercase)
-      const holderName = (acc as any).holderName || (acc as any).name || undefined;
+      const holderName =
+        (acc as any).holderName || (acc as any).name || undefined;
       if (holderName) {
         const n = String(holderName).replace(/\s+/g, " ").trim().toLowerCase();
         const existing = holderNameToAccountIds.get(n) || [];
@@ -68,7 +72,7 @@ export async function syncBank(
     for (const account of accounts) {
       // Upsert account
       const existingIdx = db.data.accounts.findIndex(
-        (a) => a.id === account.id,
+        (a) => a.id === account.id
       );
       if (existingIdx >= 0) {
         db.data.accounts[existingIdx] = {
@@ -90,8 +94,7 @@ export async function syncBank(
       const lastSync = db.data.syncHistory
         .filter(
           (s) =>
-            s.institutionId === adapter.institutionId &&
-            s.status === "success",
+            s.institutionId === adapter.institutionId && s.status === "success"
         )
         .sort((a, b) => b.lastSyncAt.localeCompare(a.lastSyncAt))[0];
 
@@ -99,7 +102,7 @@ export async function syncBank(
       const transactions = await adapter.fetchTransactions(
         account.id,
         credentials,
-        since,
+        since
       );
 
       totalFetched += transactions.length;
@@ -110,7 +113,7 @@ export async function syncBank(
       // Helper: detect and tag internal transfers using raw attributes from DKB
       function detectAndTagInternalTransfer(
         tx: UnifiedTransaction,
-        currentAccount: UnifiedAccount,
+        currentAccount: UnifiedAccount
       ): boolean {
         try {
           if (!TAG_INTERNAL_TRANSFERS) return false;
@@ -125,16 +128,21 @@ export async function syncBank(
           const debName = attrs.debtor?.name;
           if (!credName || !debName) return false;
 
-          const normalize = (s: string) => String(s).replace(/\s+/g, " ").trim().toLowerCase();
+          const normalize = (s: string) =>
+            String(s).replace(/\s+/g, " ").trim().toLowerCase();
 
-          const acctHolder = (currentAccount as any).holderName || currentAccount.name || "";
+          const acctHolder =
+            (currentAccount as any).holderName || currentAccount.name || "";
           const nAcct = normalize(acctHolder);
           const nCred = normalize(credName);
           const nDeb = normalize(debName);
 
           if (nCred === nAcct && nDeb === nAcct) {
             tx.category = tx.category || "internal-transfer";
-            tx.raw = { ...tx.raw, __internalTransfer: true } as Record<string, unknown>;
+            tx.raw = { ...tx.raw, __internalTransfer: true } as Record<
+              string,
+              unknown
+            >;
             return true;
           }
 
@@ -178,6 +186,7 @@ export async function syncBank(
     db.data.syncHistory.push(metadata);
     db.data.meta.lastModifiedAt = new Date().toISOString();
     await db.write();
+    invalidateDbCache();
 
     return metadata;
   } catch (error) {
@@ -193,6 +202,7 @@ export async function syncBank(
 
     db.data.syncHistory.push(metadata);
     await db.write();
+    invalidateDbCache();
 
     return metadata;
   }

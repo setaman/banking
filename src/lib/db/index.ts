@@ -1,16 +1,16 @@
-import { join } from "path";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import { Database, DEFAULT_DB } from "./schema";
+import { DB_PATHS, DbMode } from "./storage";
 
 let dbInstance: Low<Database> | null = null;
-
-const DB_PATH = join(process.cwd(), "data", "db.json");
+let currentMode: DbMode = "real";
 
 export async function getDb(): Promise<Low<Database>> {
   if (dbInstance) return dbInstance;
 
-  const adapter = new JSONFile<Database>(DB_PATH);
+  const dbPath = DB_PATHS[currentMode];
+  const adapter = new JSONFile<Database>(dbPath);
   const db = new Low<Database>(adapter, DEFAULT_DB);
 
   await db.read();
@@ -24,6 +24,21 @@ export async function getDb(): Promise<Low<Database>> {
   return db;
 }
 
+export function invalidateDbCache(): void {
+  dbInstance = null;
+}
+
+export function setDbMode(mode: DbMode): void {
+  if (mode !== currentMode) {
+    currentMode = mode;
+    invalidateDbCache();
+  }
+}
+
+export function getDbMode(): DbMode {
+  return currentMode;
+}
+
 export async function resetDb(): Promise<void> {
   const db = await getDb();
   db.data = {
@@ -35,4 +50,5 @@ export async function resetDb(): Promise<void> {
     },
   };
   await db.write();
+  invalidateDbCache();
 }

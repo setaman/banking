@@ -18,6 +18,7 @@ export const DatabaseSchema = z.object({
       version: z.number().default(1),
       createdAt: z.string().datetime().optional(),
       lastModifiedAt: z.string().datetime().optional(),
+      lastSyncAt: z.string().datetime().optional(),
       isDemoMode: z.boolean().default(false),
     })
     .default({ version: 1, isDemoMode: false }),

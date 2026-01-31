@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DemoProvider } from "@/contexts/demo-context";
+import { SyncProvider } from "@/contexts/sync-context";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/footer";
 
@@ -39,13 +40,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <DemoProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1 pt-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <SyncProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-32 sm:px-6 lg:px-8">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </SyncProvider>
           </DemoProvider>
         </ThemeProvider>
       </body>

@@ -84,8 +84,8 @@ export default function InsightsPage() {
     const expenses = transactions.filter((tx) => tx.amount < 0);
     let weekdayTotal = 0;
     let weekendTotal = 0;
-    let weekdayDays = new Set<string>();
-    let weekendDays = new Set<string>();
+    const weekdayDays = new Set<string>();
+    const weekendDays = new Set<string>();
 
     expenses.forEach((tx) => {
       const date = parseISO(tx.date);
