@@ -1,11 +1,37 @@
 # Project State: BanKing
 
-**Current Phase:** Phase 7: Sync Error UI Enhancement ✅ COMPLETE
-**Current Sprint:** Error Handling & User Experience Improvements
+**Current Phase:** Phase 8: Transactions Table Enhancement ✅ COMPLETE
+**Current Sprint:** UI/UX Improvements
 **Last Session:** 2026-01-31
-**Commit:** Sync error UI complete - Comprehensive error handling with Neo-Glass design
+**Commit:** Added merchant logos to transactions table with fallback placeholder
 
-**Current Work (2026-01-31):** Implemented comprehensive sync error UI system
+**Current Work (2026-01-31):** Enhanced transactions table with merchant logo images
+
+### This session changes
+
+**Phase 8: Transactions Table with Merchant Logos**
+
+Added visual merchant logos to the transactions table for better UX. Transactions now display:
+
+- Merchant logo image (40x40px) when available from DKB API (`raw.attributes.merchant.logo.url`)
+- ShoppingBag icon placeholder when no logo is available
+- Fallback to placeholder if image fails to load
+- Improved layout with flex container for image + text
+- Neo-Glass styling consistent with project theme
+
+**Implementation Details:**
+
+- Modified `src/app/transactions/page.tsx` line 790-820
+- Added image container with rounded corners and border
+- Used type assertion `(tx.raw as any)` to access merchant data from raw object
+- Implemented `onError` handler for graceful image loading failures
+- Maintained responsive design and truncation for long text
+
+**Files Modified:**
+
+- `src/app/transactions/page.tsx` - Added merchant logo display logic
+
+---
 
 ### This session changes
 

@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear, subMonths, subYears } from "date-fns";
+import {
+  format,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  subMonths,
+  subYears,
+} from "date-fns";
 import {
   Search,
   ChevronUp,
@@ -35,7 +44,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { getTransactions } from "@/actions/transactions.actions";
 import { getAccounts } from "@/actions/accounts.actions";
@@ -44,7 +57,13 @@ import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { cn } from "@/lib/utils";
 import type { DateRangePreset } from "@/hooks/use-date-range";
 
-type SortField = "date" | "description" | "counterparty" | "category" | "amount" | "account";
+type SortField =
+  | "date"
+  | "description"
+  | "counterparty"
+  | "category"
+  | "amount"
+  | "account";
 type SortDirection = "asc" | "desc";
 
 function TransactionsPageContent() {
@@ -59,7 +78,9 @@ function TransactionsPageContent() {
   // add local preset state for the DateRangePicker
   const [pickerPreset, setPickerPreset] = useState<DateRangePreset>(
     // default to custom if URL already has dateFrom/dateTo, otherwise allTime (unset)
-    (searchParams.get("dateFrom") || searchParams.get("dateTo")) ? "custom" : "allTime"
+    searchParams.get("dateFrom") || searchParams.get("dateTo")
+      ? "custom"
+      : "allTime"
   );
 
   // URL-based state
@@ -75,14 +96,22 @@ function TransactionsPageContent() {
     () => searchParams.get("accounts")?.split(",").filter(Boolean) || [],
     [searchParams]
   );
-  const minAmount = searchParams.get("minAmount") ? parseFloat(searchParams.get("minAmount")!) : undefined;
-  const maxAmount = searchParams.get("maxAmount") ? parseFloat(searchParams.get("maxAmount")!) : undefined;
+  const minAmount = searchParams.get("minAmount")
+    ? parseFloat(searchParams.get("minAmount")!)
+    : undefined;
+  const maxAmount = searchParams.get("maxAmount")
+    ? parseFloat(searchParams.get("maxAmount")!)
+    : undefined;
   const dateFrom = searchParams.get("dateFrom") || undefined;
   const dateTo = searchParams.get("dateTo") || undefined;
 
   // Local state for filter inputs
-  const [minAmountInput, setMinAmountInput] = useState(minAmount?.toString() || "");
-  const [maxAmountInput, setMaxAmountInput] = useState(maxAmount?.toString() || "");
+  const [minAmountInput, setMinAmountInput] = useState(
+    minAmount?.toString() || ""
+  );
+  const [maxAmountInput, setMaxAmountInput] = useState(
+    maxAmount?.toString() || ""
+  );
 
   // Helper function to update URL params
   const updateParams = (updates: Record<string, string | undefined>) => {
@@ -149,7 +178,9 @@ function TransactionsPageContent() {
 
     // Account filter
     if (selectedAccounts.length > 0) {
-      filtered = filtered.filter((tx) => selectedAccounts.includes(tx.accountId));
+      filtered = filtered.filter((tx) =>
+        selectedAccounts.includes(tx.accountId)
+      );
     }
 
     // Amount range filter
@@ -285,7 +316,10 @@ function TransactionsPageContent() {
     });
   };
 
-  const handleDateRangeChange = (from: Date | undefined, to: Date | undefined) => {
+  const handleDateRangeChange = (
+    from: Date | undefined,
+    to: Date | undefined
+  ) => {
     updateParams({
       dateFrom: from ? format(from, "yyyy-MM-dd") : undefined,
       dateTo: to ? format(to, "yyyy-MM-dd") : undefined,
@@ -309,11 +343,21 @@ function TransactionsPageContent() {
     if (minAmount !== undefined || maxAmount !== undefined) count++;
     if (dateFrom || dateTo) count++;
     return count;
-  }, [searchQuery, selectedCategories, selectedAccounts, minAmount, maxAmount, dateFrom, dateTo]);
+  }, [
+    searchQuery,
+    selectedCategories,
+    selectedAccounts,
+    minAmount,
+    maxAmount,
+    dateFrom,
+    dateTo,
+  ]);
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ChevronsUpDown className="ml-1 inline-block h-4 w-4 opacity-30" />;
+      return (
+        <ChevronsUpDown className="ml-1 inline-block h-4 w-4 opacity-30" />
+      );
     }
     return sortDirection === "asc" ? (
       <ChevronUp className="ml-1 inline-block h-4 w-4" />
@@ -367,8 +411,8 @@ function TransactionsPageContent() {
   // Initial state is already derived from search params; when the user picks a preset we set
   // the local pickerPreset and update the URL. When clearing filters we reset to the default.
 
-    // Compute the range to pass into the DateRangePicker: prefer URL values, otherwise derive from the selected preset
-    const pickerRange = useMemo(() => {
+  // Compute the range to pass into the DateRangePicker: prefer URL values, otherwise derive from the selected preset
+  const pickerRange = useMemo(() => {
     if (dateFrom || dateTo) {
       return {
         from: dateFrom ? new Date(dateFrom) : new Date(),
@@ -401,18 +445,18 @@ function TransactionsPageContent() {
         // If no preset chosen, default to a neutral same-day range (picker will show preset label if not custom)
         return { from: now, to: now };
     }
-    }, [dateFrom, dateTo, pickerPreset]);
+  }, [dateFrom, dateTo, pickerPreset]);
 
-    // localRange mirrors pickerRange but updates immediately when user picks a preset/custom range
-    const [localRange, setLocalRange] = useState(pickerRange);
+  // localRange mirrors pickerRange but updates immediately when user picks a preset/custom range
+  const [localRange, setLocalRange] = useState(pickerRange);
 
-    // sync localRange whenever derived pickerRange changes (e.g., after navigation completes)
-    useEffect(() => {
+  // sync localRange whenever derived pickerRange changes (e.g., after navigation completes)
+  useEffect(() => {
     setLocalRange(pickerRange);
-    }, [pickerRange.from.getTime(), pickerRange.to.getTime()]);
+  }, [pickerRange.from.getTime(), pickerRange.to.getTime()]);
 
-    // Map preset -> actual from/to dates and update URL
-    const handlePresetChange = (preset: DateRangePreset) => {
+  // Map preset -> actual from/to dates and update URL
+  const handlePresetChange = (preset: DateRangePreset) => {
     const now = new Date();
     let from: Date | undefined = undefined;
     let to: Date | undefined = undefined;
@@ -462,14 +506,14 @@ function TransactionsPageContent() {
     setLocalRange({ from: from || new Date(), to: to || new Date() });
 
     handleDateRangeChange(from, to);
-    };
+  };
 
-    return (
+  return (
     <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-tight text-glow">
-          <span className="bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
+        <h1 className="text-glow text-4xl font-bold tracking-tight">
+          <span className="from-foreground to-foreground/50 bg-gradient-to-r bg-clip-text text-transparent">
             Transactions
           </span>
         </h1>
@@ -484,7 +528,7 @@ function TransactionsPageContent() {
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
             <div className="relative">
-              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
                 type="text"
                 placeholder="Search by description or counterparty..."
@@ -503,13 +547,13 @@ function TransactionsPageContent() {
                     variant="outline"
                     className={cn(
                       "justify-start text-left font-normal",
-                      "bg-card/50 backdrop-blur-xl border-white/10 dark:border-white/5",
+                      "bg-card/50 border-white/10 backdrop-blur-xl dark:border-white/5",
                       "hover:bg-card/70 hover:border-primary/20",
                       "transition-all duration-200",
                       selectedCategories.length > 0 && "border-primary/30"
                     )}
                   >
-                    <Filter className="mr-2 h-4 w-4 text-primary" />
+                    <Filter className="text-primary mr-2 h-4 w-4" />
                     Categories
                     {selectedCategories.length > 0 && (
                       <Badge variant="secondary" className="ml-2">
@@ -521,15 +565,20 @@ function TransactionsPageContent() {
                 <PopoverContent
                   className={cn(
                     "w-64 p-4",
-                    "bg-card/95 backdrop-blur-xl border-white/10 dark:border-white/5",
-                    "shadow-xl shadow-primary/5"
+                    "bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5",
+                    "shadow-primary/5 shadow-xl"
                   )}
                   align="start"
                 >
                   <div className="space-y-2">
-                    <div className="text-sm font-medium mb-3">Filter by Category</div>
+                    <div className="mb-3 text-sm font-medium">
+                      Filter by Category
+                    </div>
                     {CATEGORIES.map((category) => (
-                      <div key={category} className="flex items-center space-x-2">
+                      <div
+                        key={category}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`category-${category}`}
                           checked={selectedCategories.includes(category)}
@@ -537,7 +586,7 @@ function TransactionsPageContent() {
                         />
                         <label
                           htmlFor={`category-${category}`}
-                          className="text-sm cursor-pointer flex-1"
+                          className="flex-1 cursor-pointer text-sm"
                         >
                           {category}
                         </label>
@@ -554,13 +603,13 @@ function TransactionsPageContent() {
                     variant="outline"
                     className={cn(
                       "justify-start text-left font-normal",
-                      "bg-card/50 backdrop-blur-xl border-white/10 dark:border-white/5",
+                      "bg-card/50 border-white/10 backdrop-blur-xl dark:border-white/5",
                       "hover:bg-card/70 hover:border-primary/20",
                       "transition-all duration-200",
                       selectedAccounts.length > 0 && "border-primary/30"
                     )}
                   >
-                    <Filter className="mr-2 h-4 w-4 text-primary" />
+                    <Filter className="text-primary mr-2 h-4 w-4" />
                     Accounts
                     {selectedAccounts.length > 0 && (
                       <Badge variant="secondary" className="ml-2">
@@ -572,15 +621,20 @@ function TransactionsPageContent() {
                 <PopoverContent
                   className={cn(
                     "w-64 p-4",
-                    "bg-card/95 backdrop-blur-xl border-white/10 dark:border-white/5",
-                    "shadow-xl shadow-primary/5"
+                    "bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5",
+                    "shadow-primary/5 shadow-xl"
                   )}
                   align="start"
                 >
                   <div className="space-y-2">
-                    <div className="text-sm font-medium mb-3">Filter by Account</div>
+                    <div className="mb-3 text-sm font-medium">
+                      Filter by Account
+                    </div>
                     {accounts.map((account) => (
-                      <div key={account.id} className="flex items-center space-x-2">
+                      <div
+                        key={account.id}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`account-${account.id}`}
                           checked={selectedAccounts.includes(account.id)}
@@ -588,7 +642,7 @@ function TransactionsPageContent() {
                         />
                         <label
                           htmlFor={`account-${account.id}`}
-                          className="text-sm cursor-pointer flex-1"
+                          className="flex-1 cursor-pointer text-sm"
                         >
                           {account.name}
                         </label>
@@ -606,7 +660,10 @@ function TransactionsPageContent() {
                   onPresetChange={handlePresetChange}
                   onCustomRangeChange={(range) => {
                     // update localRange immediately and mark as custom
-                    setLocalRange({ from: range.from || new Date(), to: range.to || new Date() });
+                    setLocalRange({
+                      from: range.from || new Date(),
+                      to: range.to || new Date(),
+                    });
                     setPickerPreset("custom");
                     handleDateRangeChange(range.from, range.to);
                     // Do not close anything here; the picker keeps the popover open for adjustments
@@ -621,14 +678,14 @@ function TransactionsPageContent() {
                     variant="outline"
                     className={cn(
                       "justify-start text-left font-normal",
-                      "bg-card/50 backdrop-blur-xl border-white/10 dark:border-white/5",
+                      "bg-card/50 border-white/10 backdrop-blur-xl dark:border-white/5",
                       "hover:bg-card/70 hover:border-primary/20",
                       "transition-all duration-200",
                       (minAmount !== undefined || maxAmount !== undefined) &&
-                      "border-primary/30"
+                        "border-primary/30"
                     )}
                   >
-                    <Filter className="mr-2 h-4 w-4 text-primary" />
+                    <Filter className="text-primary mr-2 h-4 w-4" />
                     Amount Range
                     {(minAmount !== undefined || maxAmount !== undefined) && (
                       <Badge variant="secondary" className="ml-2">
@@ -642,16 +699,18 @@ function TransactionsPageContent() {
                 <PopoverContent
                   className={cn(
                     "w-72 p-4",
-                    "bg-card/95 backdrop-blur-xl border-white/10 dark:border-white/5",
-                    "shadow-xl shadow-primary/5"
+                    "bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5",
+                    "shadow-primary/5 shadow-xl"
                   )}
                   align="start"
                 >
                   <div className="space-y-4">
-                    <div className="text-sm font-medium">Amount Range (EUR)</div>
+                    <div className="text-sm font-medium">
+                      Amount Range (EUR)
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">
+                        <label className="text-muted-foreground text-xs">
                           Min Amount
                         </label>
                         <Input
@@ -664,7 +723,7 @@ function TransactionsPageContent() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">
+                        <label className="text-muted-foreground text-xs">
                           Max Amount
                         </label>
                         <Input
@@ -735,11 +794,7 @@ function TransactionsPageContent() {
                   : "No transactions available."}
               </p>
               {activeFilterCount > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={clearAllFilters}
-                  size="sm"
-                >
+                <Button variant="outline" onClick={clearAllFilters} size="sm">
                   Clear all filters
                 </Button>
               )}
@@ -750,25 +805,25 @@ function TransactionsPageContent() {
                 <TableHeader>
                   <TableRow className="border-white/10 dark:border-white/5">
                     <TableHead
-                      className="cursor-pointer select-none hover:bg-accent/50"
+                      className="hover:bg-accent/50 cursor-pointer select-none"
                       onClick={() => handleSort("date")}
                     >
                       Date{getSortIcon("date")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer select-none hover:bg-accent/50"
+                      className="hover:bg-accent/50 cursor-pointer select-none"
                       onClick={() => handleSort("description")}
                     >
                       Description{getSortIcon("description")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer select-none hover:bg-accent/50"
+                      className="hover:bg-accent/50 cursor-pointer select-none"
                       onClick={() => handleSort("category")}
                     >
                       Category{getSortIcon("category")}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer select-none text-right hover:bg-accent/50"
+                      className="hover:bg-accent/50 cursor-pointer text-right select-none"
                       onClick={() => handleSort("amount")}
                     >
                       Amount{getSortIcon("amount")}
@@ -782,27 +837,66 @@ function TransactionsPageContent() {
                     return (
                       <TableRow
                         key={tx.id}
-                        className="border-white/10 hover:bg-accent/30 dark:border-white/5 transition-colors"
+                        className="hover:bg-accent/30 border-white/10 transition-colors dark:border-white/5"
                       >
-                        <TableCell className="whitespace-nowrap font-medium text-sm">
+                        <TableCell className="text-sm font-medium whitespace-nowrap">
                           {format(new Date(tx.date), "MMM dd, yyyy")}
                         </TableCell>
                         <TableCell className="max-w-md">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-sm truncate">{tx.description}</span>
-                            {tx.counterparty && (
-                              <span className="text-xs text-muted-foreground truncate">
-                                {tx.counterparty}
+                          <div className="flex items-center gap-3">
+                            {/* Merchant logo or placeholder */}
+                            <div className="bg-muted/50 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10">
+                              {(() => {
+                                const merchantLogo = (tx.raw as any)?.attributes
+                                  ?.merchant?.logo?.url;
+                                return merchantLogo ? (
+                                  <img
+                                    src={merchantLogo}
+                                    alt={tx.counterparty || "Merchant"}
+                                    className="h-full w-full object-contain"
+                                    onError={(e) => {
+                                      // Fallback to placeholder if image fails to load
+                                      e.currentTarget.style.display = "none";
+                                      const sibling =
+                                        e.currentTarget.nextElementSibling;
+                                      if (sibling) {
+                                        sibling.classList.remove("hidden");
+                                      }
+                                    }}
+                                  />
+                                ) : null;
+                              })()}
+                              <div
+                                className={
+                                  (tx.raw as any)?.attributes?.merchant?.logo
+                                    ?.url
+                                    ? "hidden"
+                                    : ""
+                                }
+                              >
+                                <ShoppingBag className="text-muted-foreground/50 h-5 w-5" />
+                              </div>
+                            </div>
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                              <span className="truncate text-sm font-medium">
+                                {tx.description}
                               </span>
-                            )}
+                              {tx.counterparty && (
+                                <span className="text-muted-foreground truncate text-xs">
+                                  {tx.counterparty}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-lg">
                               {getCategoryIcon(category)}
                             </div>
-                            <span className="text-sm font-medium">{category}</span>
+                            <span className="text-sm font-medium">
+                              {category}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell
@@ -837,7 +931,9 @@ function TransactionsPageContent() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+            onClick={() =>
+              handlePageChange(Math.min(totalPages, currentPage + 1))
+            }
             disabled={currentPage === totalPages}
           >
             Next
@@ -853,7 +949,7 @@ export default function TransactionsPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
+          <div className="border-primary/30 border-t-primary h-12 w-12 animate-spin rounded-full border-4" />
         </div>
       }
     >
