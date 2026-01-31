@@ -23,6 +23,8 @@ export const metadata: Metadata = {
     "A personal banking app for importing and analyzing financial transactions from German bank CSV exports",
 };
 
+import { Toaster } from "@/components/ui/sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,6 +50,7 @@ export default function RootLayout({
                 </main>
                 <Footer />
               </div>
+              <Toaster />
             </SyncProvider>
           </DemoProvider>
         </ThemeProvider>

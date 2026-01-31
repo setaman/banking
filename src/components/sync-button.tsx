@@ -6,25 +6,35 @@ import { useSync } from "@/contexts/sync-context";
 import { useDemoMode } from "@/contexts/demo-context";
 import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { SyncErrorDetails } from "@/components/sync-error-details";
 
 export function SyncButton() {
   const {
     isSyncing,
     syncStatus,
+    syncError,
     triggerManualSync,
     hasCredentials,
-    lastSyncResult,
+    syncHistory,
   } = useSync();
   const { isDemoMode } = useDemoMode();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  // Auto-open popover on error
+  React.useEffect(() => {
+    if (syncStatus === "error" && syncError) {
+      setIsOpen(true);
+    }
+  }, [syncStatus, syncError]);
 
   const handleSync = async () => {
     if (isSyncing || isDemoMode) return;
+    setIsOpen(false);
     await triggerManualSync();
   };
 
@@ -44,40 +54,46 @@ export function SyncButton() {
     return <RefreshCw className="h-4 w-4" />;
   };
 
-  const getTooltipContent = () => {
-    if (isDemoMode) return "Disable demo mode to sync";
-    if (!hasCredentials) return "Configure banking.config.json to sync";
-    if (isSyncing) return "Syncing...";
-    if (syncStatus === "success" && lastSyncResult) {
-      return `Synced ${lastSyncResult.newTransactions} new transactions`;
-    }
-    if (syncStatus === "error") return "Sync failed. Click to retry.";
-    return "Sync with bank";
-  };
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-9 w-9 rounded-full",
-              syncStatus === "success" && "text-green-500",
-              syncStatus === "error" && "text-destructive"
-            )}
-            onClick={handleSync}
-            disabled={isSyncing || isDemoMode || !hasCredentials}
-            aria-label="Sync with bank"
-          >
-            {getIcon()}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{getTooltipContent()}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+  // If we have an error, we wrap in Popover. Otherwise just a button/tooltip.
+  const button = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={cn(
+        "h-9 w-9 rounded-full transition-all duration-500",
+        syncStatus === "success" && "bg-green-500/10 text-green-500",
+        syncStatus === "error" &&
+          "text-destructive bg-destructive/10 ring-destructive/20 ring-2",
+        isSyncing && "cursor-not-allowed opacity-80"
+      )}
+      onClick={syncStatus === "error" ? undefined : handleSync}
+      disabled={
+        isSyncing || isDemoMode || (!hasCredentials && syncStatus !== "error")
+      }
+      aria-label="Sync with bank"
+    >
+      {getIcon()}
+    </Button>
   );
+
+  if (syncStatus === "error" && syncError) {
+    return (
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>{button}</PopoverTrigger>
+        <PopoverContent
+          className="bg-card/80 animate-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 w-auto border-white/10 p-4 shadow-2xl backdrop-blur-xl dark:border-white/5"
+          align="end"
+        >
+          <SyncErrorDetails
+            error={syncError}
+            onRetry={handleSync}
+            syncHistory={syncHistory}
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  // Fallback for non-error states (keep tooltip logic if desired, or simplify)
+  return button;
 }

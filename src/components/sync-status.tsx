@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import { formatDistanceToNow } from "date-fns";
+import { AlertCircle } from "lucide-react";
 import { useSync } from "@/contexts/sync-context";
 import { useDemoMode } from "@/contexts/demo-context";
-import { cn } from "@/lib/utils";
 
 export function SyncStatus() {
   const { lastSyncAt, isSyncing, syncStatus } = useSync();
@@ -29,6 +29,15 @@ export function SyncStatus() {
     );
   }
 
+  if (syncStatus === "error") {
+    return (
+      <span className="text-destructive flex items-center gap-1 text-xs font-medium">
+        <AlertCircle className="h-3 w-3" />
+        Sync failed
+      </span>
+    );
+  }
+
   if (!lastSyncAt) {
     return <span className="text-muted-foreground text-xs">Never synced</span>;
   }
@@ -36,13 +45,6 @@ export function SyncStatus() {
   const timeAgo = formatDistanceToNow(lastSyncAt, { addSuffix: true });
 
   return (
-    <span
-      className={cn(
-        "text-xs",
-        syncStatus === "error" ? "text-destructive" : "text-muted-foreground"
-      )}
-    >
-      Synced {timeAgo}
-    </span>
+    <span className="text-muted-foreground text-xs">Synced {timeAgo}</span>
   );
 }

@@ -1,11 +1,15 @@
 "use server";
 
 import { loadCredentials } from "@/config/credentials";
-import { getAdapter } from "@/lib/banking/adapters";
+import { getAdapter, registerAdapter } from "@/lib/banking/adapters";
+import { dkbAdapter } from "@/lib/banking/adapters/dkb";
 import { syncBank } from "@/lib/banking/sync";
 import { getDb, invalidateDbCache, getDbMode } from "@/lib/db";
 import type { SyncMetadata } from "@/lib/banking/types";
 import { revalidatePath } from "next/cache";
+
+// Register adapters on module load
+registerAdapter(dkbAdapter);
 
 export async function triggerSync(
   institutionId: string = "dkb"

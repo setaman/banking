@@ -12,6 +12,7 @@ interface SyncContextValue {
   syncStatus: SyncStatus;
   syncError: string | null;
   lastSyncResult: SyncMetadata | null;
+  syncHistory: SyncMetadata[];
   hasCredentials: boolean;
   triggerManualSync: () => Promise<SyncMetadata>;
   refreshSyncStatus: () => Promise<void>;
@@ -28,6 +29,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [syncError, setSyncError] = React.useState<string | null>(null);
   const [lastSyncResult, setLastSyncResult] =
     React.useState<SyncMetadata | null>(null);
+  const [syncHistory, setSyncHistory] = React.useState<SyncMetadata[]>([]);
   const [hasCredentials, setHasCredentials] = React.useState(false);
 
   const refreshSyncStatus = React.useCallback(async () => {
@@ -35,6 +37,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       const status = await getSyncStatus();
       setLastSyncAt(status.lastSyncAt ? new Date(status.lastSyncAt) : null);
       setHasCredentials(status.hasCredentials);
+      setSyncHistory(status.syncHistory);
     } catch (error) {
       console.error("Failed to fetch sync status:", error);
     }
@@ -94,6 +97,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       syncStatus,
       syncError,
       lastSyncResult,
+      syncHistory,
       hasCredentials,
       triggerManualSync,
       refreshSyncStatus,
@@ -104,6 +108,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       syncStatus,
       syncError,
       lastSyncResult,
+      syncHistory,
       hasCredentials,
       triggerManualSync,
       refreshSyncStatus,
