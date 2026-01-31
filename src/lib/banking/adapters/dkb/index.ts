@@ -23,9 +23,7 @@ export const dkbAdapter: BankAdapter = {
   institutionId: "dkb",
   institutionName: "Deutsche Kreditbank (DKB)",
 
-  async fetchAccounts(
-    credentials: BankCredentials,
-  ): Promise<UnifiedAccount[]> {
+  async fetchAccounts(credentials: BankCredentials): Promise<UnifiedAccount[]> {
     const dkbAccounts = await fetchDkbAccounts(credentials);
     return dkbAccounts.map(mapDkbAccount);
   },
@@ -33,7 +31,7 @@ export const dkbAdapter: BankAdapter = {
   async fetchTransactions(
     accountId: string,
     credentials: BankCredentials,
-    since?: Date,
+    since?: Date
   ): Promise<UnifiedTransaction[]> {
     // Extract the DKB account ID from our unified ID format (dkb_UUID)
     const externalAccountId = accountId.startsWith("dkb_")
@@ -50,7 +48,11 @@ export const dkbAdapter: BankAdapter = {
       // Subsequent sync: fetch from last sync date until today
       const from = since.toISOString().slice(0, 10);
       const to = new Date().toISOString().slice(0, 10);
-      dkbTransactions = await fetchDkbTransactions(externalAccountId, credentials, { from, to });
+      dkbTransactions = await fetchDkbTransactions(
+        externalAccountId,
+        credentials,
+        { from, to }
+      );
     } else {
       // Initial sync: fetch per calendar year starting with current year and going back until an empty year
       const currentYear = new Date().getUTCFullYear();
@@ -61,7 +63,11 @@ export const dkbAdapter: BankAdapter = {
         const from = `${year}-01-01`;
         const to = `${year}-12-31`;
 
-        const yearTx = await fetchDkbTransactions(externalAccountId, credentials, { from, to });
+        const yearTx = await fetchDkbTransactions(
+          externalAccountId,
+          credentials,
+          { from, to }
+        );
 
         if (!yearTx || yearTx.length === 0) {
           // Stop on first empty year per spec
@@ -74,14 +80,13 @@ export const dkbAdapter: BankAdapter = {
 
     // Map all transactions to unified format
     const mappedTransactions = dkbTransactions.map((tx) =>
-      mapDkbTransaction(tx, accountId),
+      mapDkbTransaction(tx, accountId)
     );
 
-    // Filter by 'since' date if provided (compare against bookingDate or fallback to date)
+    // Filter by 'since' date if provided (compare against bookingDate)
     if (since) {
       return mappedTransactions.filter((tx) => {
-        const dateStr = tx.bookingDate || tx.date;
-        const txDate = new Date(dateStr);
+        const txDate = new Date(tx.bookingDate);
         return txDate >= since;
       });
     }
@@ -91,7 +96,7 @@ export const dkbAdapter: BankAdapter = {
 
   async fetchBalances(
     accountId: string,
-    credentials: BankCredentials,
+    credentials: BankCredentials
   ): Promise<UnifiedBalance> {
     // Extract the DKB account ID from our unified ID format (dkb_UUID)
     const externalAccountId = accountId.startsWith("dkb_")
@@ -106,7 +111,7 @@ export const dkbAdapter: BankAdapter = {
 
     if (!account) {
       throw new Error(
-        `Account not found: ${accountId} (external ID: ${externalAccountId})`,
+        `Account not found: ${accountId} (external ID: ${externalAccountId})`
       );
     }
 

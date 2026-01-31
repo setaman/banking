@@ -20,7 +20,7 @@ export interface GetTransactionsOptions {
 
 export async function getTransactions(
   filters?: TransactionFilters,
-  options?: GetTransactionsOptions,
+  options?: GetTransactionsOptions
 ): Promise<UnifiedTransaction[]> {
   const db = await getDb();
   let transactions = [...db.data.transactions];
@@ -28,33 +28,37 @@ export async function getTransactions(
   if (filters) {
     if (filters.accountId) {
       transactions = transactions.filter(
-        (t) => t.accountId === filters.accountId,
+        (t) => t.accountId === filters.accountId
       );
     }
     if (filters.startDate) {
-      transactions = transactions.filter((t) => t.date >= filters.startDate!);
+      transactions = transactions.filter(
+        (t) => t.bookingDate >= filters.startDate!
+      );
     }
     if (filters.endDate) {
-      transactions = transactions.filter((t) => t.date <= filters.endDate!);
+      transactions = transactions.filter(
+        (t) => t.bookingDate <= filters.endDate!
+      );
     }
     if (filters.category) {
       transactions = transactions.filter(
-        (t) => t.category === filters.category,
+        (t) => t.category === filters.category
       );
     }
     if (filters.direction) {
       transactions = transactions.filter(
-        (t) => t.direction === filters.direction,
+        (t) => t.direction === filters.direction
       );
     }
     if (filters.minAmount !== undefined) {
       transactions = transactions.filter(
-        (t) => Math.abs(t.amount) >= filters.minAmount!,
+        (t) => Math.abs(t.amount) >= filters.minAmount!
       );
     }
     if (filters.maxAmount !== undefined) {
       transactions = transactions.filter(
-        (t) => Math.abs(t.amount) <= filters.maxAmount!,
+        (t) => Math.abs(t.amount) <= filters.maxAmount!
       );
     }
     if (filters.search) {
@@ -62,23 +66,27 @@ export async function getTransactions(
       transactions = transactions.filter(
         (t) =>
           t.description.toLowerCase().includes(query) ||
-          t.counterparty.toLowerCase().includes(query),
+          t.counterparty.toLowerCase().includes(query)
       );
     }
   }
 
   if (options?.excludeInternal) {
-    transactions = transactions.filter((t) =>
-      t.category !== "internal-transfer" && !(t.raw && (t.raw as any).__internalTransfer),
+    transactions = transactions.filter(
+      (t) =>
+        t.category !== "internal-transfer" &&
+        !(t.raw && (t.raw as any).__internalTransfer)
     );
   }
 
-  return transactions.sort((a, b) => b.date.localeCompare(a.date));
+  return transactions.sort((a, b) =>
+    b.bookingDate.localeCompare(a.bookingDate)
+  );
 }
 
 export async function getTransactionCount(
   filters?: TransactionFilters,
-  options?: GetTransactionsOptions,
+  options?: GetTransactionsOptions
 ): Promise<number> {
   const transactions = await getTransactions(filters, options);
   return transactions.length;

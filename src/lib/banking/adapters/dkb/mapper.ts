@@ -1,5 +1,9 @@
 import { z } from "zod";
-import type { UnifiedAccount, UnifiedBalance, UnifiedTransaction } from "@/lib/banking/types";
+import type {
+  UnifiedAccount,
+  UnifiedBalance,
+  UnifiedTransaction,
+} from "@/lib/banking/types";
 import { createTransactionId } from "@/lib/banking/utils";
 
 /**
@@ -21,14 +25,18 @@ export const DkbAccountResponseSchema = z.object({
       currencyCode: z.string(),
       value: z.string(), // Decimal as string like "1234.56"
     }),
-    availableBalance: z.object({
-      currencyCode: z.string(),
-      value: z.string(),
-    }).optional(),
-    nearTimeBalance: z.object({
-      currencyCode: z.string(),
-      value: z.string(),
-    }).optional(),
+    availableBalance: z
+      .object({
+        currencyCode: z.string(),
+        value: z.string(),
+      })
+      .optional(),
+    nearTimeBalance: z
+      .object({
+        currencyCode: z.string(),
+        value: z.string(),
+      })
+      .optional(),
     product: z.object({
       id: z.string(),
       type: z.string(), // e.g. "checking-account-private", "savings-account"
@@ -61,49 +69,67 @@ export const DkbTransactionResponseSchema = z.object({
       currencyCode: z.string(), // "EUR"
       value: z.string(), // Decimal as string, negative = expense
     }),
-    creditor: z.object({
-      name: z.string().optional(),
-      creditorAccount: z.object({
-        accountNr: z.string().optional(),
-        blz: z.string().optional(),
-        iban: z.string().optional(),
-      }).optional(),
-      agent: z.object({
-        bic: z.string().optional(),
-      }).optional(),
-      intermediaryName: z.string().optional(),
-    }).optional(),
-    debtor: z.object({
-      name: z.string().optional(),
-      debtorAccount: z.object({
-        accountNr: z.string().optional(),
-        blz: z.string().optional(),
-        iban: z.string().optional(),
-      }).optional(),
-      agent: z.object({
-        bic: z.string().optional(),
-      }).optional(),
-    }).optional(),
-    isRevocable: z.boolean().optional(),
-    merchant: z.object({
-      name: z.string().optional(),
-      category: z.object({
+    creditor: z
+      .object({
         name: z.string().optional(),
-        imageUrl: z.string().optional(),
-        subCategories: z.array(z.string()).optional(),
-      }).optional(),
-      logo: z.object({
-        url: z.string().optional(),
-        score: z.number().optional(),
-      }).optional(),
-    }).optional(),
+        creditorAccount: z
+          .object({
+            accountNr: z.string().optional(),
+            blz: z.string().optional(),
+            iban: z.string().optional(),
+          })
+          .optional(),
+        agent: z
+          .object({
+            bic: z.string().optional(),
+          })
+          .optional(),
+        intermediaryName: z.string().optional(),
+      })
+      .optional(),
+    debtor: z
+      .object({
+        name: z.string().optional(),
+        debtorAccount: z
+          .object({
+            accountNr: z.string().optional(),
+            blz: z.string().optional(),
+            iban: z.string().optional(),
+          })
+          .optional(),
+        agent: z
+          .object({
+            bic: z.string().optional(),
+          })
+          .optional(),
+      })
+      .optional(),
+    isRevocable: z.boolean().optional(),
+    merchant: z
+      .object({
+        name: z.string().optional(),
+        category: z
+          .object({
+            name: z.string().optional(),
+            imageUrl: z.string().optional(),
+            subCategories: z.array(z.string()).optional(),
+          })
+          .optional(),
+        logo: z
+          .object({
+            url: z.string().optional(),
+            score: z.number().optional(),
+          })
+          .optional(),
+      })
+      .optional(),
   }),
 });
 
 // --- Mappers ---
 
 export function mapDkbAccount(
-  raw: z.infer<typeof DkbAccountResponseSchema>,
+  raw: z.infer<typeof DkbAccountResponseSchema>
 ): UnifiedAccount {
   const { id, attributes } = raw;
 
@@ -122,7 +148,7 @@ export function mapDkbAccount(
 
 export function mapDkbTransaction(
   raw: z.infer<typeof DkbTransactionResponseSchema>,
-  accountId: string,
+  accountId: string
 ): UnifiedTransaction {
   const { id, attributes } = raw;
   const amount = parseFloat(attributes.amount.value);
@@ -136,14 +162,14 @@ export function mapDkbTransaction(
   const tx: UnifiedTransaction = {
     id: "", // Will be set below
     accountId,
-    date: attributes.valueDate, // Use valueDate as primary date
+    date: attributes.bookingDate, // Use bookingDate as primary date for consistency
     bookingDate: attributes.bookingDate,
     amount,
     currency: attributes.amount.currencyCode,
     description: attributes.description ?? "",
     counterparty,
     direction: isDebit ? "debit" : "credit",
-    raw: raw as unknown as Record<string, unknown>,
+    raw: raw as unknown as Record<string, unknown>, // valueDate stored in raw.attributes.valueDate
   };
 
   tx.id = createTransactionId(tx);
@@ -152,7 +178,7 @@ export function mapDkbTransaction(
 
 export function mapDkbBalance(
   raw: z.infer<typeof DkbAccountResponseSchema>,
-  unifiedAccountId: string,
+  unifiedAccountId: string
 ): UnifiedBalance {
   const amount = parseFloat(raw.attributes.balance.value);
 
@@ -165,7 +191,7 @@ export function mapDkbBalance(
 }
 
 function mapAccountType(
-  dkbType?: string,
+  dkbType?: string
 ): "checking" | "savings" | "credit" | "investment" {
   if (!dkbType) return "checking";
 
@@ -173,7 +199,8 @@ function mapAccountType(
   if (dkbType.includes("checking-account")) return "checking";
   if (dkbType.includes("savings-account")) return "savings";
   if (dkbType.includes("credit-card")) return "credit";
-  if (dkbType.includes("depot") || dkbType.includes("investment")) return "investment";
+  if (dkbType.includes("depot") || dkbType.includes("investment"))
+    return "investment";
 
   // Legacy mappings for German terms
   switch (dkbType.toLowerCase()) {

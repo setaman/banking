@@ -230,11 +230,10 @@ export function generateDemoData(): Database {
           template,
           amount,
           dateStr,
-          "demo_checking",
+          "demo_checking"
         );
         transactions.push(tx);
-        checkingBalance +=
-          template.direction === "credit" ? amount : -amount;
+        checkingBalance += template.direction === "credit" ? amount : -amount;
       }
     }
 
@@ -246,11 +245,10 @@ export function generateDemoData(): Database {
           template,
           amount,
           dateStr,
-          "demo_checking",
+          "demo_checking"
         );
         transactions.push(tx);
-        checkingBalance +=
-          template.direction === "credit" ? amount : -amount;
+        checkingBalance += template.direction === "credit" ? amount : -amount;
       }
     }
 
@@ -314,21 +312,19 @@ function createTransaction(
   template: TransactionTemplate,
   amount: number,
   date: string,
-  accountId: string,
+  accountId: string
 ): UnifiedTransaction {
   const tx: UnifiedTransaction = {
     id: "",
     accountId,
     date,
+    bookingDate: date, // Use same date for demo data (no execution delay)
     amount: template.direction === "debit" ? -amount : amount,
     currency: "EUR",
     description: template.description,
     counterparty: template.counterparty,
     direction: template.direction,
-    category: classifyTransaction(
-      template.description,
-      template.counterparty,
-    ),
+    category: classifyTransaction(template.description, template.counterparty),
   };
   tx.id = createTransactionId(tx);
   return tx;

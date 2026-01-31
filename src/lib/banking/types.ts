@@ -34,8 +34,8 @@ export type UnifiedAccount = z.infer<typeof UnifiedAccountSchema>;
 export const UnifiedTransactionSchema = z.object({
   id: z.string(), // SHA256 hash for deduplication
   accountId: z.string(),
-  date: z.string(), // ISO 8601 date (YYYY-MM-DD)
-  bookingDate: z.string().optional(), // Booking/valuta date
+  date: z.string(), // ISO 8601 date (YYYY-MM-DD) - booking date
+  bookingDate: z.string(), // Booking date (primary for all calculations)
   amount: z.number(), // Negative = expense, positive = income
   currency: z.string().default("EUR"),
   description: z.string(),
@@ -76,19 +76,17 @@ export interface BankAdapter {
   institutionId: string;
   institutionName: string;
 
-  fetchAccounts(
-    credentials: BankCredentials,
-  ): Promise<UnifiedAccount[]>;
+  fetchAccounts(credentials: BankCredentials): Promise<UnifiedAccount[]>;
 
   fetchTransactions(
     accountId: string,
     credentials: BankCredentials,
-    since?: Date,
+    since?: Date
   ): Promise<UnifiedTransaction[]>;
 
   fetchBalances(
     accountId: string,
-    credentials: BankCredentials,
+    credentials: BankCredentials
   ): Promise<UnifiedBalance>;
 }
 

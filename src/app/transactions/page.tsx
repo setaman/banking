@@ -49,6 +49,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { getTransactions } from "@/actions/transactions.actions";
 import { getAccounts } from "@/actions/accounts.actions";
@@ -193,10 +199,10 @@ function TransactionsPageContent() {
 
     // Date range filter
     if (dateFrom) {
-      filtered = filtered.filter((tx) => tx.date >= dateFrom);
+      filtered = filtered.filter((tx) => tx.bookingDate >= dateFrom);
     }
     if (dateTo) {
-      filtered = filtered.filter((tx) => tx.date <= dateTo);
+      filtered = filtered.filter((tx) => tx.bookingDate <= dateTo);
     }
 
     return filtered;
@@ -221,8 +227,8 @@ function TransactionsPageContent() {
 
       switch (sortField) {
         case "date":
-          aValue = a.date;
-          bValue = b.date;
+          aValue = a.bookingDate;
+          bValue = b.bookingDate;
           break;
         case "description":
           aValue = a.description.toLowerCase();
@@ -840,7 +846,44 @@ function TransactionsPageContent() {
                         className="hover:bg-accent/30 border-white/10 transition-colors dark:border-white/5"
                       >
                         <TableCell className="text-sm font-medium whitespace-nowrap">
-                          {format(new Date(tx.date), "MMM dd, yyyy")}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help">
+                                  {format(
+                                    new Date(tx.bookingDate),
+                                    "MMM dd, yyyy"
+                                  )}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1 text-xs">
+                                  <div>
+                                    <span className="font-semibold">
+                                      Booked:
+                                    </span>{" "}
+                                    {format(
+                                      new Date(tx.bookingDate),
+                                      "MMM dd, yyyy"
+                                    )}
+                                  </div>
+                                  {(tx.raw as any)?.attributes?.valueDate && (
+                                    <div>
+                                      <span className="font-semibold">
+                                        Executed:
+                                      </span>{" "}
+                                      {format(
+                                        new Date(
+                                          (tx.raw as any).attributes.valueDate
+                                        ),
+                                        "MMM dd, yyyy"
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="max-w-md">
                           <div className="flex items-center gap-3">

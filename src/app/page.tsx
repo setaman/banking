@@ -27,7 +27,8 @@ const MotionDiv = motion.create("div");
 
 export default function Home() {
   // Date range state
-  const { range, preset, setPreset, setCustomRange } = useDateRange("last30days");
+  const { range, preset, setPreset, setCustomRange } =
+    useDateRange("last30days");
 
   // Data state
   const [transactions, setTransactions] = useState<UnifiedTransaction[]>([]);
@@ -68,15 +69,17 @@ export default function Home() {
       };
 
       // Fetch transactions with filters, excluding internal transfers by default
-      const transactionsData = await getTransactions(filters, { excludeInternal: true });
+      const transactionsData = await getTransactions(filters, {
+        excludeInternal: true,
+      });
 
       console.log(transactionsData);
 
       // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
       if (isAllTime && transactionsData && transactionsData.length > 0) {
-        // Compute min/max bookingDate or date
+        // Compute min/max bookingDate
         const dates = transactionsData
-          .map((t) => t.bookingDate || t.date)
+          .map((t) => t.bookingDate)
           .filter(Boolean)
           .map((d) => new Date(d));
 
@@ -130,8 +133,8 @@ export default function Home() {
         {[...Array(3)].map((_, i) => (
           <Card key={i} className="relative overflow-hidden border-white/5">
             <div className="p-6">
-              <Skeleton className="h-4 w-24 mb-4" />
-              <Skeleton className="h-9 w-32 mb-3" />
+              <Skeleton className="mb-4 h-4 w-24" />
+              <Skeleton className="mb-3 h-9 w-32" />
               <Skeleton className="h-4 w-28" />
             </div>
           </Card>
@@ -142,13 +145,13 @@ export default function Home() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-white/5">
           <div className="p-6">
-            <Skeleton className="h-6 w-48 mb-6" />
+            <Skeleton className="mb-6 h-6 w-48" />
             <Skeleton className="h-[300px] w-full" />
           </div>
         </Card>
         <Card className="border-white/5">
           <div className="p-6">
-            <Skeleton className="h-6 w-48 mb-6" />
+            <Skeleton className="mb-6 h-6 w-48" />
             <Skeleton className="h-[300px] w-full" />
           </div>
         </Card>
@@ -161,17 +164,17 @@ export default function Home() {
     return (
       <DashboardShell>
         <Card className="border-rose-500/20">
-          <CardContent className="flex flex-col items-center justify-center p-12 gap-4">
-            <div className="text-rose-400 text-4xl mb-2">⚠️</div>
+          <CardContent className="flex flex-col items-center justify-center gap-4 p-12">
+            <div className="mb-2 text-4xl text-rose-400">⚠️</div>
             <h3 className="text-xl font-semibold text-rose-400">
               Failed to Load Dashboard
             </h3>
-            <p className="text-muted-foreground text-center max-w-md">
+            <p className="text-muted-foreground max-w-md text-center">
               {error}
             </p>
             <button
               onClick={() => fetchData()}
-              className="mt-4 px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground mt-4 rounded-lg px-6 py-2 transition-colors"
             >
               Retry
             </button>
@@ -196,8 +199,8 @@ export default function Home() {
         transition={{ duration: 0.3 }}
         className="flex flex-col gap-2"
       >
-        <h1 className="text-4xl font-bold tracking-tight text-glow">
-          <span className="bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
+        <h1 className="text-glow text-4xl font-bold tracking-tight">
+          <span className="from-foreground to-foreground/50 bg-gradient-to-r bg-clip-text text-transparent">
             Welcome back
           </span>
         </h1>
@@ -215,19 +218,17 @@ export default function Home() {
       >
         {/* Account Filter */}
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+          <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">
             Filter by Account:
           </span>
           <Select
             value={selectedAccountId}
             onValueChange={setSelectedAccountId}
           >
-            <SelectTrigger
-              className="w-[200px] bg-card/50 backdrop-blur-xl border-white/10 dark:border-white/5 hover:bg-card/70 hover:border-primary/20 transition-all duration-200"
-            >
+            <SelectTrigger className="bg-card/50 hover:bg-card/70 hover:border-primary/20 w-[200px] border-white/10 backdrop-blur-xl transition-all duration-200 dark:border-white/5">
               <SelectValue placeholder="Select account" />
             </SelectTrigger>
-            <SelectContent className="bg-card/95 backdrop-blur-xl border-white/10 dark:border-white/5">
+            <SelectContent className="bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5">
               <SelectItem value="all">All Accounts</SelectItem>
               {accounts.map((account) => (
                 <SelectItem key={account.id} value={account.id}>
@@ -245,7 +246,7 @@ export default function Home() {
           preset={preset}
           onPresetChange={setPreset}
           onCustomRangeChange={setCustomRange}
-          className="w-full sm:w-auto min-w-[280px]"
+          className="w-full min-w-[280px] sm:w-auto"
         />
       </MotionDiv>
 
@@ -260,13 +261,15 @@ export default function Home() {
           filters={{
             startDate,
             endDate,
-            ...(selectedAccountId !== "all" && { accountId: selectedAccountId }),
+            ...(selectedAccountId !== "all" && {
+              accountId: selectedAccountId,
+            }),
           }}
         />
       </MotionDiv>
 
       {/* Charts Grid */}
-      <div className="grid gap-6 lg:grid-cols-2 items-stretch">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
         {/* Balance History Chart */}
         <MotionDiv
           initial={{ opacity: 0, x: -20 }}
@@ -276,7 +279,9 @@ export default function Home() {
         >
           <BalanceHistoryChart
             className="h-full"
-            accountId={selectedAccountId === "all" ? undefined : selectedAccountId}
+            accountId={
+              selectedAccountId === "all" ? undefined : selectedAccountId
+            }
           />
         </MotionDiv>
 
@@ -309,16 +314,25 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.35 }}
-          className="flex items-center justify-center gap-6 text-sm text-muted-foreground border-t border-white/5 pt-6"
+          className="text-muted-foreground flex items-center justify-center gap-6 border-t border-white/5 pt-6 text-sm"
         >
           <span>
-            Showing <strong className="text-foreground">{filteredTransactions.length}</strong>{" "}
+            Showing{" "}
+            <strong className="text-foreground">
+              {filteredTransactions.length}
+            </strong>{" "}
             transactions
           </span>
           <span className="hidden sm:inline">•</span>
           <span className="hidden sm:inline">
-            From <strong className="text-foreground">{format(range.from, "dd MMM yyyy")}</strong>{" "}
-            to <strong className="text-foreground">{format(range.to, "dd MMM yyyy")}</strong>
+            From{" "}
+            <strong className="text-foreground">
+              {format(range.from, "dd MMM yyyy")}
+            </strong>{" "}
+            to{" "}
+            <strong className="text-foreground">
+              {format(range.to, "dd MMM yyyy")}
+            </strong>
           </span>
         </MotionDiv>
       )}
@@ -331,10 +345,10 @@ export default function Home() {
           transition={{ duration: 0.3 }}
         >
           <Card className="border-white/5">
-            <CardContent className="flex flex-col items-center justify-center p-12 gap-4">
-              <div className="text-6xl mb-2 opacity-50">📊</div>
+            <CardContent className="flex flex-col items-center justify-center gap-4 p-12">
+              <div className="mb-2 text-6xl opacity-50">📊</div>
               <h3 className="text-xl font-semibold">No Transactions Found</h3>
-              <p className="text-muted-foreground text-center max-w-md">
+              <p className="text-muted-foreground max-w-md text-center">
                 {selectedAccountId !== "all"
                   ? "No transactions found for the selected account and date range. Try adjusting your filters."
                   : "No transactions found for the selected date range. Try selecting a different time period or sync your accounts."}

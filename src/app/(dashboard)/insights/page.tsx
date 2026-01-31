@@ -88,17 +88,17 @@ export default function InsightsPage() {
     const weekendDays = new Set<string>();
 
     expenses.forEach((tx) => {
-      const date = parseISO(tx.date);
+      const date = parseISO(tx.bookingDate);
       const dayOfWeek = getDay(date);
       const absAmount = Math.abs(tx.amount);
 
       if (dayOfWeek === 0 || dayOfWeek === 6) {
         // Sunday or Saturday
         weekendTotal += absAmount;
-        weekendDays.add(tx.date);
+        weekendDays.add(tx.bookingDate);
       } else {
         weekdayTotal += absAmount;
-        weekdayDays.add(tx.date);
+        weekdayDays.add(tx.bookingDate);
       }
     });
 
@@ -115,19 +115,19 @@ export default function InsightsPage() {
   // Calculate emergency fund
   const emergencyFund = useMemo(
     (): EmergencyFund => calculateEmergencyFund(balance, transactions),
-    [balance, transactions],
+    [balance, transactions]
   );
 
   // Detect recurring expenses
   const recurringExpenses = useMemo(
     (): RecurringTransactionGroup[] => detectRecurring(transactions),
-    [transactions],
+    [transactions]
   );
 
   // Calculate expense volatility
   const expenseVolatility = useMemo(
     (): ExpenseVolatility => calculateExpenseVolatility(transactions),
-    [transactions],
+    [transactions]
   );
 
   // Calculate daily spending with income markers
@@ -138,10 +138,10 @@ export default function InsightsPage() {
     >();
 
     transactions.forEach((tx) => {
-      if (!dailyMap.has(tx.date)) {
-        dailyMap.set(tx.date, { expenses: 0, income: 0, net: 0 });
+      if (!dailyMap.has(tx.bookingDate)) {
+        dailyMap.set(tx.bookingDate, { expenses: 0, income: 0, net: 0 });
       }
-      const day = dailyMap.get(tx.date)!;
+      const day = dailyMap.get(tx.bookingDate)!;
       if (tx.amount < 0) {
         day.expenses += Math.abs(tx.amount);
       } else {
@@ -156,7 +156,9 @@ export default function InsightsPage() {
   }, [transactions]);
 
   const isDark = resolvedTheme === "dark";
-  const textColor = isDark ? "rgba(241, 245, 249, 0.9)" : "rgba(30, 41, 59, 0.8)";
+  const textColor = isDark
+    ? "rgba(241, 245, 249, 0.9)"
+    : "rgba(30, 41, 59, 0.8)";
   const gridColor = isDark
     ? "rgba(255, 255, 255, 0.12)"
     : "rgba(0, 0, 0, 0.12)";
@@ -255,15 +257,15 @@ export default function InsightsPage() {
     transactions
       .filter((tx) => tx.amount < 0)
       .forEach((tx) => {
-        const month = tx.date.substring(0, 7);
+        const month = tx.bookingDate.substring(0, 7);
         monthlyExpenses.set(
           month,
-          (monthlyExpenses.get(month) || 0) + Math.abs(tx.amount),
+          (monthlyExpenses.get(month) || 0) + Math.abs(tx.amount)
         );
       });
 
     const sortedMonths = Array.from(monthlyExpenses.entries()).sort((a, b) =>
-      a[0].localeCompare(b[0]),
+      a[0].localeCompare(b[0])
     );
 
     return {
@@ -306,7 +308,9 @@ export default function InsightsPage() {
       },
       xAxis: {
         type: "category",
-        data: sortedMonths.map(([month]) => format(parseISO(month + "-01"), "MMM yy")),
+        data: sortedMonths.map(([month]) =>
+          format(parseISO(month + "-01"), "MMM yy")
+        ),
         axisLine: { lineStyle: { color: gridColor } },
         axisLabel: { color: textColor, fontSize: 11 },
       },
@@ -399,12 +403,16 @@ export default function InsightsPage() {
               <span style="flex: 1;">Expenses:</span>
               <span style="font-weight: 600;">${formatCurrency(dayData.expenses)}</span>
             </div>
-            ${dayData.income > 0 ? `
+            ${
+              dayData.income > 0
+                ? `
             <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
               <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: rgba(20, 184, 166, 1);"></span>
               <span style="flex: 1;">Income:</span>
               <span style="font-weight: 600;">${formatCurrency(dayData.income)}</span>
-            </div>` : ""}
+            </div>`
+                : ""
+            }
           </div>`;
         },
       },
@@ -513,10 +521,10 @@ export default function InsightsPage() {
         <Card className="border-rose-500/20">
           <CardContent className="flex items-center justify-center p-12">
             <div className="text-center">
-              <p className="text-rose-400 text-lg font-semibold">
+              <p className="text-lg font-semibold text-rose-400">
                 Failed to load insights
               </p>
-              <p className="text-muted-foreground text-sm mt-2">{error}</p>
+              <p className="text-muted-foreground mt-2 text-sm">{error}</p>
             </div>
           </CardContent>
         </Card>
@@ -530,8 +538,8 @@ export default function InsightsPage() {
     <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-tight text-glow">
-          <span className="bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
+        <h1 className="text-glow text-4xl font-bold tracking-tight">
+          <span className="from-foreground to-foreground/50 bg-gradient-to-r bg-clip-text text-transparent">
             Behavioral Insights
           </span>
         </h1>
@@ -544,11 +552,11 @@ export default function InsightsPage() {
         <Card className="border-primary/10">
           <CardContent className="flex items-center justify-center p-12">
             <div className="text-center">
-              <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <Activity className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
               <p className="text-muted-foreground text-lg">
                 No transaction data available
               </p>
-              <p className="text-muted-foreground text-sm mt-2">
+              <p className="text-muted-foreground mt-2 text-sm">
                 Sync your accounts to see behavioral insights
               </p>
             </div>
@@ -561,16 +569,16 @@ export default function InsightsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="relative overflow-hidden border-primary/10"
+            className="border-primary/10 relative overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 opacity-50" />
+            <div className="from-primary/5 to-chart-2/5 absolute inset-0 bg-gradient-to-br via-transparent opacity-50" />
             <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
+                  <Calendar className="text-primary h-5 w-5" />
                   Weekend vs Weekday
                 </CardTitle>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Average daily spending comparison
                 </p>
               </div>
@@ -611,7 +619,7 @@ export default function InsightsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative overflow-hidden border-primary/10"
+            className="border-primary/10 relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 opacity-50" />
             <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-4">
@@ -620,7 +628,7 @@ export default function InsightsPage() {
                   <Zap className="h-5 w-5 text-emerald-400" />
                   Safety Net
                 </CardTitle>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Emergency fund coverage
                 </p>
               </div>
@@ -634,7 +642,11 @@ export default function InsightsPage() {
                       cy="96"
                       r="80"
                       fill="none"
-                      stroke={isDark ? "oklch(0.3 0.05 260 / 0.2)" : "oklch(0.92 0.02 260 / 0.4)"}
+                      stroke={
+                        isDark
+                          ? "oklch(0.3 0.05 260 / 0.2)"
+                          : "oklch(0.92 0.02 260 / 0.4)"
+                      }
                       strokeWidth="16"
                     />
                     <circle
@@ -652,7 +664,10 @@ export default function InsightsPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <p className="text-5xl font-bold" style={{ color: safetyNetColor }}>
+                    <p
+                      className="text-5xl font-bold"
+                      style={{ color: safetyNetColor }}
+                    >
                       {emergencyFund.months.toFixed(1)}
                     </p>
                     <p className="text-muted-foreground text-sm">months</p>
@@ -662,14 +677,17 @@ export default function InsightsPage() {
                   <p className="text-muted-foreground text-sm">
                     Current Balance: {formatCurrency(emergencyFund.balance)}
                   </p>
-                  <p className="text-muted-foreground text-xs mt-1">
-                    Avg Monthly Expenses: {formatCurrency(emergencyFund.avgMonthlyExpenses)}
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Avg Monthly Expenses:{" "}
+                    {formatCurrency(emergencyFund.avgMonthlyExpenses)}
                   </p>
                   <Badge
                     className="mt-4 px-3 py-1 font-semibold"
                     style={{
                       backgroundColor: `oklch(${safetyNetBaseColor} / 0.15)`,
-                      color: isDark ? `oklch(0.9 ${safetyNetBaseColor.split(' ').slice(1).join(' ')})` : `oklch(0.4 ${safetyNetBaseColor.split(' ').slice(1).join(' ')})`,
+                      color: isDark
+                        ? `oklch(0.9 ${safetyNetBaseColor.split(" ").slice(1).join(" ")})`
+                        : `oklch(0.4 ${safetyNetBaseColor.split(" ").slice(1).join(" ")})`,
                       borderColor: `oklch(${safetyNetBaseColor} / 0.3)`,
                     }}
                   >
@@ -689,7 +707,7 @@ export default function InsightsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative overflow-hidden border-primary/10"
+            className="border-primary/10 relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 opacity-50" />
             <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-4">
@@ -698,7 +716,7 @@ export default function InsightsPage() {
                   <Repeat className="h-5 w-5 text-purple-400" />
                   Recurring Expenses
                 </CardTitle>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Detected monthly patterns
                 </p>
               </div>
@@ -706,42 +724,44 @@ export default function InsightsPage() {
             <CardContent className="relative z-10">
               {recurringExpenses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Repeat className="h-12 w-12 text-muted-foreground mb-4" />
+                  <Repeat className="text-muted-foreground mb-4 h-12 w-12" />
                   <p className="text-muted-foreground">
                     No recurring expenses detected
                   </p>
-                  <p className="text-muted-foreground text-xs mt-1">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     Need at least 3 similar transactions to detect patterns
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2">
+                <div className="max-h-[320px] space-y-3 overflow-y-auto pr-2">
                   {recurringExpenses.slice(0, 10).map((group, idx) => {
                     const baseColors = [
-                      "0.6 0.2 260",  // Blue
+                      "0.6 0.2 260", // Blue
                       "0.65 0.2 310", // Magenta
                       "0.7 0.18 150", // Green
-                      "0.8 0.15 80",  // Orange
-                      "0.7 0.2 340",  // Pink
+                      "0.8 0.15 80", // Orange
+                      "0.7 0.2 340", // Pink
                     ];
                     const baseColor = baseColors[idx % 5];
-                    const [L, C, H] = baseColor.split(' ');
+                    const [L, C, H] = baseColor.split(" ");
 
                     return (
                       <div
                         key={idx}
-                        className="glass-panel flex items-center justify-between p-4 rounded-xl border border-white/5 bg-card/30 hover:bg-card/50 transition-all duration-200"
+                        className="glass-panel bg-card/30 hover:bg-card/50 flex items-center justify-between rounded-xl border border-white/5 p-4 transition-all duration-200"
                       >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-foreground font-semibold text-base truncate">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-foreground truncate text-base font-semibold">
                             {group.counterparty}
                           </p>
-                          <div className="flex items-center gap-3 mt-1.5">
+                          <div className="mt-1.5 flex items-center gap-3">
                             <Badge
-                              className="text-xs font-bold px-2 py-0.5"
+                              className="px-2 py-0.5 text-xs font-bold"
                               style={{
                                 backgroundColor: `oklch(${L} ${C} ${H} / 0.15)`,
-                                color: isDark ? `oklch(0.9 ${C} ${H})` : `oklch(0.4 ${C} ${H})`,
+                                color: isDark
+                                  ? `oklch(0.9 ${C} ${H})`
+                                  : `oklch(0.4 ${C} ${H})`,
                                 borderColor: `oklch(${L} ${C} ${H} / 0.3)`,
                               }}
                             >
@@ -752,11 +772,11 @@ export default function InsightsPage() {
                             </span>
                           </div>
                         </div>
-                        <div className="text-right ml-4">
-                          <p className="text-foreground font-bold text-lg">
+                        <div className="ml-4 text-right">
+                          <p className="text-foreground text-lg font-bold">
                             {formatCurrency(group.averageAmount)}
                           </p>
-                          <p className="text-muted-foreground/80 text-xs mt-0.5 font-medium">
+                          <p className="text-muted-foreground/80 mt-0.5 text-xs font-medium">
                             {group.transactions.length}× occurrences
                           </p>
                         </div>
@@ -773,7 +793,7 @@ export default function InsightsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="relative overflow-hidden border-primary/10"
+            className="border-primary/10 relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-amber-500/5 opacity-50" />
             <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-4">
@@ -782,13 +802,13 @@ export default function InsightsPage() {
                   <TrendingUp className="h-5 w-5 text-orange-400" />
                   Expense Volatility
                 </CardTitle>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Monthly spending variation
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-muted-foreground text-xs">Std Dev</p>
-                <p className="text-foreground font-bold text-lg">
+                <p className="text-foreground text-lg font-bold">
                   {expenseVolatility.formatted}
                 </p>
               </div>
@@ -823,7 +843,7 @@ export default function InsightsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="relative overflow-hidden border-primary/10 md:col-span-2"
+            className="border-primary/10 relative overflow-hidden md:col-span-2"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-purple-500/5 opacity-50" />
             <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-4">
@@ -832,7 +852,7 @@ export default function InsightsPage() {
                   <Activity className="h-5 w-5 text-pink-400" />
                   Financial Pulse
                 </CardTitle>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Last 30 days spending rhythm (green dots = income)
                 </p>
               </div>

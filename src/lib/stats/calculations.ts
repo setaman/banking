@@ -111,12 +111,12 @@ function calculateStandardDeviation(values: number[]): number {
 }
 
 function groupTransactionsByMonth(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): Map<string, UnifiedTransaction[]> {
   const groups = new Map<string, UnifiedTransaction[]>();
 
   transactions.forEach((tx) => {
-    const month = tx.date.substring(0, 7); // Extract YYYY-MM
+    const month = tx.bookingDate.substring(0, 7); // Extract YYYY-MM from bookingDate
     if (!groups.has(month)) {
       groups.set(month, []);
     }
@@ -133,7 +133,7 @@ function groupTransactionsByMonth(
  * Returns array of monthly data sorted chronologically.
  */
 export function calculateMonthlyFlow(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): MonthlyFlow[] {
   const monthlyGroups = groupTransactionsByMonth(transactions);
   const results: MonthlyFlow[] = [];
@@ -144,9 +144,7 @@ export function calculateMonthlyFlow(
       .reduce((sum, tx) => sum + tx.amount, 0);
 
     const expenses = Math.abs(
-      txs
-        .filter((tx) => tx.amount < 0)
-        .reduce((sum, tx) => sum + tx.amount, 0),
+      txs.filter((tx) => tx.amount < 0).reduce((sum, tx) => sum + tx.amount, 0)
     );
 
     results.push({
@@ -165,7 +163,7 @@ export function calculateMonthlyFlow(
  * Returns percentage for the entire period.
  */
 export function calculateSavingsRate(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): SavingsRate {
   const income = transactions
     .filter((tx) => tx.amount > 0)
@@ -174,7 +172,7 @@ export function calculateSavingsRate(
   const expenses = Math.abs(
     transactions
       .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const rate = income > 0 ? ((income - expenses) / income) * 100 : 0;
@@ -193,16 +191,14 @@ export function calculateSavingsRate(
  */
 export function calculateEmergencyFund(
   balance: number,
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): EmergencyFund {
   const monthlyGroups = groupTransactionsByMonth(transactions);
   const monthlyExpenses: number[] = [];
 
   monthlyGroups.forEach((txs) => {
     const expenses = Math.abs(
-      txs
-        .filter((tx) => tx.amount < 0)
-        .reduce((sum, tx) => sum + tx.amount, 0),
+      txs.filter((tx) => tx.amount < 0).reduce((sum, tx) => sum + tx.amount, 0)
     );
     monthlyExpenses.push(expenses);
   });
@@ -228,16 +224,14 @@ export function calculateEmergencyFund(
  * Returns coefficient of variation for normalized comparison.
  */
 export function calculateExpenseVolatility(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): ExpenseVolatility {
   const monthlyGroups = groupTransactionsByMonth(transactions);
   const monthlyExpenses: number[] = [];
 
   monthlyGroups.forEach((txs) => {
     const expenses = Math.abs(
-      txs
-        .filter((tx) => tx.amount < 0)
-        .reduce((sum, tx) => sum + tx.amount, 0),
+      txs.filter((tx) => tx.amount < 0).reduce((sum, tx) => sum + tx.amount, 0)
     );
     monthlyExpenses.push(expenses);
   });
@@ -263,7 +257,7 @@ export function calculateExpenseVolatility(
  * Returns coefficient of variation for normalized comparison.
  */
 export function calculateIncomeStability(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): IncomeStability {
   const monthlyGroups = groupTransactionsByMonth(transactions);
   const monthlyIncome: number[] = [];
@@ -296,12 +290,9 @@ export function calculateIncomeStability(
  */
 export function calculateTopCategories(
   transactions: UnifiedTransaction[],
-  limit: number = 10,
+  limit: number = 10
 ): CategoryBreakdown[] {
-  const categoryTotals = new Map<
-    Category,
-    { amount: number; count: number }
-  >();
+  const categoryTotals = new Map<Category, { amount: number; count: number }>();
 
   // Filter to expenses only and classify
   transactions
@@ -322,7 +313,7 @@ export function calculateTopCategories(
 
   const totalExpenses = Array.from(categoryTotals.values()).reduce(
     (sum, { amount }) => sum + amount,
-    0,
+    0
   );
 
   const results: CategoryBreakdown[] = Array.from(categoryTotals.entries())
@@ -344,7 +335,7 @@ export function calculateTopCategories(
  * Recurring = expenses that appear monthly with similar amounts (tolerance: ±20%).
  */
 export function calculateRecurringRatio(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): RecurringRatio {
   const counterpartyMonthlyAmounts = new Map<string, Map<string, number>>();
 
@@ -352,7 +343,7 @@ export function calculateRecurringRatio(
   transactions
     .filter((tx) => tx.amount < 0 && tx.counterparty)
     .forEach((tx) => {
-      const month = tx.date.substring(0, 7);
+      const month = tx.bookingDate.substring(0, 7);
       const counterparty = tx.counterparty.toLowerCase().trim();
       const absAmount = Math.abs(tx.amount);
 
@@ -371,7 +362,7 @@ export function calculateRecurringRatio(
       const amounts = Array.from(monthlyMap.values());
       const mean = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
       const maxDeviation = Math.max(
-        ...amounts.map((amt) => Math.abs(amt - mean) / mean),
+        ...amounts.map((amt) => Math.abs(amt - mean) / mean)
       );
 
       // If variance is within 20%, consider it recurring
@@ -384,7 +375,7 @@ export function calculateRecurringRatio(
   const totalExpenses = Math.abs(
     transactions
       .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const ratio = totalExpenses > 0 ? (recurringAmount / totalExpenses) * 100 : 0;
@@ -402,7 +393,7 @@ export function calculateRecurringRatio(
  * Discretionary = Entertainment + Dining + Shopping categories.
  */
 export function calculateDiscretionaryRatio(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): DiscretionaryRatio {
   const discretionaryCategories: Category[] = [
     "Entertainment",
@@ -418,13 +409,13 @@ export function calculateDiscretionaryRatio(
           tx.category || classifyTransaction(tx.description, tx.counterparty);
         return discretionaryCategories.includes(category as Category);
       })
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const totalExpenses = Math.abs(
     transactions
       .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const ratio =
@@ -445,7 +436,7 @@ export function calculateDiscretionaryRatio(
  * @deprecated Use calculateMonthlyFlow instead
  */
 export function calculateMonthlyCashFlow(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): { month: string; income: number; expenses: number; net: number }[] {
   return calculateMonthlyFlow(transactions);
 }
@@ -456,7 +447,7 @@ export function calculateMonthlyCashFlow(
  */
 export function calculateSavingsRateLegacy(
   income: number,
-  expenses: number,
+  expenses: number
 ): number {
   if (income === 0) return 0;
   return Math.round(((income - expenses) / income) * 10000) / 100;
@@ -466,7 +457,7 @@ export function calculateSavingsRateLegacy(
  * Category breakdown sorted by amount descending.
  */
 export function calculateCategoryBreakdown(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): { category: string; amount: number; percentage: number }[] {
   const topCategories = calculateTopCategories(transactions, 100); // Get all categories
   return topCategories.map((cat) => ({
@@ -480,13 +471,15 @@ export function calculateCategoryBreakdown(
  * Income vs Expenses grouped by month.
  */
 export function calculateIncomeVsExpenses(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): { month: string; income: number; expenses: number }[] {
-  return calculateMonthlyFlow(transactions).map(({ month, income, expenses }) => ({
-    month,
-    income: Math.round(income * 100) / 100,
-    expenses: Math.round(expenses * 100) / 100,
-  }));
+  return calculateMonthlyFlow(transactions).map(
+    ({ month, income, expenses }) => ({
+      month,
+      income: Math.round(income * 100) / 100,
+      expenses: Math.round(expenses * 100) / 100,
+    })
+  );
 }
 
 /**
@@ -495,7 +488,7 @@ export function calculateIncomeVsExpenses(
 export function calculateDailyAverageSpend(
   transactions: UnifiedTransaction[],
   startDate?: string,
-  endDate?: string,
+  endDate?: string
 ): number {
   const dateRange =
     startDate && endDate
@@ -511,7 +504,7 @@ export function calculateDailyAverageSpend(
  * Positive = spending increased, negative = spending decreased.
  */
 export function calculateMonthOverMonthTrend(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): number {
   const result = calculateMoMTrend(transactions);
   return Math.round(result.trend * 100) / 100;
@@ -522,7 +515,7 @@ export function calculateMonthOverMonthTrend(
  * @deprecated This is a legacy wrapper. Use the full calculateExpenseVolatility() for detailed results.
  */
 export function calculateExpenseVolatilityLegacy(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): number {
   const result = calculateExpenseVolatility(transactions);
   return Math.round(result.standardDeviation * 100) / 100;
@@ -534,7 +527,7 @@ export function calculateExpenseVolatilityLegacy(
 export function calculateEmergencyFundCoverage(
   totalBalance: number,
   _totalExpenses: number,
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): number {
   const result = calculateEmergencyFund(totalBalance, transactions);
   return Math.round(result.months * 100) / 100;
@@ -545,7 +538,7 @@ export function calculateEmergencyFundCoverage(
  * Returns percentage change from previous month to current month.
  */
 export function calculateMoMTrend(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): MoMTrend {
   const monthlyGroups = groupTransactionsByMonth(transactions);
   const sortedMonths = Array.from(monthlyGroups.keys()).sort();
@@ -566,18 +559,20 @@ export function calculateMoMTrend(
     monthlyGroups
       .get(currentMonthKey)!
       .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const previousMonth = Math.abs(
     monthlyGroups
       .get(previousMonthKey)!
       .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const trend =
-    previousMonth > 0 ? ((currentMonth - previousMonth) / previousMonth) * 100 : 0;
+    previousMonth > 0
+      ? ((currentMonth - previousMonth) / previousMonth) * 100
+      : 0;
 
   const sign = trend > 0 ? "+" : "";
   const formatted = `${sign}${trend.toFixed(1)}%`;
@@ -596,14 +591,14 @@ export function calculateMoMTrend(
  */
 export function calculateDailyAverage(
   transactions: UnifiedTransaction[],
-  dateRange?: { start: Date; end: Date },
+  dateRange?: { start: Date; end: Date }
 ): DailyAverage {
   let filteredTransactions = transactions;
   let days = 0;
 
   if (dateRange) {
     filteredTransactions = transactions.filter((tx) => {
-      const txDate = parseISO(tx.date);
+      const txDate = parseISO(tx.bookingDate);
       return isWithinInterval(txDate, {
         start: dateRange.start,
         end: dateRange.end,
@@ -621,7 +616,7 @@ export function calculateDailyAverage(
       };
     }
 
-    const dates = transactions.map((tx) => parseISO(tx.date));
+    const dates = transactions.map((tx) => parseISO(tx.bookingDate));
     const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
     const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
     days = differenceInDays(maxDate, minDate) + 1;
@@ -630,7 +625,7 @@ export function calculateDailyAverage(
   const totalExpenses = Math.abs(
     filteredTransactions
       .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + tx.amount, 0),
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   const average = days > 0 ? totalExpenses / days : 0;
@@ -648,7 +643,7 @@ export function calculateDailyAverage(
  * Returns the transaction with the highest absolute value (most negative).
  */
 export function findLargestExpense(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): LargestExpense {
   const expenses = transactions.filter((tx) => tx.amount < 0);
 
@@ -661,7 +656,7 @@ export function findLargestExpense(
   }
 
   const largest = expenses.reduce((max, tx) =>
-    tx.amount < max.amount ? tx : max,
+    tx.amount < max.amount ? tx : max
   );
 
   const amount = Math.abs(largest.amount);
