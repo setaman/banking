@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Nav } from "./nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DemoToggle } from "@/components/demo-toggle";
@@ -22,8 +23,19 @@ export function Header() {
             href="/"
             className="flex items-center space-x-2 transition-transform hover:scale-105"
           >
-            <div className="bg-primary/20 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md">
-              <span className="text-primary text-xl font-bold">B</span>
+            <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full">
+              <Image 
+                src="/logo-dark.png" 
+                alt="BanKing Logo" 
+                fill
+                className="hidden object-cover dark:block"
+              />
+              <Image 
+                src="/logo-light.png" 
+                alt="BanKing Logo" 
+                fill
+                className="block object-cover dark:hidden"
+              />
             </div>
             <span className="from-foreground to-foreground/70 bg-gradient-to-r bg-clip-text text-xl font-bold text-transparent">
               BanKing
