@@ -5,6 +5,14 @@ Here the human intervention ends.
 
 ---
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="public/logo-light.png">
+    <img alt="BanKing Logo" src="public/logo-light.png" width="120" style="max-width: 100%;">
+  </picture>
+</p>
+
 # BanKing
 
 A personal banking application for importing and analyzing financial transactions from German bank accounts. Built with
