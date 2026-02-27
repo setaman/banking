@@ -23,7 +23,7 @@ export function Header() {
             href="/"
             className="flex items-center space-x-2 transition-transform hover:scale-105"
           >
-            <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[14px] ring-1 ring-white/10 shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all duration-300 dark:shadow-[0_0_20px_rgba(139,92,246,0.4)]">
+            <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[14px] ring-1 ring-white/10 transition-all duration-300">
               <Image
                 src="/logo-dark.png"
                 alt="BanKing Logo"
