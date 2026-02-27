@@ -49,6 +49,7 @@ next-env.d.ts
 db.json
 /data/db.json
 /data/db-demo.json
+/data/db-backup.json
 banking.config.json
 
 # Auto Claude data directory

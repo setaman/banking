@@ -7,11 +7,21 @@ import type {
   UnifiedAccount,
 } from "@/lib/banking/types";
 import { createTransactionId } from "@/lib/banking/utils";
+import { createBackup } from "@/lib/db/backup";
 
 export async function syncBank(
   adapter: BankAdapter,
   credentials: BankCredentials
 ): Promise<SyncMetadata> {
+  // Create backup of current DB state before sync
+  const backupResult = await createBackup();
+  if (!backupResult.success) {
+    console.warn(
+      "[Sync] Backup failed, proceeding with sync:",
+      backupResult.error
+    );
+  }
+
   const db = await getDb();
   const startTime = new Date();
 

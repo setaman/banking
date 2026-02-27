@@ -5,7 +5,11 @@ import { getAdapter, registerAdapter } from "@/lib/banking/adapters";
 import { dkbAdapter } from "@/lib/banking/adapters/dkb";
 import { syncBank } from "@/lib/banking/sync";
 import { getDb, invalidateDbCache, getDbMode } from "@/lib/db";
+import { DB_PATHS } from "@/lib/db/storage";
+import type { OperationResult } from "@/lib/db/backup";
 import type { SyncMetadata } from "@/lib/banking/types";
+import { DatabaseSchema } from "@/lib/db/schema";
+import { copyFile, readFile } from "fs/promises";
 import { revalidatePath } from "next/cache";
 
 // Register adapters on module load
@@ -98,4 +102,48 @@ export async function getSyncStatus(): Promise<{
     syncHistory: db.data.syncHistory.slice(-10), // Last 10 syncs
     hasCredentials: !!config,
   };
+}
+
+export async function restoreFromBackup(): Promise<OperationResult> {
+  // Prevent restore in demo mode — same guard as triggerSync
+  if (getDbMode() === "demo") {
+    return { success: false, error: "Cannot restore in demo mode." };
+  }
+
+  try {
+    const mode = getDbMode();
+    const targetPath = DB_PATHS[mode];
+    const backupPath = DB_PATHS.backup;
+
+    // Invalidate cache before overwriting to prevent stale writes
+    invalidateDbCache();
+
+    // Validate backup file against DB schema before restoring
+    const raw = await readFile(backupPath, "utf-8");
+    const parsed = DatabaseSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: "Backup file is corrupted or has invalid schema.",
+      };
+    }
+
+    await copyFile(backupPath, targetPath);
+    invalidateDbCache();
+
+    revalidatePath("/");
+    revalidatePath("/transactions");
+    revalidatePath("/insights");
+
+    return { success: true };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { success: false, error: "No backup file found." };
+    }
+    console.error("[Restore] Failed to restore from backup:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
