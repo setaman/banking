@@ -5,6 +5,7 @@ import { getAdapter, registerAdapter } from "@/lib/banking/adapters";
 import { dkbAdapter } from "@/lib/banking/adapters/dkb";
 import { syncBank } from "@/lib/banking/sync";
 import { getDb, invalidateDbCache, getDbMode } from "@/lib/db";
+import { DB_PATHS } from "@/lib/db/storage";
 import type { SyncMetadata } from "@/lib/banking/types";
 import { revalidatePath } from "next/cache";
 
@@ -98,4 +99,36 @@ export async function getSyncStatus(): Promise<{
     syncHistory: db.data.syncHistory.slice(-10), // Last 10 syncs
     hasCredentials: !!config,
   };
+}
+
+export async function restoreFromBackup(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const { copyFile, access } = await import("fs/promises");
+
+    const mode = getDbMode();
+    const targetPath = DB_PATHS[mode];
+    const backupPath = DB_PATHS.backup;
+
+    await access(backupPath);
+    await copyFile(backupPath, targetPath);
+    invalidateDbCache();
+
+    revalidatePath("/");
+    revalidatePath("/transactions");
+    revalidatePath("/insights");
+
+    return { success: true };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { success: false, error: "No backup file found." };
+    }
+    console.error("[Restore] Failed to restore from backup:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
