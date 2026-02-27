@@ -6,7 +6,10 @@ import { dkbAdapter } from "@/lib/banking/adapters/dkb";
 import { syncBank } from "@/lib/banking/sync";
 import { getDb, invalidateDbCache, getDbMode } from "@/lib/db";
 import { DB_PATHS } from "@/lib/db/storage";
+import type { OperationResult } from "@/lib/db/backup";
 import type { SyncMetadata } from "@/lib/banking/types";
+import { DatabaseSchema } from "@/lib/db/schema";
+import { copyFile, readFile } from "fs/promises";
 import { revalidatePath } from "next/cache";
 
 // Register adapters on module load
@@ -101,18 +104,30 @@ export async function getSyncStatus(): Promise<{
   };
 }
 
-export async function restoreFromBackup(): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  try {
-    const { copyFile, access } = await import("fs/promises");
+export async function restoreFromBackup(): Promise<OperationResult> {
+  // Prevent restore in demo mode — same guard as triggerSync
+  if (getDbMode() === "demo") {
+    return { success: false, error: "Cannot restore in demo mode." };
+  }
 
+  try {
     const mode = getDbMode();
     const targetPath = DB_PATHS[mode];
     const backupPath = DB_PATHS.backup;
 
-    await access(backupPath);
+    // Invalidate cache before overwriting to prevent stale writes
+    invalidateDbCache();
+
+    // Validate backup file against DB schema before restoring
+    const raw = await readFile(backupPath, "utf-8");
+    const parsed = DatabaseSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: "Backup file is corrupted or has invalid schema.",
+      };
+    }
+
     await copyFile(backupPath, targetPath);
     invalidateDbCache();
 
