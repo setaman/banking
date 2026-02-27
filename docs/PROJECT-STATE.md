@@ -1,33 +1,56 @@
 # Project State: BanKing
 
-**Current Phase:** Phase 8: Transactions Table Enhancement ✅ COMPLETE
-**Current Sprint:** UI/UX Improvements
-**Last Session:** 2026-01-31
-**Commit:** Added merchant logos to transactions table with fallback placeholder
+**Current Phase:** Phase 9: Database Backup Before Sync ✅ COMPLETE
+**Current Sprint:** Data Safety & Reliability
+**Last Session:** 2026-02-27
+**Commit:** feat(db): add automatic backup before sync with restore capability (#14)
 
-**Current Work (2026-01-31):** Enhanced transactions table with merchant logo images
+**Current Work (2026-02-27):** Added automatic DB backup before sync with restore capability
 
 ### This session changes
 
-**Phase 8: Transactions Table with Merchant Logos**
+**Phase 9: Database Backup Before Sync**
 
-Added visual merchant logos to the transactions table for better UX. Transactions now display:
+Added automatic database backup before every sync operation to protect against data corruption. The system creates a copy of the current DB file before any sync mutations, and provides a server action to restore from backup if needed.
 
-- Merchant logo image (40x40px) when available from DKB API (`raw.attributes.merchant.logo.url`)
-- ShoppingBag icon placeholder when no logo is available
-- Fallback to placeholder if image fails to load
-- Improved layout with flex container for image + text
-- Neo-Glass styling consistent with project theme
+**Key Features:**
+
+- Automatic pre-sync backup via `createBackup()` using `fs.copyFile`
+- Flushes in-memory DB state to disk before copying (ensures consistent backup)
+- Schema validation on restore via `DatabaseSchema.safeParse()`
+- Demo-mode guard prevents restore in demo mode (consistent with sync guard)
+- Non-blocking design: backup failure logs a warning but never prevents sync
+- Double cache invalidation on restore (before and after file overwrite)
+- `data/` directory auto-created with `mkdir(recursive)` on first run
 
 **Implementation Details:**
 
-- Modified `src/app/transactions/page.tsx` line 790-820
-- Added image container with rounded corners and border
-- Used type assertion `(tx.raw as any)` to access merchant data from raw object
-- Implemented `onError` handler for graceful image loading failures
-- Maintained responsive design and truncation for long text
+- `createBackup()` in `src/lib/db/backup.ts` — core backup utility
+- `OperationResult` shared type exported from `backup.ts`
+- Backup hooked into `syncBank()` as the very first operation (covers both UI and REST triggers)
+- `restoreFromBackup()` server action in `src/actions/sync.actions.ts`
+- `db-backup.json` added to `.gitignore` to prevent sensitive data leaks
+
+**Files Created:**
+
+- `src/lib/db/backup.ts` — createBackup() utility + OperationResult type (44 lines)
 
 **Files Modified:**
+
+- `src/lib/banking/sync.ts` — Added backup call at start of syncBank() (+10 lines)
+- `src/actions/sync.actions.ts` — Added restoreFromBackup() server action (+48 lines)
+- `.gitignore` — Added /data/db-backup.json (+1 line)
+
+**PR:** https://github.com/setaman/banking/pull/14 (merged)
+
+**Verification:**
+
+- ✅ TypeScript compilation passes
+- ✅ Prettier formatting passes
+- ✅ Production build succeeds
+- ✅ Code review approved
+
+---
 
 - `src/app/transactions/page.tsx` - Added merchant logo display logic
 
@@ -102,6 +125,7 @@ Implemented a complete error handling system for bank synchronization failures f
 | Phase 5: Demo & Extended               | ✅ DONE | 100%       |
 | Phase 6: Sync & Test-Mode Improvements | ✅ DONE | 100%       |
 | **Phase 7: Sync Error UI Enhancement** | ✅ DONE | 100%       |
+| **Phase 9: DB Backup Before Sync**     | ✅ DONE | 100%       |
 
 ---
 
@@ -267,7 +291,7 @@ After enabling demo mode, these files will exist:
 data/
 ├── db.json         # Real banking data (preserved across demo toggles)
 ├── db-demo.json    # Demo/sample data (generated on first enable)
-└── db-backup.json  # Future: Auto-backup before mode switches
+└── db-backup.json  # Auto-backup created before each sync operation
 ```
 
 ### Next Steps
