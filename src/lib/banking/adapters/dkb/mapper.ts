@@ -58,7 +58,7 @@ export const DkbTransactionResponseSchema = z.object({
   attributes: z.object({
     status: z.string(), // "booked", "pending"
     bookingDate: z.string(), // YYYY-MM-DD
-    valueDate: z.string(), // YYYY-MM-DD
+    valueDate: z.string().optional(), // YYYY-MM-DD
     description: z.string().optional(),
     endToEndId: z.string().optional(),
     transactionType: z.string().optional(), // e.g. "KARTENZAHLUNG", "UEBERWEISUNG"
