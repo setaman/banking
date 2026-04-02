@@ -2,12 +2,29 @@
 
 **Current Phase:** Phase 9: Database Backup Before Sync ✅ COMPLETE
 **Current Sprint:** Data Safety & Reliability
-**Last Session:** 2026-02-27
+**Last Session:** 2026-04-02
 **Commit:** feat(db): add automatic backup before sync with restore capability (#14)
 
-**Current Work (2026-02-27):** Added automatic DB backup before sync with restore capability
+**Current Work (2026-04-02):** Fixed DKB sync validation to accept transactions without valueDate
 
 ### This session changes
+
+**Hotfix: DKB transactions without `valueDate`**
+
+Fixed DKB sync failures caused by transaction records that omit `attributes.valueDate`. The DKB transaction schemas now treat `valueDate` as optional, which allows sync to continue while preserving existing behavior that uses `bookingDate` as the authoritative transaction date.
+
+**Files Modified:**
+
+- `src/lib/banking/adapters/dkb/api.ts` — Made transaction `valueDate` optional during API response validation
+- `src/lib/banking/adapters/dkb/mapper.ts` — Kept mapper schema aligned by making `valueDate` optional there as well
+
+**Verification:**
+
+- ✅ TypeScript compilation passes (`npx tsc --noEmit`)
+- ✅ Production build succeeds (`npm run build`)
+- ⚠️ `npm run lint` still fails due to pre-existing unrelated repository issues
+
+---
 
 **Phase 9: Database Backup Before Sync**
 

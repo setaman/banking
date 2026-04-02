@@ -125,7 +125,7 @@ const DkbMerchantSchema = z.object({
 const DkbTransactionAttributesSchema = z.object({
   status: z.string(),
   bookingDate: z.string(),
-  valueDate: z.string(),
+  valueDate: z.string().optional(),
   description: z.string().optional(),
   endToEndId: z.string().optional(),
   transactionType: z.string().optional(),
@@ -179,7 +179,7 @@ export class DkbApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode?: number,
-    public readonly response?: unknown,
+    public readonly response?: unknown
   ) {
     super(message);
     this.name = "DkbApiError";
@@ -194,7 +194,10 @@ export class DkbAuthError extends DkbApiError {
 }
 
 export class DkbNetworkError extends DkbApiError {
-  constructor(message: string, public readonly originalError?: unknown) {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown
+  ) {
     super(message);
     this.name = "DkbNetworkError";
   }
@@ -211,7 +214,7 @@ function buildHeaders(credentials: BankCredentials): HeadersInit {
 
 async function fetchWithErrorHandling(
   url: string,
-  credentials: BankCredentials,
+  credentials: BankCredentials
 ): Promise<unknown> {
   let response: Response;
 
@@ -223,7 +226,7 @@ async function fetchWithErrorHandling(
   } catch (error) {
     throw new DkbNetworkError(
       `Network request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      error,
+      error
     );
   }
 
@@ -231,7 +234,7 @@ async function fetchWithErrorHandling(
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
       throw new DkbAuthError(
-        `Authentication failed (HTTP ${response.status}) - please refresh your DKB session credentials`,
+        `Authentication failed (HTTP ${response.status}) - please refresh your DKB session credentials`
       );
     }
 
@@ -242,12 +245,12 @@ async function fetchWithErrorHandling(
       errorBody = await response.text();
     }
 
-    console.log(errorBody)
+    console.log(errorBody);
 
     throw new DkbApiError(
       `DKB API request failed: HTTP ${response.status} ${response.statusText}`,
       response.status,
-      errorBody,
+      errorBody
     );
   }
 
@@ -256,7 +259,7 @@ async function fetchWithErrorHandling(
     return await response.json();
   } catch (error) {
     throw new DkbApiError(
-      `Failed to parse JSON response: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Failed to parse JSON response: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -273,7 +276,7 @@ async function fetchWithErrorHandling(
  * @throws {DkbApiError} For other API errors
  */
 export async function fetchDkbAccounts(
-  credentials: BankCredentials,
+  credentials: BankCredentials
 ): Promise<DkbAccount[]> {
   const url = `${DKB_BASE_URL}/accounts/accounts?filter[product.type][NEQ]=loan`;
 
@@ -283,7 +286,7 @@ export async function fetchDkbAccounts(
   const parsed = DkbAccountsResponseSchema.safeParse(data);
   if (!parsed.success) {
     throw new DkbApiError(
-      `Invalid accounts response format: ${parsed.error.message}`,
+      `Invalid accounts response format: ${parsed.error.message}`
     );
   }
 
@@ -307,7 +310,7 @@ export async function fetchDkbTransactions(
   accountId: string,
   credentials: BankCredentials,
   // Optional date range to restrict transactions (ISO date strings: YYYY-MM-DD)
-  range?: { from?: string; to?: string },
+  range?: { from?: string; to?: string }
 ): Promise<DkbTransaction[]> {
   const allTransactions: DkbTransaction[] = [];
   let nextCursor: string | undefined;
@@ -345,7 +348,7 @@ export async function fetchDkbTransactions(
     const parsed = DkbTransactionsResponseSchema.safeParse(data);
     if (!parsed.success) {
       throw new DkbApiError(
-        `Invalid transactions response format (page ${pageCount}): ${parsed.error.message}`,
+        `Invalid transactions response format (page ${pageCount}): ${parsed.error.message}`
       );
     }
 
@@ -358,7 +361,7 @@ export async function fetchDkbTransactions(
     // Safety check
     if (pageCount >= MAX_PAGES) {
       throw new DkbApiError(
-        `Pagination limit exceeded (${MAX_PAGES} pages) - possible infinite loop`,
+        `Pagination limit exceeded (${MAX_PAGES} pages) - possible infinite loop`
       );
     }
   } while (nextCursor);
