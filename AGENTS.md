@@ -122,6 +122,12 @@ Database and persistence
 
 Agent behavior rules (operational)
 
+### Code-writing delegation rule
+
+- Only the `react-specialist` agent is permitted to write or edit application source files.
+- The Lead agent (and all other agents) must always delegate code-writing and implementation tasks to `react-specialist`.
+- All other agents (architect, designer-high, planner, etc.) may propose, plan, or review code, but must not perform direct code edits.
+
 - Do not create or commit secrets (any `banking.config.json`, `.env*`). These are explicitly gitignored; never add credentials to commits.
 - When making edits: prefer small, incremental commits with descriptive messages. If asked to create a commit, follow repository's existing style and do not amend unrelated changes.
 - Update `docs/PROJECT-STATE.md` with session summary, changed files, blockers and next actions before ending a session.
