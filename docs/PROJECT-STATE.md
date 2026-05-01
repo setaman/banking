@@ -1,9 +1,40 @@
 # Project State: BanKing
 
-**Current Phase:** Phase 9: Database Backup Before Sync ✅ COMPLETE
-**Current Sprint:** Data Safety & Reliability
-**Last Session:** 2026-04-02
-**Commit:** feat(db): add automatic backup before sync with restore capability (#14)
+**Current Phase:** Dashboard Trend Fix ✅ COMPLETE
+**Current Sprint:** UX Accuracy
+**Last Session:** 2026-05-01
+**Commit:** fix(dashboard): accurate period-comparison trends on overview cards
+
+---
+
+### This session changes (2026-05-01)
+
+**Fix: Overview Cards — Real Period-Comparison Trends**
+
+Replaced the broken `monthlyCashFlow`-based trend logic (which always showed `0.0% vs last month`) with a proper previous-period comparison.
+
+**Root Cause:** Trend calculations used the last two buckets of `monthlyCashFlow`, but for ranges like "Last 30 days" only one partial bucket existed, so diffs were always zero.
+
+**Solution:**
+- `stats.actions.ts`: computes a mirror "previous period" (same duration, immediately before the selected range) by fetching a second batch of transactions, and returns it as `previousPeriod` in `DashboardStats`.
+- `overview-cards.tsx`: replaced all `monthlyCashFlow` math with simple `(current − previous) / |previous| × 100` calculations against `previousPeriod`. The comparison label is now dynamic (`"vs previous 30 days"`, `"vs last month"`, etc.) based on the `preset` prop. "Total Balance" correctly shows `"current balance"` (point-in-time, no period comparison). "All Time" shows `"—"` (no comparison possible).
+- `page.tsx`: passes the `preset` prop from `useDateRange` to `<OverviewCards>`.
+
+**Files Modified:**
+- `src/actions/stats.actions.ts` — added `PreviousPeriodStats` interface, previous-period fetch, `previousPeriod` field on `DashboardStats`
+- `src/components/dashboard/overview-cards.tsx` — new `preset` prop, dynamic label, `previousPeriod`-based trend calc
+- `src/app/page.tsx` — passes `preset` to `<OverviewCards>`
+
+**Verification:**
+- ✅ `npx tsc --noEmit` — no errors
+- ✅ `npm run build` — production build succeeds
+
+---
+
+**Previous Phase:** Phase 9: Database Backup Before Sync ✅ COMPLETE
+**Previous Sprint:** Data Safety & Reliability
+**Previous Last Session:** 2026-04-02
+**Previous Commit:** feat(db): add automatic backup before sync with restore capability (#14)
 
 **Current Work (2026-04-02):** Fixed DKB sync validation to accept transactions without valueDate
 

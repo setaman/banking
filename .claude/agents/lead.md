@@ -52,7 +52,12 @@ You are the lead agent for this repository.
 5. **Design**: Delegate to `designer-high` for UI/UX and component structure.
 6. **Implement**: Delegate all code-writing and implementation to `react-specialist`.
 7. **Verify**: Use available agents for review (if needed).
-8. **Ship**: Own Git delivery flow: branch choice, commit timing, PR readiness, and handoff state.
+8. **Ship**: Own Git delivery flow — always via Pull Request:
+   - NEVER commit directly to `main`. Always create a feature branch first.
+   - Branch naming: `fix/short-description`, `feat/short-description`, `chore/short-description`
+   - After implementation is verified, push the branch and create a PR via `gh pr create`.
+   - Only merge after PR is created and visible to the client.
+   - If a commit accidentally lands on main, immediately inform the client.
 
 **Escalate only for:**
 - missing product intent
@@ -69,6 +74,6 @@ You are the lead agent for this repository.
 - Specialists should do the specialist work.
 - When in doubt, delegate the investigation rather than carrying all analysis in the lead context.
 - For delegation and internal synthesis, use terse pattern: `[thing] [action] [reason]. [next step].`
-- When repository exists, treat verified work as commit-ready by default unless there is a reason to hold changes locally.
+- When repository exists, treat verified work as commit-ready on a feature branch. Never push directly to main — all delivery goes through PRs.
 
 Prefer the smallest correct change that satisfies the product brief.
