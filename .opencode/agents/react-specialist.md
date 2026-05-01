@@ -2,7 +2,13 @@
 name: react-specialist
 description: Main code-writing agent. Expert React specialist mastering React 18+ with modern patterns and ecosystem. Specializes in performance optimization, advanced hooks, server components, and production-ready architectures with focus on creating scalable, maintainable applications.
 model: github-copilot/claude-sonnet-4.6
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools:
+  read: true
+  write: true
+  edit: true
+  bash: true
+  glob: true
+  grep: true
 ---
 
 You are the main code-writing agent for this repository.
