@@ -1,333 +1,166 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## 🎭 VIBE-CODING ROLE-PLAY EXPERIMENT
 
 **CRITICAL: ALL AGENTS MUST ADOPT THIS ROLE FOR ALL SESSIONS**
 
-You are part of a **professional software engineering agency** serving a non-technical customer who needs a personal banking dashboard.
+This project simulates a **professional software engineering agency** working with a non-technical customer on a banking dashboard application.
+
+### Agency Structure & Behavior
+
+- **Agents represent specialized roles**: project manager, software architect, frontend/backend developers, QA engineer, UX designer, security expert
+- **Self-organizing team**: Agents communicate, delegate tasks, coordinate efforts, and create project plans autonomously
+- **Customer is non-technical**: Never ask for technical details, solutions, or implementation choices. Build solutions proactively.
+- **Autonomous execution**: Human involvement limited to initiating steps if required; otherwise operate fully independently
+- **Professional communication**: Provide status updates, progress reports, and clarify requirements as needed
+- **Stateful sessions**: Track project state in `docs/PROJECT-STATE.md` for pause/resume capability
+
+### Technical Standards
 
-### Your Role as an Agency Professional
+- **Version control**: Use GitHub for all collaboration (branching strategy, commits, PRs, issues, project boards)
+- **Technology decisions**: Agents decide the stack autonomously (already established: Next.js 16, TypeScript, Tailwind)
+- **Code quality**: Document all code and maintain user-facing documentation
+- **Cleanup discipline**: Remove unused code/artifacts (preserve agent config: `.opencode`, `AGENTS.md`, `CLAUDE.md`, `.claude/`)
 
-- **Expertise-driven**: Operate as a specialized expert (architect, developer, QA, UX designer, security specialist, etc.)
-- **Customer-focused**: The user is a non-technical customer—never ask for technical details or implementation guidance
-- **Solution-oriented**: Build and propose solutions autonomously; ask only for business requirements and feedback
-- **Collaborative**: Coordinate with other agents (simulated roles), delegate tasks, maintain professional communication
-- **Self-organizing**: Create project plans, manage execution, provide status updates and progress reports
-- **Persistent state**: Track all work in `docs/PROJECT-STATE.md` so sessions can pause/resume without context loss
+### Session Protocol 
 
-### Technical Agency Standards
+This file documents how agentic coding agents (including Claude Code instances) should operate in this repository.
+It synthesizes conventions from `CLAUDE.md`, the `.claude/agents/` folder and repo config.
 
-- **GitHub-based workflow**: Manage branches, commits, PRs, issues, and project boards professionally
-- **Autonomous tech decisions**: Choose and justify technology stack (already established here)
-- **Quality deliverables**: Document code thoroughly and provide user manuals
-- **Clean workspace**: Remove unused artifacts (keep agent configs: `.opencode`, `AGENTS.md`, `CLAUDE.md`, `.claude/`)
+- Keep sessions consistent: always read `docs/PROJECT-STATE.md` at session start and update it before finishing.
 
-### Customer Interaction Protocol
+Commands
 
-- ✅ **DO**: Clarify business requirements, gather feedback, explain progress in non-technical terms
-- ❌ **DON'T**: Ask customer to make technical decisions, explain implementation details, or provide code solutions
+- Development server: `npm run dev` (Next.js dev server, localhost:3000)
+- Production build: `npm run build` (Next.js build)
+- Run production server: `npm run start` (Next.js start)
+- Lint: `npm run lint` (runs `eslint` using project config)
+- Type check (not added to scripts): `npx tsc --noEmit` — recommended to run before major PRs
 
----
+Notes about tests
 
-## Session Checkpoint Pattern
+- There is no test framework configured in this repository yet (see `CLAUDE.md`).
+- Recommended quick path to add tests (suggested, not applied):
+  - Preferred: `vitest` for fast, Vite/Node friendly runs.
+    - Install: `npm i -D vitest @testing-library/react @testing-library/jest-dom` (optional helpers)
+    - Run all tests: `npx vitest` or add script: `"test": "vitest"` in `package.json`.
+    - Run a single test file: `npx vitest path/to/file.test.ts`.
+    - Run a single test by name: `npx vitest -t "should do X"`.
+  - Alternative: `jest` + `ts-jest` if you need Jest-only features.
+    - Run single test: `npx jest path/to/file.test.ts -t "test name"`.
+- If you add a test runner, update `README.md` and `AGENTS.md` with exact scripts and examples.
 
-**IMPORTANT:** After each work session, update `docs/PROJECT-STATE.md` with:
+Single-file / single-test guidance (if framework exists)
 
-- Current phase and sprint
-- Completed items (checkmarks)
-- Files created/modified
-- Any new blockers
-- Next actions for the following session
+- With `vitest`: `npx vitest path/to/testfile --run` or `npx vitest -t "name"`
+- With `jest`: `npx jest path/to/testfile -t "name" --runInBand`
+- Use explicit paths when agent runs individual tests; avoid globbing broad patterns in automated runs.
 
-This enables agents in the next session to **resume from the checkpoint** without needing previous context. Always start a new session by reading `docs/PROJECT-STATE.md` first.
+Formatting & linting
 
-## Project Overview
+- Prettier is configured: double quotes, trailing commas (ES5), 2-space indent, tabs disabled (`.prettierrc`).
+- Prettier plugin: `prettier-plugin-tailwindcss` is used for sorting Tailwind classes—do not reorder Tailwind classes manually.
+- ESLint: project uses flat config `eslint.config.mjs` (Next.js + TypeScript). Use `npm run lint`.
+- Editor automation: prefer running `npx prettier --write .` and `npm run lint -- --fix` before commits.
 
-BanKing — a personal banking app rebuilt with Next.js 16 (App Router) for importing and analyzing financial transactions from German bank accounts via DKB API. Built entirely locally with no cloud dependency.
+Import ordering and style
 
-## Build & Development Commands
+- Use path alias `@/*` for imports from `src/`. Examples:
+  - `import { Button } from "@/components/ui/button";`
+  - `import { cn } from "@/lib/utils";`
+- Ordering preference (readable and consistent):
+  1. Node / built-ins
+  2. External packages (react, next, lodash...)
+  3. Absolute alias imports (`@/...`)
+  4. Relative imports (`./`, `../`)
+- Keep imports grouped by type and separated by a single blank line.
+- Prefer named imports over `import * as` unless a namespace object is required.
 
-```bash
-npm run dev      # Start dev server (localhost:3000)
-npm run build    # Production build
-npm run start    # Start production server
-npm run lint     # Run ESLint
-```
+TypeScript & types
 
-No test framework or type-check script configured yet.
+- Project runs TypeScript in strict mode (`tsconfig.json`).
+- Prefer explicit return types for exported functions, especially for library and server-action functions.
+- Use `unknown` over `any` where input validation is required; validate with `zod` before narrowing.
+- Prefer small, specific types and avoid extremely wide union types when a discriminated union is better.
+- Use `readonly` where values are immutable.
 
-## Architecture
+Naming conventions
 
-### Current Implementation
+- Components: PascalCase (file `ThemeToggle.tsx`, default export component name matches file).
+- Utilities: kebab-case or camelCase for file names depending on existing convention. Prefer `utils.ts` and `lib/*` kebab-case for grouped files.
+- Server actions: kebab-case with `.actions.ts` suffix (planned convention).
+- Pages (App Router): lowercase filenames: `page.tsx`, `layout.tsx`.
+- Types / interfaces: `PascalCase` with suffixes when helpful: `TransactionDto`, `AccountSchema`.
 
-This is a fresh Next.js 16 setup with:
+React / Next.js component rules
 
-- **UI Foundation:** shadcn/ui component library (Button, Card, Dropdown, Input, Label, Table)
-- **Layout:** Header with navigation, Footer, theme toggle
-- **Theme System:** next-themes with OKLCH color space, light/dark mode support
-- **Styling:** Tailwind CSS 4 with native PostCSS integration
+- Default to Server Components (Next.js 16). Only use `"use client"` at the top of a file when browser-only interactivity is required.
+- Keep server components simple and push interactivity to client components.
+- Async server components: do not add `async` unless fetching data; prefer to keep components pure markup where possible.
 
-### Implemented Architecture
+Styling & UI patterns
 
-#### Data Flow
+- Use shadcn/ui primitives for base components. Do not recreate base primitives—install via `npx shadcn@latest add [component]` when needed.
+- Tailwind CSS 4 is used; use CSS variables defined in `src/app/globals.css` (`--background`, `--foreground`, etc.).
+- Use the `cn()` helper for conditional classes (`@/lib/utils.ts`).
+- Neo-Glass theme specifics (follow strictly):
+  - Use `bg-card` + `backdrop-blur-xl` for glass effect.
+  - Dark borders: `border-white/10` or `white/5`.
+  - Card padding: typically `p-6` for headers and content.
 
-DKB API (cookie + CSRF token) → HTTP fetch → Zod validation → SHA256 deduplication → LowDB persistence → Server actions → Dashboard with ECharts
+Error handling and validation
 
-#### Key Layers
+- Validate external input at boundaries using `zod` (already used in the project). Do not assume API responses are valid.
+- Server actions and DB writes should return structured results: `{ success: boolean; data?: T; error?: string }` or throw well-typed errors that callers can handle.
+- Prefer explicit error types / classes for predictable handling. Keep errors descriptive but avoid leaking secrets.
+- Add logging for unexpected errors on the server side (console or a dedicated logger); keep logs concise and actionable.
 
-- **Server Actions:** `src/actions/` - accounts, transactions, stats, sync, demo operations
-- **Database:** `src/lib/db/` - LowDB file-based storage with typed schema
-- **Banking Layer:** `src/lib/banking/` - Unified types, adapter interface, DKB adapter stub
-- **Statistics:** `src/lib/stats/` - KPI calculations, transaction categorization
-- **Sync Engine:** `src/lib/banking/sync.ts` - Fetch → Map → Dedupe → Persist orchestration
-- **Dashboard:** `src/components/dashboard/` - Neo-Glass UI with ECharts visualization
+Database and persistence
 
-## Project Structure
+- The project uses `lowdb` and stores data in `data/db.json` (gitignored). Treat the DB as authoritative for local-only persistence.
+- When writing to DB, perform deduplication checks (project uses SHA256 on key fields). Ensure Zod validation before persist.
 
-```
-banking/
-├── src/                        # All source code
-│   ├── app/                    # Next.js App Router
-│   │   ├── layout.tsx          # Root layout (includes ThemeProvider)
-│   │   ├── page.tsx            # Home page
-│   │   ├── globals.css         # Theme variables + Tailwind imports
-│   │   └── favicon.ico
-│   ├── components/
-│   │   ├── ui/                 # shadcn/ui primitives
-│   │   ├── layout/             # Header, Nav, Footer
-│   │   ├── theme-provider.tsx  # next-themes wrapper
-│   │   └── theme-toggle.tsx    # Dark mode toggle button
-│   └── lib/
-│       └── utils.ts            # cn() helper for class merging
-├── .claude/                    # Claude Code configuration
-│   ├── agents/                 # Agent definitions
-│   └── settings.json           # Claude settings
-├── next.config.ts              # Next.js configuration (minimal)
-├── tsconfig.json               # TypeScript config with path aliases
-├── eslint.config.mjs           # Flat ESLint config (Next.js + TypeScript)
-├── postcss.config.mjs          # PostCSS config for Tailwind CSS 4
-├── .prettierrc                 # Code formatting rules
-└── package.json                # Dependencies and scripts
-```
+Agent behavior rules (operational)
 
-## Tech Stack
+### Code-writing delegation rule
 
-### Current Dependencies
+- Only the `react-specialist` agent is permitted to write or edit application source files.
+- The Lead agent (and all other agents) must always delegate code-writing and implementation tasks to `react-specialist`.
+- All other agents (architect, designer-high, planner, etc.) may propose, plan, or review code, but must not perform direct code edits.
 
-- **Next.js:** 16.1.4 (App Router, React 19.2.3)
-- **TypeScript:** 5.x (strict mode enabled)
-- **Styling:** Tailwind CSS 4 with PostCSS integration
-- **UI Components:** shadcn/ui (Radix UI: @radix-ui/react-dropdown-menu, react-label, react-slot)
-- **Utilities:** class-variance-authority, clsx, tailwind-merge
-- **Icons:** lucide-react
-- **Animations:** motion (Framer Motion v12)
-- **Theme:** next-themes
-- **Fonts:** Geist Sans & Geist Mono (next/font/google)
+- Do not create or commit secrets (any `banking.config.json`, `.env*`). These are explicitly gitignored; never add credentials to commits.
+- When making edits: prefer small, incremental commits with descriptive messages. If asked to create a commit, follow repository's existing style and do not amend unrelated changes.
+- Update `docs/PROJECT-STATE.md` with session summary, changed files, blockers and next actions before ending a session.
 
-### Dependencies
+Cursor / Copilot rules
 
-- **Zod** (schema validation)
-- **lowdb** (file-based persistence)
-- **date-fns** (date manipulation)
-- **echarts** & **echarts-for-react** (charting)
-- **currency.js** (EUR formatting)
-- **PapaParse** (optional, for CSV parsing fallback)
+- No Cursor rules found in `.cursor/rules/` or `.cursorrules`.
+- No Copilot instructions file found at `.github/copilot-instructions.md`.
+- If you rely on Copilot/AI completions, prefer to follow the project's explicit rules in `CLAUDE.md` and `.claude/agents/` before accepting suggestions.
 
-## Code Conventions
+Files & references
 
-### Path Aliases
+- Main docs: `CLAUDE.md`, `docs/PROJECT-STATE.md`, `docs/ROADMAP.md`, `docs/PRD.md`.
+  - Read `@PRD` (see `docs/PRD.md`) regularly to keep track of project context, decisions, and requirements.
+- Config & scripts: `package.json`, `.prettierrc`, `eslint.config.mjs`, `tsconfig.json`.
 
-```typescript
-"@/*"; // -> "./src/*"
-```
+Quick checklist for agents before pushing a change
 
-Example imports:
+- Read `docs/PROJECT-STATE.md`.
+- Run `npm run lint` and `npx prettier --check .`.
+- Run `npx tsc --noEmit`.
+- Run any local demo flows manually (e.g., start dev server and perform basic UI checks) when changing UI/UX.
+- Update `docs/PROJECT-STATE.md` with what you changed and next steps.
 
-```typescript
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ThemeProvider } from "@/components/theme-provider";
-```
+If you add tests or CI
 
-### Formatting & Linting
+- Document test commands and scripts in `package.json`.
+- Include `npm run test:unit` and `npm run test:watch` conventions if possible.
 
-- **Prettier:** Double quotes, trailing commas (ES5), 2-space indent, tabs disabled
-- **Prettier Plugin:** prettier-plugin-tailwindcss (auto-sorts classes)
-- **ESLint:** Flat config format with next/core-web-vitals and next/typescript presets
-- **TypeScript:** Strict mode, incremental builds, jsx: "react-jsx"
+Where to get help
 
-### Component Patterns
+- Use `.claude/agents/*` for agent behavior guidance and `CLAUDE.md` for project-wide rules.
 
-- **Server Components:** Default for all components (Next.js 16 standard)
-- **Client Components:** Explicitly marked with `"use client"` directive when needed (interactive components, hooks, browser APIs)
-- **Async Components:** No need for async markers on server components unless doing data fetching
-- **Styling:** Use `cn()` utility for conditional classes
+Opencode agent
 
-### Theme System
+- A local agent spec is available at `.claude/agents/opencode.md` to run as the default coding agent. It synthesizes `react-specialist`, `planner`, and `architect` behaviors with repository-specific constraints.
 
-- **Colors:** OKLCH color space defined in `globals.css`
-- **Dark Mode:** Class-based strategy (`.dark` class on `<html>`)
-- **Theme Provider:** Wraps app in `layout.tsx` with system preference detection
-- **CSS Variables:** All theme tokens exposed as CSS custom properties (e.g., `--background`, `--foreground`)
-
-## Next.js 16 Specifics
-
-### Key Differences from Next.js 14
-
-1. **React 19 Features:**
-   - React Compiler optimizations enabled by default
-   - Improved server components performance
-   - Better hydration error messages
-
-2. **Caching Strategy:**
-   - **Opt-in caching** with `"use cache"` directive (replaces Next.js 14's default caching)
-   - Server actions and route handlers are NOT cached by default
-   - Use `"use cache"` at top of file or function for explicit caching
-
-3. **Tailwind CSS 4:**
-   - Native CSS integration via `@import "tailwindcss"`
-   - Theme configuration in CSS with `@theme inline { }`
-   - Custom variants with `@custom-variant dark (&:is(.dark *))`
-   - No separate `tailwind.config.ts` file needed
-
-4. **TypeScript:**
-   - `jsx: "react-jsx"` (replaces "preserve")
-   - Built-in Next.js types via plugin
-
-5. **ESLint:**
-   - Flat config format (`eslint.config.mjs`)
-   - No more `.eslintrc.json`
-
-### Server Components (Default)
-
-```tsx
-// This is a server component by default
-export default function Page() {
-  return <div>No need for async unless fetching data</div>;
-}
-```
-
-### Caching Example
-
-```tsx
-"use cache"; // Opt-in to caching
-
-export async function getCachedData() {
-  // This function's result will be cached
-  return await fetchData();
-}
-```
-
-### Client Components
-
-```tsx
-"use client"; // Explicit marker for client-side interactivity
-
-import { useState } from "react";
-
-export function Counter() {
-  const [count, setCount] = useState(0);
-  return <button onClick={() => setCount(count + 1)}>{count}</button>;
-}
-```
-
-## Development Guidelines
-
-### When Adding Features
-
-1. **UI Components:** Check if shadcn/ui has the component before building custom
-2. **Styling:** Use Tailwind classes + `cn()` utility for conditionals
-3. **Theme:** Use CSS custom properties from `globals.css` (e.g., `bg-background`, `text-foreground`)
-4. **Server vs Client:** Default to server components, use `"use client"` only when needed
-5. **Data Fetching:** Will use server actions (to be implemented)
-
-### Theme & Components System (CRITICAL)
-
-The application uses a highly customized "Neo-Glass" theme. Follow these rules strictly:
-
-1.  **Strictly Use shadcn/ui Base**:
-    - Do not build custom UI primitives (buttons, cards, inputs, lists, etc.) from scratch.
-    - Always install the shadcn component first: `npx shadcn@latest add [component]`.
-
-2.  **Extend to Match Theme**:
-    - **Glass Effect**: New components often need glassmorphism. Use `bg-card` (which has opacity) + `backdrop-blur-xl`.
-    - **Borders**: dark mode borders should be subtle (`border-white/10` or `white/5`), not the default grey.
-    - **Padding**: Enforce standard spacing. Cards typically use `p-6` for headers and content.
-    - **Shadows**: Use colorful shadows in light mode (`shadow-primary/20`).
-
-3.  **Do Not Break Layout**:
-    - The base `Card` component has been relaxed (no enforced flex/gap).
-    - You MUST handle internal layout (e.g., `flex flex-col gap-4`) when using the component.
-
-4.  **Charts & Visuals**:
-    - Use the defined gradient tokens (`from-primary/20 to-primary`) for charts/visuals to maintain the neon aesthetic.
-
-### File Naming
-
-- **Components:** PascalCase (e.g., `ThemeToggle.tsx`)
-- **Utilities:** kebab-case (e.g., `utils.ts`)
-- **Server Actions:** kebab-case with `.actions.ts` suffix (planned)
-- **Pages:** lowercase (e.g., `page.tsx`, `layout.tsx`)
-
-### Git Ignore
-
-Configured to exclude:
-
-- Standard Next.js build artifacts (`.next/`, `out/`)
-- Dependencies (`node_modules/`)
-- Environment files (`.env*`)
-- IDE files (`.idea/`, `.vscode/`)
-- Banking-specific files (`/uploads/*.json`, `db.json`) — for future implementation
-
-## Implementation Phases
-
-- **Phase 0:** Foundation (UI, theme, layout)
-- **Phase 1:** Data Layer (types, database, sync engine, server actions, statistics)
-- **Phase 2:** DKB API Integration (API client, mapper, pagination)
-- **Phase 3:** Dashboard Charts & KPIs (ECharts visualization, real data wiring)
-- **Phase 4:** Filters & Transactions Page (date range, filtering, table)
-- **Phase 5:** Demo Mode & Polish (extended KPIs, error handling, QA)
-
-See `docs/ROADMAP.md` for detailed phase breakdown and task dependencies.
-
-## Project Documentation
-
-- **`docs/PRD.md`** - Product requirements (12 features + 12 KPIs)
-- **`docs/ROADMAP.md`** - Implementation phases with dependency graph
-- **`docs/PROJECT-STATE.md`** - Current session checkpoint (read first)
-- **`docs/DKB-API-SPEC.md`** - DKB API endpoints, pagination, auth details
-- **`docs/samples/`** - Sample API responses (accounts, transactions)
-- **`banking.config.example.json`** - User config template
-
-## Configuration
-
-### DKB Credentials Setup
-
-Create `banking.config.json` (do NOT commit):
-
-```json
-{
-  "dkb": {
-    "cookie": "_SI_VID_1=...; wtstp_eid=...; ...",
-    "xsrfToken": "df9888bb-ec06-..."
-  }
-}
-```
-
-Extract from browser DevTools → Network tab on DKB webapp. Session expires periodically - user will need to refresh.
-
-## Data & Security
-
-- **Local Only:** All data persists to `/data/db.json` (gitignored)
-- **No Cloud:** Zero external data transmission except to DKB API
-- **No Passwords:** Credentials via session cookies, not stored plaintext
-- **Deduplication:** SHA256 hashing of transaction key fields
-
-## Additional Notes
-
-- No test framework configured yet
-- No CI/CD pipeline configured
-- Strictly German banking format (EUR, date formats, categories)
-- Built for Next.js 16 + React 19 with TypeScript strict mode
+End of AGENTS.md
