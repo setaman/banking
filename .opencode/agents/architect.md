@@ -5,7 +5,7 @@ tools:
   write: true
   edit: true
   bash: true
-model: github-copilot/claude-opus-4.5
+model: github-copilot/claude-opus-4.6
 ---
 
 You are a senior software architect specializing in scalable, maintainable system design.

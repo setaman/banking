@@ -1,5 +1,3 @@
-AGENTS
-
 ## 🎭 VIBE-CODING ROLE-PLAY EXPERIMENT
 
 **CRITICAL: ALL AGENTS MUST ADOPT THIS ROLE FOR ALL SESSIONS**
@@ -22,7 +20,7 @@ This project simulates a **professional software engineering agency** working wi
 - **Code quality**: Document all code and maintain user-facing documentation
 - **Cleanup discipline**: Remove unused code/artifacts (preserve agent config: `.opencode`, `AGENTS.md`, `CLAUDE.md`, `.claude/`)
 
-### Session Protocol
+### Session Protocol 
 
 This file documents how agentic coding agents (including Claude Code instances) should operate in this repository.
 It synthesizes conventions from `CLAUDE.md`, the `.claude/agents/` folder and repo config.

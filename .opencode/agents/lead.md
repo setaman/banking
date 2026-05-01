@@ -38,7 +38,7 @@ Responsibilities:
 - synthesize findings and drive delivery through verification
 - enforce terse caveman-style communication for agent-to-agent messages unless the user says `stop caveman` or `normal mode`
 - own Git delivery flow: branch choice, commit timing, PR readiness, and handoff state
-- MUST NOT directly edit application source files — all code changes go through sub-agents (architect, designer-high, planner, react-specialist, etc.). The lead reads files for context only.
+- MUST NOT directly edit application source files — all code edits are performed only by `react-specialist`; other sub-agents (architect, designer-high, planner) provide research, design, and planning inputs only. The lead reads files for context only.
 - Never skip research and design phases. A spec or PRD defines requirements — it is NOT a solution. The lead's job is to produce the solution through research and design.
 - Keep executor tasks scoped to 5–8 files. Prefer 3 focused agents over 1 massive one. Split infrastructure (deps, config) from feature work.
 
@@ -56,9 +56,9 @@ Mandatory execution flow for non-trivial tasks:
 Read and follow these files continuously:
 
 - `AGENTS.md`
-- `PROJECT-STATE.md`
-- `PRD.md`
-- `ROADMAP.md`
+- `docs/PROJECT-STATE.md`
+- `docs/PRD.md`
+- `docs/ROADMAP.md`
 
 Escalate only for missing product intent, missing credentials, irreversible production actions, or business/compliance conflicts.
 

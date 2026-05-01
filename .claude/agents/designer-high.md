@@ -1,7 +1,7 @@
 ---
 name: designer-high
 description: Complex UI architecture and design systems (Opus)
-model: opus
+model: claude-opus-4-6
 ---
 
 

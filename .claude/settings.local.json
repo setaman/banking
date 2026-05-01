@@ -27,7 +27,20 @@
       "Bash(npx prettier --write .)",
       "Bash(timeout 10 npm run dev:*)",
       "WebFetch(domain:execviva.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls \"F:\\\\Projects\\\\banking\\\\.omc\"\" 2>/dev/null && echo \"EXISTS\" || echo \"NOT FOUND \")",
+      "mcp__plugin_oh-my-claudecode_t__notepad_read",
+      "Bash(dir:*)",
+      "mcp__plugin_oh-my-claudecode_t__project_memory_read",
+      "mcp__plugin_oh-my-claudecode_t__trace_timeline",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(python -c \"import openpyxl\")",
+      "Bash(pip install *)",
+      "Bash(python -c ' *)",
+      "Bash(cygpath -w /tmp/xlsx-dump.txt)",
+      "Read(//c/Users/serg_/**)",
+      "Bash(start \"\" \"C:\\\\Users\\\\serg_\\\\.agent\\\\diagrams\\\\muelheim-bungalow-kaufentscheidung.html\")"
     ]
-  }
+  },
+  "model": "sonnet"
 }
