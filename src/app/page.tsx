@@ -265,6 +265,7 @@ export default function Home() {
               accountId: selectedAccountId,
             }),
           }}
+          preset={preset}
         />
       </MotionDiv>
 

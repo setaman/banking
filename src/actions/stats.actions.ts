@@ -1,17 +1,25 @@
 "use server";
 
+import { differenceInDays, parseISO, subDays } from "date-fns";
 import { getTransactions, type TransactionFilters } from "./transactions.actions";
 import {
   calculateMonthlyCashFlow,
   calculateSavingsRateLegacy,
   calculateCategoryBreakdown,
-  calculateIncomeVsExpenses,
   calculateDailyAverageSpend,
   calculateExpenseVolatilityLegacy,
   calculateMonthOverMonthTrend,
   calculateEmergencyFundCoverage,
 } from "@/lib/stats/calculations";
 import { getTotalBalance } from "./accounts.actions";
+
+export interface PreviousPeriodStats {
+  totalIncome: number;
+  totalExpenses: number;
+  netCashFlow: number;
+  savingsRate: number;
+  expenseToIncomeRatio: number;
+}
 
 export interface DashboardStats {
   totalBalance: number;
@@ -26,15 +34,45 @@ export interface DashboardStats {
   expenseVolatility: number;
   monthOverMonthTrend: number;
   emergencyFundCoverage: number;
+  previousPeriod: PreviousPeriodStats | null;
+}
+
+function computePeriodStats(income: number, expenses: number): PreviousPeriodStats {
+  return {
+    totalIncome: income,
+    totalExpenses: expenses,
+    netCashFlow: income - expenses,
+    savingsRate: calculateSavingsRateLegacy(income, expenses),
+    expenseToIncomeRatio: income > 0 ? (expenses / income) * 100 : 0,
+  };
 }
 
 export async function getDashboardStats(
   filters?: TransactionFilters,
 ): Promise<DashboardStats> {
-  const [transactions, totalBalance] = await Promise.all([
+  // Build previous-period filters when both startDate and endDate are present
+  let prevFilters: TransactionFilters | undefined;
+  if (filters?.startDate && filters?.endDate) {
+    const start = parseISO(filters.startDate);
+    const end = parseISO(filters.endDate);
+    const durationDays = differenceInDays(end, start);
+    const prevEnd = subDays(start, 1);
+    const prevStart = subDays(prevEnd, durationDays > 0 ? durationDays - 1 : 0);
+
+    prevFilters = {
+      ...filters,
+      startDate: prevStart.toISOString().slice(0, 10),
+      endDate: prevEnd.toISOString().slice(0, 10),
+    };
+  }
+
+  const [transactions, totalBalance, prevTransactions] = await Promise.all([
     // Exclude internal transfers from KPI calculations by default
     getTransactions(filters, { excludeInternal: true }),
     getTotalBalance(),
+    prevFilters
+      ? getTransactions(prevFilters, { excludeInternal: true })
+      : Promise.resolve(null),
   ]);
 
   const income = transactions
@@ -44,6 +82,17 @@ export async function getDashboardStats(
   const expenses = transactions
     .filter((t) => t.direction === "debit")
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+  let previousPeriod: PreviousPeriodStats | null = null;
+  if (prevTransactions !== null) {
+    const prevIncome = prevTransactions
+      .filter((t) => t.direction === "credit")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const prevExpenses = prevTransactions
+      .filter((t) => t.direction === "debit")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    previousPeriod = computePeriodStats(prevIncome, prevExpenses);
+  }
 
   return {
     totalBalance,
@@ -58,5 +107,6 @@ export async function getDashboardStats(
     expenseVolatility: calculateExpenseVolatilityLegacy(transactions),
     monthOverMonthTrend: calculateMonthOverMonthTrend(transactions),
     emergencyFundCoverage: calculateEmergencyFundCoverage(totalBalance, expenses, transactions),
+    previousPeriod,
   };
 }

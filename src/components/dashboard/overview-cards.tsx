@@ -1,12 +1,22 @@
 "use client";
 
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, TrendingDown, PiggyBank, Percent, Coins } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  PiggyBank,
+  Percent,
+  Coins,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/actions/stats.actions";
 import type { TransactionFilters } from "@/actions/transactions.actions";
+import type { DateRangePreset } from "@/hooks/use-date-range";
 
 const MotionCard = motion.create(Card);
 
@@ -14,6 +24,7 @@ interface CardData {
   title: string;
   amount: string;
   change: string;
+  trendLabel: string;
   trend: "up" | "down" | "neutral";
   icon: typeof Wallet;
   gradient: string;
@@ -23,20 +34,7 @@ interface CardData {
 
 interface OverviewCardsProps {
   filters?: TransactionFilters;
-}
-
-interface DashboardStats {
-  totalBalance: number;
-  totalIncome: number;
-  totalExpenses: number;
-  monthlyCashFlow: {
-    month: string;
-    net: number;
-    income: number;
-    expenses: number;
-  }[];
-  expenseToIncomeRatio: number;
-  savingsRate: number;
+  preset?: DateRangePreset;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -53,7 +51,37 @@ const formatPercentage = (value: number): string => {
   return `${sign}${value.toFixed(1)}%`;
 };
 
-export function OverviewCards({ filters }: OverviewCardsProps) {
+/** Returns the human-readable comparison label for the given preset. */
+function getTrendLabel(preset: DateRangePreset | undefined): string | null {
+  switch (preset) {
+    case "last7days":
+      return "vs previous 7 days";
+    case "last30days":
+      return "vs previous 30 days";
+    case "thisMonth":
+      return "vs last month";
+    case "lastMonth":
+      return "vs month before";
+    case "thisYear":
+      return "vs last year";
+    case "lastYear":
+      return "vs year before";
+    case "allTime":
+      return null; // no meaningful comparison
+    case "custom":
+      return "vs previous period";
+    default:
+      return "vs previous period";
+  }
+}
+
+/** Computes a percentage change, returning null when previous is zero. */
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+export function OverviewCards({ filters, preset }: OverviewCardsProps) {
   const [cards, setCards] = useState<CardData[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,72 +90,54 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
       try {
         const stats = await getDashboardStats(filters);
 
-        // Calculate month-over-month trends
-        const monthlyCashFlow = stats.monthlyCashFlow;
-        let balanceTrend: "up" | "down" | "neutral" = "neutral";
-        let balanceChange = "0.0%";
-        let incomeTrend: "up" | "down" | "neutral" = "neutral";
-        let incomeChange = "0.0%";
-        let expenseTrend: "up" | "down" | "neutral" = "neutral";
-        let expenseChange = "0.0%";
-        let cashFlowTrend: "up" | "down" | "neutral" = "neutral";
-        let cashFlowChange = "0.0%";
-        let ratioTrend: "up" | "down" | "neutral" = "neutral";
-        let ratioChange = "0.0%";
-        let savingsTrend: "up" | "down" | "neutral" = "neutral";
-        let savingsChange = "0.0%";
+        const trendLabel = getTrendLabel(preset);
+        const prev = stats.previousPeriod;
 
-        if (monthlyCashFlow.length >= 2) {
-          const currentMonth = monthlyCashFlow[monthlyCashFlow.length - 1];
-          const previousMonth = monthlyCashFlow[monthlyCashFlow.length - 2];
-
-          // Calculate trends
-          if (previousMonth.net !== 0) {
-            const netChange = ((currentMonth.net - previousMonth.net) / Math.abs(previousMonth.net)) * 100;
-            balanceTrend = netChange > 0 ? "up" : netChange < 0 ? "down" : "neutral";
-            balanceChange = formatPercentage(netChange);
-            cashFlowTrend = balanceTrend;
-            cashFlowChange = balanceChange;
+        // Helper: build change text + trend direction from a pct value
+        const makeTrend = (
+          pct: number | null,
+        ): { change: string; trend: "up" | "down" | "neutral" } => {
+          if (pct === null || trendLabel === null) {
+            return { change: "—", trend: "neutral" };
           }
+          return {
+            change: formatPercentage(pct),
+            trend: pct > 0 ? "up" : pct < 0 ? "down" : "neutral",
+          };
+        };
 
-          if (previousMonth.income !== 0) {
-            const incChange = ((currentMonth.income - previousMonth.income) / previousMonth.income) * 100;
-            incomeTrend = incChange > 0 ? "up" : incChange < 0 ? "down" : "neutral";
-            incomeChange = formatPercentage(incChange);
-          }
+        // Income
+        const incomePct = prev ? pctChange(stats.totalIncome, prev.totalIncome) : null;
+        const incomeTrend = makeTrend(incomePct);
 
-          if (previousMonth.expenses !== 0) {
-            const expChange = ((currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100;
-            // For expenses, down is good (less spending)
-            expenseTrend = expChange > 0 ? "up" : expChange < 0 ? "down" : "neutral";
-            expenseChange = formatPercentage(expChange);
-          }
+        // Expenses
+        const expensesPct = prev ? pctChange(stats.totalExpenses, prev.totalExpenses) : null;
+        const expensesTrend = makeTrend(expensesPct);
 
-          // Ratio Trend
-          const currentRatio = currentMonth.income > 0 ? (currentMonth.expenses / currentMonth.income) * 100 : 0;
-          const prevRatio = previousMonth.income > 0 ? (previousMonth.expenses / previousMonth.income) * 100 : 0;
-          if (prevRatio !== 0) {
-            const ratioChangeVal = ((currentRatio - prevRatio) / prevRatio) * 100;
-            ratioTrend = ratioChangeVal > 0 ? "up" : ratioChangeVal < 0 ? "down" : "neutral";
-            ratioChange = formatPercentage(ratioChangeVal);
-          }
+        // Net cash flow
+        const cashFlowPct = prev ? pctChange(stats.netCashFlow, prev.netCashFlow) : null;
+        const cashFlowTrend = makeTrend(cashFlowPct);
 
-          // Savings Rate Trend
-          const currentSavings = currentMonth.income > 0 ? ((currentMonth.income - currentMonth.expenses) / currentMonth.income) * 100 : 0;
-          const prevSavings = previousMonth.income > 0 ? ((previousMonth.income - previousMonth.expenses) / previousMonth.income) * 100 : 0;
-          if (prevSavings !== 0) {
-             const savingsChangeVal = ((currentSavings - prevSavings) / Math.abs(prevSavings)) * 100;
-             savingsTrend = savingsChangeVal > 0 ? "up" : savingsChangeVal < 0 ? "down" : "neutral";
-             savingsChange = formatPercentage(savingsChangeVal);
-          }
-        }
+        // Savings rate (absolute percentage points, not pct-of-pct)
+        const savingsPct = prev ? pctChange(stats.savingsRate, prev.savingsRate) : null;
+        const savingsTrend = makeTrend(savingsPct);
+
+        // Expense-to-income ratio
+        const ratioPct = prev
+          ? pctChange(stats.expenseToIncomeRatio, prev.expenseToIncomeRatio)
+          : null;
+        const ratioTrend = makeTrend(ratioPct);
+
+        const sharedLabel = trendLabel ?? "—";
 
         const cardData: CardData[] = [
           {
             title: "Total Balance",
             amount: formatCurrency(stats.totalBalance),
-            change: balanceChange,
-            trend: balanceTrend,
+            // Balance is a point-in-time value — no period comparison makes sense
+            change: "—",
+            trendLabel: "current balance",
+            trend: "neutral",
             icon: Wallet,
             gradient: "from-blue-500/20 to-purple-500/20",
             border: "border-blue-500/20",
@@ -136,8 +146,9 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
           {
             title: "Income",
             amount: formatCurrency(stats.totalIncome),
-            change: incomeChange,
-            trend: incomeTrend,
+            change: incomeTrend.change,
+            trendLabel: sharedLabel,
+            trend: incomeTrend.trend,
             icon: ArrowUpRight,
             gradient: "from-emerald-500/20 to-teal-500/20",
             border: "border-emerald-500/20",
@@ -146,8 +157,9 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
           {
             title: "Expenses",
             amount: formatCurrency(stats.totalExpenses),
-            change: expenseChange,
-            trend: expenseTrend,
+            change: expensesTrend.change,
+            trendLabel: sharedLabel,
+            trend: expensesTrend.trend,
             icon: ArrowDownRight,
             gradient: "from-rose-500/20 to-orange-500/20",
             border: "border-rose-500/20",
@@ -156,8 +168,9 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
           {
             title: "Net Cash Flow",
             amount: formatCurrency(stats.netCashFlow),
-            change: cashFlowChange,
-            trend: cashFlowTrend,
+            change: cashFlowTrend.change,
+            trendLabel: sharedLabel,
+            trend: cashFlowTrend.trend,
             icon: Coins,
             gradient: "from-cyan-500/20 to-blue-500/20",
             border: "border-cyan-500/20",
@@ -166,8 +179,9 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
           {
             title: "Savings Rate",
             amount: stats.savingsRate.toFixed(1) + "%",
-            change: savingsChange,
-            trend: savingsTrend,
+            change: savingsTrend.change,
+            trendLabel: sharedLabel,
+            trend: savingsTrend.trend,
             icon: PiggyBank,
             gradient: "from-green-500/20 to-emerald-500/20",
             border: "border-green-500/20",
@@ -176,8 +190,9 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
           {
             title: "Expense-to-Income Ratio",
             amount: stats.expenseToIncomeRatio.toFixed(1) + "%",
-            change: ratioChange,
-            trend: ratioTrend,
+            change: ratioTrend.change,
+            trendLabel: sharedLabel,
+            trend: ratioTrend.trend,
             icon: Percent,
             gradient: "from-orange-500/20 to-red-500/20",
             border: "border-orange-500/20",
@@ -193,7 +208,7 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
     }
 
     fetchData();
-  }, [filters]);
+  }, [filters, preset]);
 
   // Loading state
   if (!cards && !error) {
@@ -234,11 +249,25 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
   return (
     <div className="grid gap-6 md:grid-cols-3">
       {cards!.map((card, index) => {
-        const TrendIcon = card.trend === "up" ? TrendingUp : card.trend === "down" ? TrendingDown : null;
-        const isBadIfUp = card.title === "Expenses" || card.title === "Expense-to-Income Ratio";
+        const TrendIcon =
+          card.trend === "up"
+            ? TrendingUp
+            : card.trend === "down"
+              ? TrendingDown
+              : null;
+        const isBadIfUp =
+          card.title === "Expenses" || card.title === "Expense-to-Income Ratio";
         const trendColor = isBadIfUp
-          ? (card.trend === "down" ? "text-emerald-400" : card.trend === "up" ? "text-rose-400" : "text-muted-foreground")
-          : (card.trend === "up" ? "text-emerald-400" : card.trend === "down" ? "text-rose-400" : "text-muted-foreground");
+          ? card.trend === "down"
+            ? "text-emerald-400"
+            : card.trend === "up"
+              ? "text-rose-400"
+              : "text-muted-foreground"
+          : card.trend === "up"
+            ? "text-emerald-400"
+            : card.trend === "down"
+              ? "text-rose-400"
+              : "text-muted-foreground";
 
         return (
           <MotionCard
@@ -273,7 +302,9 @@ export function OverviewCards({ filters }: OverviewCardsProps) {
                   {TrendIcon && <TrendIcon className="h-3 w-3" />}
                   {card.change}
                 </span>
-                <span className="text-muted-foreground ml-2">vs last month</span>
+                <span className="text-muted-foreground ml-2">
+                  {card.trendLabel}
+                </span>
               </div>
             </CardContent>
           </MotionCard>
