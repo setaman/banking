@@ -17,13 +17,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { type DateRange, type DateRangePreset } from "@/hooks/use-date-range";
+import {
+  type DateRange,
+  type DateRangePreset,
+  type NavigationUnit,
+} from "@/hooks/use-date-range";
 
 const MotionButton = motion.create(Button);
 
 interface DateRangePickerProps {
   range: DateRange;
   preset: DateRangePreset;
+  navigationUnit?: NavigationUnit;
   onPresetChange: (preset: DateRangePreset) => void;
   onCustomRangeChange: (range: DateRange) => void;
   onNavigate?: (direction: 1 | -1) => void;
@@ -53,6 +58,7 @@ const navButtonClass = cn(
 export function DateRangePicker({
   range,
   preset,
+  navigationUnit,
   onPresetChange,
   onCustomRangeChange,
   onNavigate,
@@ -72,11 +78,17 @@ export function DateRangePicker({
   // Format display text based on preset or custom range
   const displayText = React.useMemo(() => {
     if (preset === "custom") {
+      if (navigationUnit === "month") {
+        return format(range.from, "MMMM yyyy");
+      }
+      if (navigationUnit === "year") {
+        return format(range.from, "yyyy");
+      }
       return `${format(range.from, "MMM dd, yyyy")} - ${format(range.to, "MMM dd, yyyy")}`;
     }
     const presetLabel = presets.find((p) => p.value === preset)?.label;
     return presetLabel || "Select date range";
-  }, [range, preset]);
+  }, [range, preset, navigationUnit]);
 
   const handlePresetClick = (presetValue: DateRangePreset) => {
     onPresetChange(presetValue);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
@@ -30,6 +30,7 @@ export default function Home() {
   const {
     range,
     preset,
+    navigationUnit,
     setPreset,
     setCustomRange,
     navigateRange,
@@ -42,6 +43,7 @@ export default function Home() {
   const [accounts, setAccounts] = useState<UnifiedAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const isInitialLoadRef = useRef(true);
   const [error, setError] = useState<string | null>(null);
 
   // Convert date range to ISO strings for filtering
@@ -65,7 +67,9 @@ export default function Home() {
   // Fetch transactions when date range or account changes
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
+      if (isInitialLoadRef.current) {
+        setLoading(true);
+      }
       setError(null);
 
       // Build filters. If preset is 'allTime', omit date filters to fetch all transactions
@@ -102,13 +106,14 @@ export default function Home() {
 
       // Set transactions
       setTransactions(transactionsData);
+      isInitialLoadRef.current = false;
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, selectedAccountId]);
+  }, [preset, startDate, endDate, selectedAccountId, setCustomRange]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -251,6 +256,7 @@ export default function Home() {
         <DateRangePicker
           range={range}
           preset={preset}
+          navigationUnit={navigationUnit}
           onPresetChange={setPreset}
           onCustomRangeChange={setCustomRange}
           onNavigate={navigateRange}
@@ -265,7 +271,6 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.15 }}
-        key={`overview-${startDate}-${endDate}-${selectedAccountId}`}
       >
         <OverviewCards
           filters={{

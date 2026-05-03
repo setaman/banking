@@ -33,9 +33,12 @@ export type DateRangePreset =
   | "allTime"
   | "custom";
 
+export type NavigationUnit = "week" | "month" | "year" | "days" | null;
+
 export interface DateRangeState {
   range: DateRange;
   preset: DateRangePreset;
+  navigationUnit: NavigationUnit;
 }
 
 const getPresetRange = (preset: DateRangePreset): DateRange => {
@@ -66,24 +69,51 @@ const getPresetRange = (preset: DateRangePreset): DateRange => {
   }
 };
 
+const getNavigationUnit = (preset: DateRangePreset): NavigationUnit => {
+  switch (preset) {
+    case "last7days":
+      return "week";
+    case "last30days":
+      return "days";
+    case "thisMonth":
+    case "lastMonth":
+      return "month";
+    case "thisYear":
+    case "lastYear":
+      return "year";
+    case "allTime":
+      return null;
+    case "custom":
+      return "days";
+    default:
+      return "days";
+  }
+};
+
 export function useDateRange(initialPreset: DateRangePreset = "last30days") {
   const [state, setState] = useState<DateRangeState>({
     range: getPresetRange(initialPreset),
     preset: initialPreset,
+    navigationUnit: getNavigationUnit(initialPreset),
   });
 
   const setPreset = useCallback((preset: DateRangePreset) => {
     setState({
       range: getPresetRange(preset),
       preset,
+      navigationUnit: getNavigationUnit(preset),
     });
   }, []);
 
   const setCustomRange = useCallback((range: DateRange) => {
-    setState({
+    setState((prev) => ({
       range,
       preset: "custom",
-    });
+      // Preserve existing navigationUnit when called internally (e.g. allTime data span update)
+      // but use "days" as default for user-initiated custom ranges
+      navigationUnit:
+        prev.preset === "allTime" ? null : (prev.navigationUnit ?? "days"),
+    }));
   }, []);
 
   const setRange = useCallback((range: DateRange) => {
@@ -95,43 +125,39 @@ export function useDateRange(initialPreset: DateRangePreset = "last30days") {
 
   const navigateRange = useCallback((direction: 1 | -1) => {
     setState((prev) => {
-      if (prev.preset === "allTime") return prev;
+      if (prev.navigationUnit === null) return prev;
 
       const { from, to } = prev.range;
       let newFrom: Date;
       let newTo: Date;
 
-      switch (prev.preset) {
-        case "last7days":
+      switch (prev.navigationUnit) {
+        case "week":
           newFrom = addDays(from, direction * 7);
           newTo = addDays(to, direction * 7);
           break;
-        case "last30days":
-          newFrom = addDays(from, direction * 30);
-          newTo = addDays(to, direction * 30);
-          break;
-        case "thisMonth":
-        case "lastMonth": {
-          const shiftedFrom =
-            direction === 1 ? addMonths(from, 1) : subMonths(from, 1);
-          const shiftedTo =
-            direction === 1 ? addMonths(to, 1) : subMonths(to, 1);
-          newFrom = startOfMonth(shiftedFrom);
-          newTo = endOfMonth(shiftedTo);
+        case "days": {
+          const durationDays = Math.max(1, differenceInDays(to, from));
+          newFrom = addDays(from, direction * durationDays);
+          newTo = addDays(to, direction * durationDays);
           break;
         }
-        case "thisYear":
-        case "lastYear": {
+        case "month": {
+          const shiftedFrom =
+            direction === 1 ? addMonths(from, 1) : subMonths(from, 1);
+          newFrom = startOfMonth(shiftedFrom);
+          newTo = endOfMonth(shiftedFrom);
+          break;
+        }
+        case "year": {
           const shiftedFrom =
             direction === 1 ? addYears(from, 1) : subYears(from, 1);
-          const shiftedTo = direction === 1 ? addYears(to, 1) : subYears(to, 1);
           newFrom = startOfYear(shiftedFrom);
-          newTo = endOfYear(shiftedTo);
+          newTo = endOfYear(shiftedFrom);
           break;
         }
         default: {
-          // custom: shift by the range's own duration
-          const durationDays = differenceInDays(to, from);
+          const durationDays = Math.max(1, differenceInDays(to, from));
           newFrom = addDays(from, direction * durationDays);
           newTo = addDays(to, direction * durationDays);
           break;
@@ -141,20 +167,23 @@ export function useDateRange(initialPreset: DateRangePreset = "last30days") {
       return {
         range: { from: newFrom, to: newTo },
         preset: "custom",
+        // Keep navigationUnit unchanged so subsequent navigations stay consistent
+        navigationUnit: prev.navigationUnit,
       };
     });
   }, []);
 
   const today = startOfDay(new Date());
-  const canNavigateBack = state.preset !== "allTime";
+  const canNavigateBack = state.navigationUnit !== null;
   const canNavigateForward =
-    state.preset !== "allTime" &&
+    state.navigationUnit !== null &&
     !isAfter(state.range.to, today) &&
     !isSameDay(state.range.to, today);
 
   return {
     range: state.range,
     preset: state.preset,
+    navigationUnit: state.navigationUnit,
     setPreset,
     setCustomRange,
     setRange,
