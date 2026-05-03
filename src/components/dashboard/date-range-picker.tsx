@@ -114,7 +114,7 @@ export function DateRangePicker({
   return (
     <div className={cn("flex items-center gap-1", className)}>
       {/* Back chevron */}
-      {onNavigate && (
+      {onNavigate && (canNavigateBack || canNavigateForward) && (
         <Button
           variant="ghost"
           size="icon"
@@ -208,7 +208,7 @@ export function DateRangePicker({
       </Popover>
 
       {/* Forward chevron */}
-      {onNavigate && (
+      {onNavigate && (canNavigateBack || canNavigateForward) && (
         <Button
           variant="ghost"
           size="icon"
