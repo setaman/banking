@@ -3,12 +3,19 @@
 import { useState, useCallback } from "react";
 import {
   subDays,
+  addDays,
   startOfMonth,
   endOfMonth,
   startOfYear,
   endOfYear,
   subMonths,
+  addMonths,
   subYears,
+  addYears,
+  differenceInDays,
+  startOfDay,
+  isAfter,
+  isSameDay,
 } from "date-fns";
 
 export type DateRange = {
@@ -86,11 +93,73 @@ export function useDateRange(initialPreset: DateRangePreset = "last30days") {
     }));
   }, []);
 
+  const navigateRange = useCallback((direction: 1 | -1) => {
+    setState((prev) => {
+      if (prev.preset === "allTime") return prev;
+
+      const { from, to } = prev.range;
+      let newFrom: Date;
+      let newTo: Date;
+
+      switch (prev.preset) {
+        case "last7days":
+          newFrom = addDays(from, direction * 7);
+          newTo = addDays(to, direction * 7);
+          break;
+        case "last30days":
+          newFrom = addDays(from, direction * 30);
+          newTo = addDays(to, direction * 30);
+          break;
+        case "thisMonth":
+        case "lastMonth": {
+          const shiftedFrom =
+            direction === 1 ? addMonths(from, 1) : subMonths(from, 1);
+          const shiftedTo =
+            direction === 1 ? addMonths(to, 1) : subMonths(to, 1);
+          newFrom = startOfMonth(shiftedFrom);
+          newTo = endOfMonth(shiftedTo);
+          break;
+        }
+        case "thisYear":
+        case "lastYear": {
+          const shiftedFrom =
+            direction === 1 ? addYears(from, 1) : subYears(from, 1);
+          const shiftedTo = direction === 1 ? addYears(to, 1) : subYears(to, 1);
+          newFrom = startOfYear(shiftedFrom);
+          newTo = endOfYear(shiftedTo);
+          break;
+        }
+        default: {
+          // custom: shift by the range's own duration
+          const durationDays = differenceInDays(to, from);
+          newFrom = addDays(from, direction * durationDays);
+          newTo = addDays(to, direction * durationDays);
+          break;
+        }
+      }
+
+      return {
+        range: { from: newFrom, to: newTo },
+        preset: "custom",
+      };
+    });
+  }, []);
+
+  const today = startOfDay(new Date());
+  const canNavigateBack = state.preset !== "allTime";
+  const canNavigateForward =
+    state.preset !== "allTime" &&
+    !isAfter(state.range.to, today) &&
+    !isSameDay(state.range.to, today);
+
   return {
     range: state.range,
     preset: state.preset,
     setPreset,
     setCustomRange,
     setRange,
+    navigateRange,
+    canNavigateForward,
+    canNavigateBack,
   };
 }

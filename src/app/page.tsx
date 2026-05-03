@@ -27,8 +27,15 @@ const MotionDiv = motion.create("div");
 
 export default function Home() {
   // Date range state
-  const { range, preset, setPreset, setCustomRange } =
-    useDateRange("last30days");
+  const {
+    range,
+    preset,
+    setPreset,
+    setCustomRange,
+    navigateRange,
+    canNavigateForward,
+    canNavigateBack,
+  } = useDateRange("last30days");
 
   // Data state
   const [transactions, setTransactions] = useState<UnifiedTransaction[]>([]);
@@ -246,6 +253,9 @@ export default function Home() {
           preset={preset}
           onPresetChange={setPreset}
           onCustomRangeChange={setCustomRange}
+          onNavigate={navigateRange}
+          canNavigateForward={canNavigateForward}
+          canNavigateBack={canNavigateBack}
           className="w-full min-w-[280px] sm:w-auto"
         />
       </MotionDiv>
