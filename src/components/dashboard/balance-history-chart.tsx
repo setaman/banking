@@ -6,11 +6,7 @@ import type { EChartsOption } from "echarts";
 import { useTheme } from "next-themes";
 import { motion } from "motion/react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  getBalanceHistory,
-  getAccounts,
-  getActiveAccountIds,
-} from "@/actions/accounts.actions";
+import { getBalanceHistory, getAccounts } from "@/actions/accounts.actions";
 import type { UnifiedBalance, UnifiedAccount } from "@/lib/banking/types";
 import { format, parseISO } from "date-fns";
 
@@ -27,9 +23,6 @@ export function BalanceHistoryChart({
 }: BalanceHistoryChartProps) {
   const [balances, setBalances] = useState<UnifiedBalance[]>([]);
   const [accounts, setAccounts] = useState<UnifiedAccount[]>([]);
-  const [activeAccountIds, setActiveAccountIds] = useState<Set<string>>(
-    new Set()
-  );
   const [loading, setLoading] = useState(true);
   const { resolvedTheme } = useTheme();
 
@@ -37,15 +30,12 @@ export function BalanceHistoryChart({
     async function fetchData() {
       try {
         setLoading(true);
-        // Fetch balances, accounts, and active ids in parallel
-        const [balanceData, accountsData, activeIds] = await Promise.all([
+        const [balanceData, accountsData] = await Promise.all([
           getBalanceHistory(accountId),
           getAccounts(),
-          getActiveAccountIds(),
         ]);
         setBalances(balanceData);
         setAccounts(accountsData);
-        setActiveAccountIds(activeIds);
       } catch (error) {
         console.error("Failed to fetch balance history:", error);
       } finally {
@@ -71,54 +61,38 @@ export function BalanceHistoryChart({
   const accountIds = Object.keys(balancesByAccount);
   const hasData = accountIds.length > 0 && balances.length > 0;
 
-  // Active account IDs within this chart's scope (respects the accountId filter)
-  // When viewing a single account, treat it as active for display purposes.
-  const effectiveActiveIds =
-    accountId !== undefined
-      ? new Set([accountId])
-      : activeAccountIds.size > 0
-        ? activeAccountIds
-        : new Set(accountIds); // fallback: no sync yet, show all
-
-  // Account IDs that are active (for aggregate total + tracking count)
-  const activeChartAccountIds = accountIds.filter((id) =>
-    effectiveActiveIds.has(id)
-  );
-
   // Create account name lookup map
   const accountNameMap = new Map(accounts.map((acc) => [acc.id, acc.name]));
 
-  // Calculate total balance timeline (aggregate by calendar date, active accounts only)
+  // Calculate total balance timeline (aggregate by calendar date, all accounts)
   const totalBalanceData: [number, number][] = [];
-  if (!accountId && activeChartAccountIds.length > 1) {
-    // Group balances by calendar date (YYYY-MM-DD) — active accounts only
+  if (!accountId && accountIds.length > 1) {
+    // Group balances by calendar date (YYYY-MM-DD) — all accounts with history
     const balancesByDate = new Map<
       string,
       Map<string, { amount: number; time: number }>
     >();
 
-    balances
-      .filter((balance) => effectiveActiveIds.has(balance.accountId))
-      .forEach((balance) => {
-        // Extract date only (ignore time)
-        const date = balance.fetchedAt.split("T")[0]; // "2026-01-31"
+    balances.forEach((balance) => {
+      // Extract date only (ignore time)
+      const date = balance.fetchedAt.split("T")[0]; // "2026-01-31"
 
-        if (!balancesByDate.has(date)) {
-          balancesByDate.set(date, new Map());
-        }
+      if (!balancesByDate.has(date)) {
+        balancesByDate.set(date, new Map());
+      }
 
-        const dateBalances = balancesByDate.get(date)!;
-        const existingTime = parseISO(balance.fetchedAt).getTime();
+      const dateBalances = balancesByDate.get(date)!;
+      const existingTime = parseISO(balance.fetchedAt).getTime();
 
-        // Store latest balance for each account on this date
-        const currentEntry = dateBalances.get(balance.accountId);
-        if (!currentEntry || existingTime > currentEntry.time) {
-          dateBalances.set(balance.accountId, {
-            amount: balance.amount,
-            time: existingTime,
-          });
-        }
-      });
+      // Store latest balance for each account on this date
+      const currentEntry = dateBalances.get(balance.accountId);
+      if (!currentEntry || existingTime > currentEntry.time) {
+        dateBalances.set(balance.accountId, {
+          amount: balance.amount,
+          time: existingTime,
+        });
+      }
+    });
 
     // Calculate total balance per date
     for (const [dateStr, accountBalances] of balancesByDate.entries()) {
@@ -216,12 +190,8 @@ export function BalanceHistoryChart({
       };
     });
 
-    // Add Total Balance series (the "Luminance" design) — active accounts only
-    if (
-      !accountId &&
-      activeChartAccountIds.length > 1 &&
-      totalBalanceData.length > 0
-    ) {
+    // Add Total Balance series (the "Luminance" design)
+    if (!accountId && accountIds.length > 1 && totalBalanceData.length > 0) {
       const masterLineColor = isDark ? "#ffffff" : "#020617"; // Pure white / Slate-950
       const glowColor = isDark
         ? "rgba(139, 92, 246, 0.6)" // Primary purple glow (stronger in dark)
@@ -449,10 +419,10 @@ export function BalanceHistoryChart({
     >
       <CardHeader className="flex flex-col gap-2 p-6">
         <CardTitle>Balance History</CardTitle>
-        {activeChartAccountIds.length > 0 && accountIds.length > 1 && (
+        {accountIds.length > 1 && (
           <p className="text-muted-foreground text-sm">
-            Tracking {activeChartAccountIds.length} account
-            {activeChartAccountIds.length !== 1 ? "s" : ""}
+            Tracking {accountIds.length} account
+            {accountIds.length !== 1 ? "s" : ""}
             {!accountId && totalBalanceData.length > 0 && " with total balance"}
           </p>
         )}
