@@ -234,6 +234,7 @@ export default function Home() {
                 <SelectItem key={account.id} value={account.id}>
                   {account.name}
                   {account.iban && ` (${account.iban.slice(-4)})`}
+                  {account.status === "closed" && " (closed)"}
                 </SelectItem>
               ))}
             </SelectContent>

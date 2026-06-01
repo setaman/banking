@@ -13,8 +13,15 @@ import {
 import { motion } from "motion/react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/actions/stats.actions";
+import { getAccounts, getActiveAccountIds } from "@/actions/accounts.actions";
 import type { TransactionFilters } from "@/actions/transactions.actions";
 import type { DateRangePreset } from "@/hooks/use-date-range";
 
@@ -84,6 +91,22 @@ function pctChange(current: number, previous: number): number | null {
 export function OverviewCards({ filters, preset }: OverviewCardsProps) {
   const [cards, setCards] = useState<CardData[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [excludedCount, setExcludedCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchAccountCounts() {
+      try {
+        const [allAccounts, activeIds] = await Promise.all([
+          getAccounts(),
+          getActiveAccountIds(),
+        ]);
+        setExcludedCount(allAccounts.length - activeIds.size);
+      } catch {
+        // Non-critical — leave excludedCount at 0
+      }
+    }
+    fetchAccountCounts();
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -95,7 +118,7 @@ export function OverviewCards({ filters, preset }: OverviewCardsProps) {
 
         // Helper: build change text + trend direction from a pct value
         const makeTrend = (
-          pct: number | null,
+          pct: number | null
         ): { change: string; trend: "up" | "down" | "neutral" } => {
           if (pct === null || trendLabel === null) {
             return { change: "—", trend: "neutral" };
@@ -107,19 +130,27 @@ export function OverviewCards({ filters, preset }: OverviewCardsProps) {
         };
 
         // Income
-        const incomePct = prev ? pctChange(stats.totalIncome, prev.totalIncome) : null;
+        const incomePct = prev
+          ? pctChange(stats.totalIncome, prev.totalIncome)
+          : null;
         const incomeTrend = makeTrend(incomePct);
 
         // Expenses
-        const expensesPct = prev ? pctChange(stats.totalExpenses, prev.totalExpenses) : null;
+        const expensesPct = prev
+          ? pctChange(stats.totalExpenses, prev.totalExpenses)
+          : null;
         const expensesTrend = makeTrend(expensesPct);
 
         // Net cash flow
-        const cashFlowPct = prev ? pctChange(stats.netCashFlow, prev.netCashFlow) : null;
+        const cashFlowPct = prev
+          ? pctChange(stats.netCashFlow, prev.netCashFlow)
+          : null;
         const cashFlowTrend = makeTrend(cashFlowPct);
 
         // Savings rate (absolute percentage points, not pct-of-pct)
-        const savingsPct = prev ? pctChange(stats.savingsRate, prev.savingsRate) : null;
+        const savingsPct = prev
+          ? pctChange(stats.savingsRate, prev.savingsRate)
+          : null;
         const savingsTrend = makeTrend(savingsPct);
 
         // Expense-to-income ratio
@@ -221,7 +252,7 @@ export function OverviewCards({ filters, preset }: OverviewCardsProps) {
               <Skeleton className="h-8 w-8 rounded-xl" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-9 w-32 mb-3" />
+              <Skeleton className="mb-3 h-9 w-32" />
               <Skeleton className="h-4 w-28" />
             </CardContent>
           </Card>
@@ -234,9 +265,9 @@ export function OverviewCards({ filters, preset }: OverviewCardsProps) {
   if (error) {
     return (
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-3 border-rose-500/20">
+        <Card className="border-rose-500/20 md:col-span-3">
           <CardContent className="flex items-center justify-center p-6">
-            <p className="text-rose-400 text-sm">
+            <p className="text-sm text-rose-400">
               Failed to load overview data: {error}
             </p>
           </CardContent>
@@ -306,6 +337,27 @@ export function OverviewCards({ filters, preset }: OverviewCardsProps) {
                   {card.trendLabel}
                 </span>
               </div>
+              {card.title === "Total Balance" && excludedCount > 0 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p
+                        role="note"
+                        tabIndex={0}
+                        className="text-muted-foreground mt-1.5 cursor-default text-xs"
+                      >
+                        Excludes {excludedCount} inactive{" "}
+                        {excludedCount === 1 ? "account" : "accounts"}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Closed or inactive accounts (no longer reported by your
+                      bank) are hidden from your total. You can manage them in
+                      Settings.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </CardContent>
           </MotionCard>
         );
