@@ -221,10 +221,12 @@ function MonthlyAverageCardsView({
                 {card.amount}
               </h3>
               <p className="text-muted-foreground/80 mt-0.5 text-xs font-medium">
-                / month
+                {isPartialMonth ? "period total" : "/ month"}
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
-                across {monthsCount} month{monthsCount === 1 ? "" : "s"}
+                {isPartialMonth
+                  ? "for the selected period"
+                  : `across ${monthsCount} month${monthsCount === 1 ? "" : "s"}`}
               </p>
             </CardContent>
           </MotionCard>

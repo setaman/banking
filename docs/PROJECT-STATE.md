@@ -7,6 +7,25 @@
 
 ---
 
+## This session changes (2026-06-01) — Fix: CodeRabbit PR #22 review findings
+
+**Summary:** Addressed CodeRabbit review findings on the Monthly Averages PR. Removed a PII debug log, corrected `fetchData` useCallback dependency array, fixed partial-month label consistency in card bodies, and demoted stale "Current Sprint" heading in PROJECT-STATE.md.
+
+**Files Modified:**
+
+- `src/app/page.tsx` — Removed `console.log(transactionsData)` PII leak; added `preset` and `setCustomRange` to `fetchData` useCallback deps (satisfies `react-hooks/exhaustive-deps`)
+- `src/components/dashboard/monthly-average-cards.tsx` — Card body now conditionally shows "period total" / "for the selected period" when `isPartialMonth` is true, instead of always showing "/ month" / "across N month(s)"
+- `docs/PROJECT-STATE.md` — Renamed `## Current Sprint: Sync Error UI Enhancement` to `## Previous Sprint:` so only the top-level header block indicates the active sprint
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run build` — succeeds (all 9 routes emitted)
+- `npx prettier --write` — all 3 changed files reported unchanged (already formatted)
+- `npm run lint` — 44 pre-existing problems; zero new issues introduced; `exhaustive-deps` warning for `fetchData` is gone (fixed by dep array update)
+
+---
+
 ## This session changes (2026-06-01) — Feature: Monthly Averages (avg income / spending / net cash flow)
 
 **Summary:** Added a "Monthly Averages" dashboard section showing average-per-month income, spending, and net cash flow over the selected date range, plus new "Last 3/6/12 Months" date-range presets. Month-count divisor is duration-based (elapsed days / 30.44, rounded, min 1) so a "Last 3 Months" range divides by 3 — matching the user's mental model rather than calendar-boundary counting. Averages are computed server-side in `getDashboardStats` and surfaced via a new `DashboardStats.averages` field. The averages cards intentionally use reduced-opacity Neo-Glass styling vs the totals row to read as a derived/secondary metric, with a labeled "Monthly Averages" section heading and a "/ month" suffix to prevent confusion with totals. A partial-month (<28 days) range shows an amber note and falls back to the period total.
@@ -304,7 +323,7 @@ Implemented a complete error handling system for bank synchronization failures f
 
 ---
 
-## Current Sprint: Sync Error UI Enhancement ✅ COMPLETE
+## Previous Sprint: Sync Error UI Enhancement ✅ COMPLETE
 
 ### Phase 7 Overview
 

@@ -81,8 +81,6 @@ export default function Home() {
         getDashboardStats(filters),
       ]);
 
-      console.log(transactionsData);
-
       // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
       if (isAllTime && transactionsData && transactionsData.length > 0) {
         // Compute min/max bookingDate
@@ -110,7 +108,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, selectedAccountId]);
+  }, [startDate, endDate, selectedAccountId, preset, setCustomRange]);
 
   // Fetch data when filters change
   useEffect(() => {
