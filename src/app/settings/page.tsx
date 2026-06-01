@@ -13,22 +13,28 @@ export default function SettingsPage() {
   const [activeAccountIds, setActiveAccountIds] = useState<Set<string>>(
     new Set()
   );
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [fetchedAccounts, fetchedActiveIds] = await Promise.all([
-          getAccounts(),
-          getActiveAccountIds(),
-        ]);
-        setAccounts(fetchedAccounts);
-        setActiveAccountIds(fetchedActiveIds);
-      } catch (err) {
-        console.error("Failed to fetch accounts for settings:", err);
-      }
-    }
-    fetchData();
-  }, []);
+    let cancelled = false;
+    getAccounts()
+      .then((fetchedAccounts) => {
+        if (!cancelled) setAccounts(fetchedAccounts);
+      })
+      .catch((err: unknown) =>
+        console.error("Failed to fetch accounts for settings:", err)
+      );
+    getActiveAccountIds()
+      .then((fetchedActiveIds) => {
+        if (!cancelled) setActiveAccountIds(fetchedActiveIds);
+      })
+      .catch((err: unknown) =>
+        console.error("Failed to fetch active account ids for settings:", err)
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -75,6 +81,7 @@ export default function SettingsPage() {
         <AccountManagementCard
           accounts={accounts}
           activeAccountIds={activeAccountIds}
+          onChanged={() => setRefreshKey((k) => k + 1)}
         />
       </motion.section>
     </div>

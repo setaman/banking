@@ -343,15 +343,17 @@ export function OverviewCards({ filters, preset }: OverviewCardsProps) {
                     <TooltipTrigger asChild>
                       <p
                         role="note"
+                        tabIndex={0}
                         className="text-muted-foreground mt-1.5 cursor-default text-xs"
                       >
-                        Excludes {excludedCount} closed{" "}
+                        Excludes {excludedCount} inactive{" "}
                         {excludedCount === 1 ? "account" : "accounts"}
                       </p>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Closed accounts are hidden from your total. You can
-                      reactivate them in Settings.
+                      Closed or inactive accounts (no longer reported by your
+                      bank) are hidden from your total. You can manage them in
+                      Settings.
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

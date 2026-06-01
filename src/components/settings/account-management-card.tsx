@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 interface AccountManagementCardProps {
   accounts: UnifiedAccount[];
   activeAccountIds: Set<string>;
+  onChanged?: () => void | Promise<void>;
 }
 
 type DialogAction =
@@ -122,6 +123,7 @@ function formatLastSeenFull(account: UnifiedAccount): string {
 export function AccountManagementCard({
   accounts,
   activeAccountIds,
+  onChanged,
 }: AccountManagementCardProps) {
   const router = useRouter();
   const [pendingDialog, setPendingDialog] = React.useState<DialogAction>(null);
@@ -149,6 +151,7 @@ export function AccountManagementCard({
                 : `${account.name} is now included in your total balance and charts.`,
           }
         );
+        await onChanged?.();
         router.refresh();
       } else {
         toast.error(
