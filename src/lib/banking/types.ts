@@ -26,6 +26,8 @@ export const UnifiedAccountSchema = z.object({
   // Optional holder name (populated by some adapters like DKB)
   holderName: z.string().optional(),
   lastSyncedAt: z.string().datetime().optional(),
+  status: z.enum(["active", "closed"]).default("active"),
+  lastSeenAt: z.string().datetime().optional(),
 });
 export type UnifiedAccount = z.infer<typeof UnifiedAccountSchema>;
 

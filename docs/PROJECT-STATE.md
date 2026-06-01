@@ -1,13 +1,82 @@
 # Project State: BanKing
 
-**Current Phase:** UI Credential Entry ✅ COMPLETE
-**Current Sprint:** Settings & Credential Management
+**Current Phase:** Account Management UI ✅ COMPLETE
+**Current Sprint:** Closed/Stale Account Visibility
 **Last Session:** 2026-06-01
-**Commit:** feat(settings): add Bank Connection card for in-UI DKB credential entry
+**Branch:** fix/total-balance-excludes-closed-accounts
 
 ---
 
-## This session changes (2026-06-01)
+## This session changes (2026-06-01) — Fix: Total Balance double-counted closed account + account-status feature
+
+**Root cause:** `getTotalBalance()` summed the latest-ever balance of every account, including a closed savings account that the bank no longer returns. The Total Balance card showed an inflated total while the Balance History chart correctly showed the correct total. The closed account's funds had already rolled into another active account, so the balance was double-counted. The data model had no concept of account status.
+
+**Solution:**
+
+- Added `status: "active" | "closed"` (default active) and `lastSeenAt?` to `UnifiedAccountSchema`.
+- New pure helper `src/lib/banking/account-utils.ts` — `isAccountCurrent()`: an account is excluded from totals if `status === "closed"` OR it was not returned in the most recent successful sync for its institution (stale).
+- `getTotalBalance()` / `getLatestBalances({ activeOnly })` exclude non-current accounts; `getActiveAccountIds()` added; `closeAccount()` / `reactivateAccount()` server actions added.
+- Sync now stamps `lastSeenAt` on accounts the bank returns.
+- New `/settings` "Your Accounts" card to view/close/reactivate accounts (amber "Not seen since…" badge for stale, "Closed" badge, AlertDialog confirm, toasts).
+- Total Balance card shows "Excludes N closed accounts" hint; Balance History chart total line + "Tracking N accounts" now count only active accounts; filter dropdowns label closed accounts "(closed)".
+- Behavior decided: stale accounts are excluded from totals immediately (self-heals if the bank returns them next sync); manual close/reactivate gives permanent control; history is never deleted.
+
+**Files Created:**
+
+- `src/lib/banking/account-utils.ts` — `isAccountCurrent()` pure helper and related utilities
+- `src/components/settings/account-management-card.tsx` — "Your Accounts" card with per-account status badges, DropdownMenu actions, AlertDialog confirmations, Sonner toasts, and `router.refresh()` on success
+
+**Files Modified:**
+
+- `src/lib/banking/types.ts` — Added `status` and `lastSeenAt` to `UnifiedAccountSchema`
+- `src/actions/accounts.actions.ts` — Added `getActiveAccountIds()`, `closeAccount()`, `reactivateAccount()`
+- `src/lib/banking/sync.ts` — Stamps `lastSeenAt` on returned accounts during sync
+- `src/lib/banking/adapters/dkb/mapper.ts` — Passes `lastSeenAt` through mapper
+- `src/lib/db/seed.ts` — Updated seed data to include new account fields
+- `src/app/settings/page.tsx` — Added "Your Accounts" section with `AccountManagementCard`
+- `src/components/dashboard/overview-cards.tsx` — Parallel fetch of `getActiveAccountIds()`; Total Balance card shows "Excludes N closed account(s)" tooltip hint when N > 0
+- `src/components/dashboard/balance-history-chart.tsx` — Fetches `getActiveAccountIds()` in parallel; aggregate "Total Balance" line and "Tracking N accounts" subtitle reflect only active accounts
+- `src/app/page.tsx` — Account filter Select: closed accounts labelled with " (closed)" suffix
+- `src/app/transactions/page.tsx` — Account filter checkbox popover: closed accounts show a muted "(closed)" suffix
+
+**Verification:**
+
+- `npx tsc --noEmit` — no errors
+- `npm run build` — production build succeeds, all 9 routes emitted
+- `npx prettier --check` — all changed files pass
+- `npm run lint` — no new errors introduced
+- Verified getTotalBalance now matches the chart total against local data
+
+---
+
+## This session changes (2026-06-01) — Closed/Stale Account Management UI
+
+**Feature: Closed/Stale Account Management UI**
+
+Implemented the full UI layer for the `fix/total-balance-excludes-closed-accounts` branch. Closed and stale accounts are now surfaced everywhere in the UI with correct exclusion from totals, an account management card in Settings, tooltipped exclusion notes on the balance card, a filtered balance history chart, and "(closed)" labels in dropdowns.
+
+**Files Created:**
+
+- `src/components/settings/account-management-card.tsx` — "Your Accounts" card with per-account status badges (Closed / Not seen since), DropdownMenu actions (Mark as closed / Reactivate / Dismiss), AlertDialog confirmations, Sonner toasts, and router.refresh() on success.
+
+**Files Modified:**
+
+- `src/app/settings/page.tsx` — Added Account Management section (client component, fetches accounts + activeIds via useEffect, renders AccountManagementCard below BankConnectionCard).
+- `src/components/dashboard/overview-cards.tsx` — Added `excludedCount` state (parallel fetch of getAccounts + getActiveAccountIds). Total Balance card now shows a tooltipped muted note "Excludes N closed account(s)" when N > 0.
+- `src/components/dashboard/balance-history-chart.tsx` — Fetches `getActiveAccountIds()` in parallel with existing data. Aggregate "Total Balance" line and "Tracking N accounts" subtitle now reflect only active accounts. Closed/stale account lines still render their own history but are excluded from the aggregate.
+- `src/app/page.tsx` — Account filter Select: closed accounts labelled with " (closed)" suffix.
+- `src/app/transactions/page.tsx` — Account filter checkbox popover: closed accounts show a muted "(closed)" suffix next to their name.
+
+**Verification:**
+
+- `npx tsc --noEmit` — no errors
+- `npm run build` — production build succeeds, all 9 routes emitted
+- `npx prettier --check` — all changed files pass
+- `npm run lint` — all errors in output are pre-existing (confirmed via git stash baseline); no new errors introduced by this session
+
+---
+
+## This session changes (2026-06-01 — previous)
 
 **Feature: Settings Page — Bank Connection Card**
 
@@ -45,16 +114,19 @@ Replaced the broken `monthlyCashFlow`-based trend logic (which always showed `0.
 **Root Cause:** Trend calculations used the last two buckets of `monthlyCashFlow`, but for ranges like "Last 30 days" only one partial bucket existed, so diffs were always zero.
 
 **Solution:**
+
 - `stats.actions.ts`: computes a mirror "previous period" (same duration, immediately before the selected range) by fetching a second batch of transactions, and returns it as `previousPeriod` in `DashboardStats`.
 - `overview-cards.tsx`: replaced all `monthlyCashFlow` math with simple `(current − previous) / |previous| × 100` calculations against `previousPeriod`. The comparison label is now dynamic (`"vs previous 30 days"`, `"vs last month"`, etc.) based on the `preset` prop. "Total Balance" correctly shows `"current balance"` (point-in-time, no period comparison). "All Time" shows `"—"` (no comparison possible).
 - `page.tsx`: passes the `preset` prop from `useDateRange` to `<OverviewCards>`.
 
 **Files Modified:**
+
 - `src/actions/stats.actions.ts` — added `PreviousPeriodStats` interface, previous-period fetch, `previousPeriod` field on `DashboardStats`
 - `src/components/dashboard/overview-cards.tsx` — new `preset` prop, dynamic label, `previousPeriod`-based trend calc
 - `src/app/page.tsx` — passes `preset` to `<OverviewCards>`
 
 **Verification:**
+
 - ✅ `npx tsc --noEmit` — no errors
 - ✅ `npm run build` — production build succeeds
 

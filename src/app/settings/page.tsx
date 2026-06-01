@@ -1,10 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 
 import { BankConnectionCard } from "@/components/settings/bank-connection-card";
+import { AccountManagementCard } from "@/components/settings/account-management-card";
+import { getAccounts, getActiveAccountIds } from "@/actions/accounts.actions";
+import type { UnifiedAccount } from "@/lib/banking/types";
 
 export default function SettingsPage() {
+  const [accounts, setAccounts] = useState<UnifiedAccount[]>([]);
+  const [activeAccountIds, setActiveAccountIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [fetchedAccounts, fetchedActiveIds] = await Promise.all([
+          getAccounts(),
+          getActiveAccountIds(),
+        ]);
+        setAccounts(fetchedAccounts);
+        setActiveAccountIds(fetchedActiveIds);
+      } catch (err) {
+        console.error("Failed to fetch accounts for settings:", err);
+      }
+    }
+    fetchData();
+  }, []);
+
   return (
     <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
@@ -35,6 +60,22 @@ export default function SettingsPage() {
           Bank Connection
         </h2>
         <BankConnectionCard />
+      </motion.section>
+
+      {/* Account Management section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.2 }}
+        className="flex flex-col gap-4"
+      >
+        <h2 className="text-foreground text-lg font-semibold">
+          Account Management
+        </h2>
+        <AccountManagementCard
+          accounts={accounts}
+          activeAccountIds={activeAccountIds}
+        />
       </motion.section>
     </div>
   );

@@ -84,15 +84,18 @@ export async function syncBank(
       const existingIdx = db.data.accounts.findIndex(
         (a) => a.id === account.id
       );
+      const syncTimestamp = startTime.toISOString();
       if (existingIdx >= 0) {
         db.data.accounts[existingIdx] = {
           ...account,
-          lastSyncedAt: startTime.toISOString(),
+          lastSyncedAt: syncTimestamp,
+          lastSeenAt: syncTimestamp,
         };
       } else {
         db.data.accounts.push({
           ...account,
-          lastSyncedAt: startTime.toISOString(),
+          lastSyncedAt: syncTimestamp,
+          lastSeenAt: syncTimestamp,
         });
       }
 

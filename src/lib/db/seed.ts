@@ -18,6 +18,7 @@ const DEMO_ACCOUNTS: UnifiedAccount[] = [
     type: "checking",
     currency: "EUR",
     iban: "DE89 3704 0044 0532 0130 00",
+    status: "active",
   },
   {
     id: "demo_savings",
@@ -27,6 +28,7 @@ const DEMO_ACCOUNTS: UnifiedAccount[] = [
     type: "savings",
     currency: "EUR",
     iban: "DE27 1007 0024 0066 4440 00",
+    status: "active",
   },
 ];
 
