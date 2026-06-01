@@ -11,6 +11,8 @@ import { CategoryBreakdownChart } from "@/components/dashboard/category-breakdow
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { useDateRange } from "@/hooks/use-date-range";
 import { getTransactions } from "@/actions/transactions.actions";
+import { getDashboardStats } from "@/actions/stats.actions";
+import type { DashboardStats } from "@/actions/stats.actions";
 import { getAccounts } from "@/actions/accounts.actions";
 import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { format } from "date-fns";
@@ -37,6 +39,9 @@ export default function Home() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
+    null
+  );
 
   // Convert date range to ISO strings for filtering
   const startDate = format(range.from, "yyyy-MM-dd");
@@ -61,6 +66,7 @@ export default function Home() {
     try {
       setLoading(true);
       setError(null);
+      setDashboardStats(null);
 
       // Build filters. If preset is 'allTime', omit date filters to fetch all transactions
       const isAllTime = preset === "allTime";
@@ -69,10 +75,11 @@ export default function Home() {
         ...(selectedAccountId !== "all" && { accountId: selectedAccountId }),
       };
 
-      // Fetch transactions with filters, excluding internal transfers by default
-      const transactionsData = await getTransactions(filters, {
-        excludeInternal: true,
-      });
+      // Fetch transactions and dashboard stats in parallel
+      const [transactionsData, statsData] = await Promise.all([
+        getTransactions(filters, { excludeInternal: true }),
+        getDashboardStats(filters),
+      ]);
 
       console.log(transactionsData);
 
@@ -94,8 +101,9 @@ export default function Home() {
         }
       }
 
-      // Set transactions
+      // Set transactions and stats
       setTransactions(transactionsData);
+      setDashboardStats(statsData);
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -268,6 +276,7 @@ export default function Home() {
             }),
           }}
           preset={preset}
+          stats={dashboardStats}
         />
       </MotionDiv>
 
@@ -286,7 +295,7 @@ export default function Home() {
               accountId: selectedAccountId,
             }),
           }}
-          preset={preset}
+          stats={dashboardStats}
         />
       </MotionDiv>
 

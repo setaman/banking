@@ -6,15 +6,14 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/actions/stats.actions";
-import type { MonthlyAverages } from "@/actions/stats.actions";
+import type { DashboardStats, MonthlyAverages } from "@/actions/stats.actions";
 import type { TransactionFilters } from "@/actions/transactions.actions";
-import type { DateRangePreset } from "@/hooks/use-date-range";
 
 const MotionCard = motion.create(Card);
 
 interface MonthlyAverageCardsProps {
   filters?: TransactionFilters;
-  preset?: DateRangePreset;
+  stats?: DashboardStats | null;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -26,9 +25,15 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-export function MonthlyAverageCards({
+/**
+ * Inner component that handles the self-fetch path (no stats prop provided).
+ * Keeping it separate avoids calling hooks conditionally in the outer component.
+ */
+function MonthlyAverageCardsSelfFetch({
   filters,
-}: MonthlyAverageCardsProps) {
+}: {
+  filters?: TransactionFilters;
+}) {
   const [averages, setAverages] = useState<MonthlyAverages | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,17 +42,43 @@ export function MonthlyAverageCards({
       try {
         setAverages(null);
         setError(null);
-        const stats = await getDashboardStats(filters);
-        setAverages(stats.averages);
+        const fetched = await getDashboardStats(filters);
+        setAverages(fetched.averages);
       } catch (err) {
         console.error("Failed to fetch monthly averages:", err);
         setError(err instanceof Error ? err.message : "Failed to load data");
       }
     }
-
     fetchData();
   }, [filters]);
 
+  return <MonthlyAverageCardsView averages={averages} error={error} />;
+}
+
+export function MonthlyAverageCards({
+  filters,
+  stats: statsProp,
+}: MonthlyAverageCardsProps) {
+  // When the parent provides stats, derive averages directly — no effect needed.
+  if (statsProp !== undefined) {
+    return (
+      <MonthlyAverageCardsView
+        averages={statsProp ? statsProp.averages : null}
+        error={null}
+      />
+    );
+  }
+
+  return <MonthlyAverageCardsSelfFetch filters={filters} />;
+}
+
+function MonthlyAverageCardsView({
+  averages,
+  error,
+}: {
+  averages: MonthlyAverages | null;
+  error: string | null;
+}) {
   // Loading state
   if (!averages && !error) {
     return (
