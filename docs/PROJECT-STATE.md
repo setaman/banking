@@ -7,7 +7,7 @@
 
 ---
 
-### This session changes (2026-06-01)
+## This session changes (2026-06-01)
 
 **Feature: Settings Page — Bank Connection Card**
 

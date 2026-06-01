@@ -5,8 +5,8 @@ import { z } from "zod";
 export const CONFIG_PATH = join(process.cwd(), "banking.config.json");
 
 export const BankCredentialSchema = z.object({
-  cookie: z.string(),
-  xsrfToken: z.string().optional(),
+  cookie: z.string().trim().min(1, "Cookie cannot be empty"),
+  xsrfToken: z.string().trim().min(1).optional(),
 });
 
 export const ConfigSchema = z.object({
@@ -16,6 +16,10 @@ export const ConfigSchema = z.object({
 
 export type BankingConfig = z.infer<typeof ConfigSchema>;
 
+/**
+ * Reads and validates banking.config.json from disk. Returns null if the file
+ * is missing or fails schema validation. Never exposes raw credentials to callers.
+ */
 export function loadCredentials(): BankingConfig | null {
   if (!existsSync(CONFIG_PATH)) {
     return null;
@@ -33,6 +37,9 @@ export function loadCredentials(): BankingConfig | null {
   return result.data;
 }
 
+/**
+ * Returns true if a cookie credential is stored for the given institution.
+ */
 export function hasCredentials(institution: keyof BankingConfig): boolean {
   const config = loadCredentials();
   return config !== null && config[institution] !== undefined;
@@ -50,6 +57,7 @@ export function getCredentialStatus(): {
 
   const maskCookie = (cookie: string | undefined): string | null => {
     if (!cookie) return null;
+    if (cookie.length <= 8) return "•••••";
     return cookie.slice(0, 5) + "…" + cookie.slice(-4);
   };
 
@@ -75,7 +83,7 @@ export function saveCredentials(
   credential: { cookie: string }
 ): { success: boolean; error?: string } {
   const validation = BankCredentialSchema.safeParse({
-    cookie: credential.cookie?.trim(),
+    cookie: credential.cookie,
   });
 
   if (!validation.success) {
@@ -84,10 +92,6 @@ export function saveCredentials(
       error: validation.error.issues.map((i) => i.message).join(", "),
     };
   }
-
-  const trimmed = {
-    cookie: validation.data.cookie.trim(),
-  };
 
   try {
     // Read existing config or start with empty object
@@ -103,7 +107,7 @@ export function saveCredentials(
     // Merge: overwrite only the given institution, preserve siblings
     const updated: BankingConfig = {
       ...existing,
-      [institution]: trimmed,
+      [institution]: { cookie: validation.data.cookie },
     };
 
     const tmpPath = CONFIG_PATH + ".tmp";

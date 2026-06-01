@@ -6,7 +6,6 @@ import { z } from "zod";
 import {
   getCredentialStatus,
   saveCredentials,
-  type BankingConfig,
 } from "@/config/credentials";
 import {
   fetchDkbAccounts,
@@ -65,7 +64,7 @@ export async function saveCredentialAction(input: {
 
   const { institution, cookie } = parsed.data;
 
-  const result = saveCredentials(institution as keyof BankingConfig, {
+  const result = saveCredentials(institution, {
     cookie,
   });
 

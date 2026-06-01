@@ -224,7 +224,7 @@ src/
 
 1. **Credential entry via local Settings UI only** - The `/settings` page allows the user to paste a fresh DKB session cookie and optional XSRF token, which a server action writes to the local `banking.config.json`. The privacy posture is fully preserved: the app runs on localhost only, the config file is gitignored and never leaves the machine, credentials are never transmitted to any cloud service, and the stored cookie is never read back into the UI (the field is write-only; only a masked status indicator is displayed).
 2. **Server-side only sync** - DKB API calls happen exclusively in server actions/route handlers
-3. **No data transmission** - Zero network calls except to DKB API during sync
+3. **No data transmission** - Zero network calls except to DKB API during sync and during server-side connection testing (Test Connection)
 4. **Local storage only** - LowDB writes to project-local `data/db.json`
 5. **No cloud deployment** - App runs on `localhost` only
 
