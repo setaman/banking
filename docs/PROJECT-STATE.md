@@ -1,9 +1,38 @@
 # Project State: BanKing
 
-**Current Phase:** Dashboard Trend Fix ✅ COMPLETE
-**Current Sprint:** UX Accuracy
-**Last Session:** 2026-05-01
-**Commit:** fix(dashboard): accurate period-comparison trends on overview cards
+**Current Phase:** UI Credential Entry ✅ COMPLETE
+**Current Sprint:** Settings & Credential Management
+**Last Session:** 2026-06-01
+**Commit:** feat(settings): add Bank Connection card for in-UI DKB credential entry
+
+---
+
+### This session changes (2026-06-01)
+
+**Feature: Settings Page — Bank Connection Card**
+
+Added a new `/settings` page with a "Bank Connection" card that allows the user to paste a fresh DKB session cookie (and optional XSRF token) directly in the UI. A server action writes the values to the local `banking.config.json`. The stored cookie is never read back into the UI (write-only field); only a masked status indicator is shown. A "Test Connection" button fires a lightweight DKB accounts call to validate credentials inline. Step-by-step help text guides the user through extracting the cookie from browser DevTools. Sonner toast notifications confirm save/test results. The header sync button's "no credentials" state now navigates to `/settings`, and `sync-error-details` links there too.
+
+**Files Created:**
+
+- `src/actions/credentials.actions.ts` — `saveCredentials` and `testConnection` server actions
+- `src/components/settings/bank-connection-card.tsx` — Bank Connection UI card (write-only credential fields, masked status, inline help, Test Connection button)
+- `src/app/settings/page.tsx` — Settings page route (`/settings`)
+- `src/components/ui/textarea.tsx` — shadcn textarea primitive (installed)
+- `src/components/ui/collapsible.tsx` — shadcn collapsible primitive (installed, used for step-by-step help)
+
+**Files Modified:**
+
+- `src/config/credentials.ts` — Added `getCredentialStatus`, `saveCredentials`, exported schema and config path
+- `src/components/layout/nav.tsx` — Added Settings nav link
+- `src/components/sync-button.tsx` — "No credentials" state navigates to `/settings` instead of showing a dead tooltip
+- `src/components/sync-error-details.tsx` — Auth/config error actions link to `/settings`
+
+**Verification:**
+
+- `npx tsc --noEmit` — no errors
+- `npm run build` — production build succeeds, `/settings` route emitted
+- `npm run lint` — clean on all changed files
 
 ---
 

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   WifiOff,
   Lock,
@@ -11,6 +12,7 @@ import {
   Database,
   ShieldAlert,
   History,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,10 +55,11 @@ const getErrorConfig = (error: string) => {
     return {
       icon: Lock,
       title: "Authentication Failed",
-      desc: "Your session may have expired or credentials are invalid.",
+      desc: "Your session has expired or the cookie is invalid. Paste a fresh session cookie in Settings.",
       color: "text-destructive",
       bg: "bg-destructive/10",
       border: "border-destructive/20",
+      showSettingsLink: true,
     };
   }
 
@@ -64,10 +67,11 @@ const getErrorConfig = (error: string) => {
     return {
       icon: FileKey,
       title: "Missing Credentials",
-      desc: "Bank credentials are not configured properly.",
+      desc: "No bank credentials are configured yet. Go to Settings to connect your DKB account.",
       color: "text-blue-500",
       bg: "bg-blue-500/10",
       border: "border-blue-500/20",
+      showSettingsLink: true,
     };
   }
 
@@ -170,6 +174,14 @@ export function SyncErrorDetails({
           <RotateCw className="mr-2 h-3.5 w-3.5" />
           Retry Sync
         </Button>
+        {config.showSettingsLink && (
+          <Button variant="outline" size="sm" asChild className="shrink-0">
+            <Link href="/settings">
+              <Settings className="mr-1.5 h-3.5 w-3.5" />
+              Settings
+            </Link>
+          </Button>
+        )}
         {syncHistory && syncHistory.length > 0 && (
           <Button
             variant="outline"
