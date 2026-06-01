@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { RefreshCw, Check, AlertCircle, CloudOff } from "lucide-react";
 import { useSync } from "@/contexts/sync-context";
 import { useDemoMode } from "@/contexts/demo-context";
@@ -10,6 +11,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { SyncErrorDetails } from "@/components/sync-error-details";
 
@@ -23,6 +30,7 @@ export function SyncButton() {
     syncHistory,
   } = useSync();
   const { isDemoMode } = useDemoMode();
+  const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
 
   // Auto-open popover on error
@@ -54,6 +62,30 @@ export function SyncButton() {
     return <RefreshCw className="h-4 w-4" />;
   };
 
+  // No credentials and not in an error state: navigate to /settings instead of syncing
+  if (!hasCredentials && syncStatus !== "error") {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full transition-all duration-500"
+              onClick={() => router.push("/settings")}
+              aria-label="Set up your bank connection"
+            >
+              <CloudOff className="text-muted-foreground h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Set up your bank connection
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   // If we have an error, we wrap in Popover. Otherwise just a button/tooltip.
   const button = (
     <Button
@@ -67,9 +99,7 @@ export function SyncButton() {
         isSyncing && "cursor-not-allowed opacity-80"
       )}
       onClick={syncStatus === "error" ? undefined : handleSync}
-      disabled={
-        isSyncing || isDemoMode || (!hasCredentials && syncStatus !== "error")
-      }
+      disabled={isSyncing || isDemoMode}
       aria-label="Sync with bank"
     >
       {getIcon()}
@@ -94,6 +124,5 @@ export function SyncButton() {
     );
   }
 
-  // Fallback for non-error states (keep tooltip logic if desired, or simplify)
   return button;
 }
