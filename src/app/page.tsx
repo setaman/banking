@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "motion/react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
+import { MonthlyAverageCards } from "@/components/dashboard/monthly-average-cards";
 import { BalanceHistoryChart } from "@/components/dashboard/balance-history-chart";
 import { IncomeExpensesChart } from "@/components/dashboard/income-expenses-chart";
 import { CategoryBreakdownChart } from "@/components/dashboard/category-breakdown-chart";
@@ -270,13 +271,32 @@ export default function Home() {
         />
       </MotionDiv>
 
+      {/* Monthly Average Cards */}
+      <MotionDiv
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        key={`averages-${startDate}-${endDate}-${selectedAccountId}`}
+      >
+        <MonthlyAverageCards
+          filters={{
+            startDate,
+            endDate,
+            ...(selectedAccountId !== "all" && {
+              accountId: selectedAccountId,
+            }),
+          }}
+          preset={preset}
+        />
+      </MotionDiv>
+
       {/* Charts Grid */}
       <div className="grid items-stretch gap-6 lg:grid-cols-2">
         {/* Balance History Chart */}
         <MotionDiv
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
           className="h-full"
         >
           <BalanceHistoryChart
@@ -291,7 +311,7 @@ export default function Home() {
         <MotionDiv
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
           className="h-full"
         >
           <CategoryBreakdownChart
@@ -305,7 +325,7 @@ export default function Home() {
       <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        transition={{ duration: 0.4, delay: 0.35 }}
       >
         <IncomeExpensesChart transactions={filteredTransactions} />
       </MotionDiv>
@@ -315,7 +335,7 @@ export default function Home() {
         <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.35 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
           className="text-muted-foreground flex items-center justify-center gap-6 border-t border-white/5 pt-6 text-sm"
         >
           <span>

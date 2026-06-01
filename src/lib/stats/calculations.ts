@@ -429,6 +429,56 @@ export function calculateDiscretionaryRatio(
   };
 }
 
+export interface MonthlyAveragesInput {
+  totalIncome: number;
+  totalExpenses: number;
+  netCashFlow: number;
+  startDate?: string; // ISO YYYY-MM-DD
+  endDate?: string; // ISO YYYY-MM-DD
+}
+
+export interface MonthlyAveragesResult {
+  avgMonthlyIncome: number;
+  avgMonthlyExpenses: number;
+  avgMonthlyNet: number;
+  monthsCount: number; // whole number of months used as divisor (min 1)
+  isPartialMonth: boolean; // true when the range spans fewer than 28 days
+}
+
+/**
+ * Calculates per-month averages for income, expenses, and net cash flow.
+ *
+ * Month-count rule (duration-based, NOT calendar+1):
+ * A "Last 3 Months" range (~91 days) must divide by 3, so we use
+ * elapsed duration / average-month-length (30.44), not calendar-boundary counting.
+ */
+export function calculateMonthlyAverages(
+  input: MonthlyAveragesInput
+): MonthlyAveragesResult {
+  const { totalIncome, totalExpenses, netCashFlow, startDate, endDate } = input;
+
+  let monthsCount: number;
+  let isPartialMonth: boolean;
+
+  if (startDate && endDate) {
+    const days = differenceInDays(parseISO(endDate), parseISO(startDate)) + 1;
+    const rawMonths = days / 30.44;
+    monthsCount = Math.max(1, Math.round(rawMonths));
+    isPartialMonth = days < 28;
+  } else {
+    monthsCount = 1;
+    isPartialMonth = false;
+  }
+
+  return {
+    avgMonthlyIncome: Math.round((totalIncome / monthsCount) * 100) / 100,
+    avgMonthlyExpenses: Math.round((totalExpenses / monthsCount) * 100) / 100,
+    avgMonthlyNet: Math.round((netCashFlow / monthsCount) * 100) / 100,
+    monthsCount,
+    isPartialMonth,
+  };
+}
+
 // --- Backward Compatibility Wrappers ---
 // These maintain compatibility with existing stats.actions.ts
 

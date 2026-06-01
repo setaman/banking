@@ -30,6 +30,9 @@ const presets: Array<{ label: string; value: DateRangePreset }> = [
   { label: "Last 30 days", value: "last30days" },
   { label: "This Month", value: "thisMonth" },
   { label: "Last Month", value: "lastMonth" },
+  { label: "Last 3 Months", value: "last3months" },
+  { label: "Last 6 Months", value: "last6months" },
+  { label: "Last 12 Months", value: "last12months" },
   { label: "This Year", value: "thisYear" },
   { label: "Last Year", value: "lastYear" },
   { label: "All Time", value: "allTime" },
@@ -88,28 +91,28 @@ export function DateRangePicker({
           variant="outline"
           className={cn(
             "justify-start text-left font-normal",
-            "bg-card/50 backdrop-blur-xl border-white/10 dark:border-white/5",
+            "bg-card/50 border-white/10 backdrop-blur-xl dark:border-white/5",
             "hover:bg-card/70 hover:border-primary/20",
             "transition-all duration-200",
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+          <CalendarIcon className="text-primary mr-2 h-4 w-4" />
           <span className="truncate">{displayText}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
         className={cn(
           "w-auto p-0",
-          "bg-card/95 backdrop-blur-xl border-white/10 dark:border-white/5",
-          "shadow-xl shadow-primary/5"
+          "bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5",
+          "shadow-primary/5 shadow-xl"
         )}
         align="start"
       >
         <div className="flex flex-col gap-2 p-3 md:flex-row">
           {/* Preset Buttons */}
           <div className="flex flex-col gap-1.5">
-            <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium uppercase tracking-wide">
+            <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
               Quick Select
             </div>
             {presets.map((presetItem, index) => (
@@ -135,8 +138,8 @@ export function DateRangePicker({
           </div>
 
           {/* Calendar */}
-          <div className="border-t pt-3 md:border-l md:border-t-0 md:pl-3 md:pt-0">
-            <div className="text-muted-foreground mb-2 px-2 text-xs font-medium uppercase tracking-wide">
+          <div className="border-t pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-3">
+            <div className="text-muted-foreground mb-2 px-2 text-xs font-medium tracking-wide uppercase">
               Custom Range
             </div>
             <Calendar

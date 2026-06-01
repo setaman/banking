@@ -69,6 +69,12 @@ function getTrendLabel(preset: DateRangePreset | undefined): string | null {
       return "vs last month";
     case "lastMonth":
       return "vs month before";
+    case "last3months":
+      return "vs previous 3 months";
+    case "last6months":
+      return "vs previous 6 months";
+    case "last12months":
+      return "vs previous 12 months";
     case "thisYear":
       return "vs last year";
     case "lastYear":

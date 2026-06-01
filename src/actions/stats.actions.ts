@@ -1,7 +1,10 @@
 "use server";
 
 import { differenceInDays, parseISO, subDays } from "date-fns";
-import { getTransactions, type TransactionFilters } from "./transactions.actions";
+import {
+  getTransactions,
+  type TransactionFilters,
+} from "./transactions.actions";
 import {
   calculateMonthlyCashFlow,
   calculateSavingsRateLegacy,
@@ -10,8 +13,17 @@ import {
   calculateExpenseVolatilityLegacy,
   calculateMonthOverMonthTrend,
   calculateEmergencyFundCoverage,
+  calculateMonthlyAverages,
 } from "@/lib/stats/calculations";
 import { getTotalBalance } from "./accounts.actions";
+
+export interface MonthlyAverages {
+  avgMonthlyIncome: number;
+  avgMonthlyExpenses: number;
+  avgMonthlyNet: number;
+  monthsCount: number;
+  isPartialMonth: boolean;
+}
 
 export interface PreviousPeriodStats {
   totalIncome: number;
@@ -28,16 +40,25 @@ export interface DashboardStats {
   netCashFlow: number;
   expenseToIncomeRatio: number;
   savingsRate: number;
-  monthlyCashFlow: { month: string; income: number; expenses: number; net: number }[];
+  monthlyCashFlow: {
+    month: string;
+    income: number;
+    expenses: number;
+    net: number;
+  }[];
   categoryBreakdown: { category: string; amount: number; percentage: number }[];
   dailyAverageSpend: number;
   expenseVolatility: number;
   monthOverMonthTrend: number;
   emergencyFundCoverage: number;
   previousPeriod: PreviousPeriodStats | null;
+  averages: MonthlyAverages;
 }
 
-function computePeriodStats(income: number, expenses: number): PreviousPeriodStats {
+function computePeriodStats(
+  income: number,
+  expenses: number
+): PreviousPeriodStats {
   return {
     totalIncome: income,
     totalExpenses: expenses,
@@ -48,7 +69,7 @@ function computePeriodStats(income: number, expenses: number): PreviousPeriodSta
 }
 
 export async function getDashboardStats(
-  filters?: TransactionFilters,
+  filters?: TransactionFilters
 ): Promise<DashboardStats> {
   // Build previous-period filters when both startDate and endDate are present
   let prevFilters: TransactionFilters | undefined;
@@ -94,6 +115,14 @@ export async function getDashboardStats(
     previousPeriod = computePeriodStats(prevIncome, prevExpenses);
   }
 
+  const averages = calculateMonthlyAverages({
+    totalIncome: income,
+    totalExpenses: expenses,
+    netCashFlow: income - expenses,
+    startDate: filters?.startDate,
+    endDate: filters?.endDate,
+  });
+
   return {
     totalBalance,
     totalIncome: income,
@@ -103,10 +132,19 @@ export async function getDashboardStats(
     savingsRate: calculateSavingsRateLegacy(income, expenses),
     monthlyCashFlow: calculateMonthlyCashFlow(transactions),
     categoryBreakdown: calculateCategoryBreakdown(transactions),
-    dailyAverageSpend: calculateDailyAverageSpend(transactions, filters?.startDate, filters?.endDate),
+    dailyAverageSpend: calculateDailyAverageSpend(
+      transactions,
+      filters?.startDate,
+      filters?.endDate
+    ),
     expenseVolatility: calculateExpenseVolatilityLegacy(transactions),
     monthOverMonthTrend: calculateMonthOverMonthTrend(transactions),
-    emergencyFundCoverage: calculateEmergencyFundCoverage(totalBalance, expenses, transactions),
+    emergencyFundCoverage: calculateEmergencyFundCoverage(
+      totalBalance,
+      expenses,
+      transactions
+    ),
     previousPeriod,
+    averages,
   };
 }

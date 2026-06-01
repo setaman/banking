@@ -21,6 +21,9 @@ export type DateRangePreset =
   | "last30days"
   | "thisMonth"
   | "lastMonth"
+  | "last3months"
+  | "last6months"
+  | "last12months"
   | "thisYear"
   | "lastYear"
   | "allTime"
@@ -45,6 +48,12 @@ const getPresetRange = (preset: DateRangePreset): DateRange => {
       const lastMonth = subMonths(now, 1);
       return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
     }
+    case "last3months":
+      return { from: subMonths(now, 3), to: now };
+    case "last6months":
+      return { from: subMonths(now, 6), to: now };
+    case "last12months":
+      return { from: subMonths(now, 12), to: now };
     case "thisYear":
       return { from: startOfYear(now), to: endOfYear(now) };
     case "lastYear": {
