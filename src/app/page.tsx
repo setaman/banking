@@ -4,12 +4,15 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "motion/react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
+import { MonthlyAverageCards } from "@/components/dashboard/monthly-average-cards";
 import { BalanceHistoryChart } from "@/components/dashboard/balance-history-chart";
 import { IncomeExpensesChart } from "@/components/dashboard/income-expenses-chart";
 import { CategoryBreakdownChart } from "@/components/dashboard/category-breakdown-chart";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { useDateRange } from "@/hooks/use-date-range";
 import { getTransactions } from "@/actions/transactions.actions";
+import { getDashboardStats } from "@/actions/stats.actions";
+import type { DashboardStats } from "@/actions/stats.actions";
 import { getAccounts } from "@/actions/accounts.actions";
 import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { format } from "date-fns";
@@ -36,6 +39,9 @@ export default function Home() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
+    null
+  );
 
   // Convert date range to ISO strings for filtering
   const startDate = format(range.from, "yyyy-MM-dd");
@@ -60,6 +66,7 @@ export default function Home() {
     try {
       setLoading(true);
       setError(null);
+      setDashboardStats(null);
 
       // Build filters. If preset is 'allTime', omit date filters to fetch all transactions
       const isAllTime = preset === "allTime";
@@ -68,12 +75,11 @@ export default function Home() {
         ...(selectedAccountId !== "all" && { accountId: selectedAccountId }),
       };
 
-      // Fetch transactions with filters, excluding internal transfers by default
-      const transactionsData = await getTransactions(filters, {
-        excludeInternal: true,
-      });
-
-      console.log(transactionsData);
+      // Fetch transactions and dashboard stats in parallel
+      const [transactionsData, statsData] = await Promise.all([
+        getTransactions(filters, { excludeInternal: true }),
+        getDashboardStats(filters),
+      ]);
 
       // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
       if (isAllTime && transactionsData && transactionsData.length > 0) {
@@ -93,15 +99,16 @@ export default function Home() {
         }
       }
 
-      // Set transactions
+      // Set transactions and stats
       setTransactions(transactionsData);
+      setDashboardStats(statsData);
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, selectedAccountId]);
+  }, [startDate, endDate, selectedAccountId, preset, setCustomRange]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -267,6 +274,26 @@ export default function Home() {
             }),
           }}
           preset={preset}
+          stats={dashboardStats}
+        />
+      </MotionDiv>
+
+      {/* Monthly Average Cards */}
+      <MotionDiv
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        key={`averages-${startDate}-${endDate}-${selectedAccountId}`}
+      >
+        <MonthlyAverageCards
+          filters={{
+            startDate,
+            endDate,
+            ...(selectedAccountId !== "all" && {
+              accountId: selectedAccountId,
+            }),
+          }}
+          stats={dashboardStats}
         />
       </MotionDiv>
 
@@ -276,7 +303,7 @@ export default function Home() {
         <MotionDiv
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
           className="h-full"
         >
           <BalanceHistoryChart
@@ -291,7 +318,7 @@ export default function Home() {
         <MotionDiv
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
           className="h-full"
         >
           <CategoryBreakdownChart
@@ -305,7 +332,7 @@ export default function Home() {
       <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        transition={{ duration: 0.4, delay: 0.35 }}
       >
         <IncomeExpensesChart transactions={filteredTransactions} />
       </MotionDiv>
@@ -315,7 +342,7 @@ export default function Home() {
         <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.35 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
           className="text-muted-foreground flex items-center justify-center gap-6 border-t border-white/5 pt-6 text-sm"
         >
           <span>
