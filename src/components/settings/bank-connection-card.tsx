@@ -31,7 +31,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
@@ -203,12 +202,10 @@ export function BankConnectionCard() {
 
   // Form fields
   const [cookie, setCookie] = React.useState("");
-  const [xsrfToken, setXsrfToken] = React.useState("");
   const [cookieVisible, setCookieVisible] = React.useState(true);
   const [cookieTouched, setCookieTouched] = React.useState(false);
 
   // Collapsible state
-  const [xsrfOpen, setXsrfOpen] = React.useState(false);
   const [helpOpen, setHelpOpen] = React.useState(false);
 
   // Independent loading for test vs save
@@ -259,7 +256,6 @@ export function BankConnectionCard() {
     try {
       const result = await testConnectionAction({
         cookie: cookie.trim(),
-        xsrfToken: xsrfToken.trim() || undefined,
       });
 
       if (result.success) {
@@ -293,13 +289,11 @@ export function BankConnectionCard() {
       const result = await saveCredentialAction({
         institution: "dkb",
         cookie: cookie.trim(),
-        xsrfToken: xsrfToken.trim() || undefined,
       });
 
       if (result.success) {
         setCardStatus("saved");
         setCookie("");
-        setXsrfToken("");
         setCookieTouched(false);
         toast.success("Bank connection saved", {
           description: "You can now sync your accounts.",
@@ -459,47 +453,6 @@ export function BankConnectionCard() {
               already saved.
             </p>
           </div>
-
-          {/* XSRF token collapsible */}
-          <Collapsible open={xsrfOpen} onOpenChange={setXsrfOpen}>
-            <CollapsibleTrigger asChild>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs font-medium transition-colors"
-              >
-                <ChevronRight
-                  className={cn(
-                    "h-3.5 w-3.5 transition-transform duration-200",
-                    xsrfOpen && "rotate-90"
-                  )}
-                />
-                Advanced: XSRF Token (optional)
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-1 data-[state=open]:slide-in-from-top-1">
-              <div className="mt-2 space-y-1.5">
-                <label
-                  htmlFor="dkb-xsrf"
-                  className="text-sm font-medium leading-none"
-                >
-                  XSRF Token
-                </label>
-                <Input
-                  id="dkb-xsrf"
-                  value={xsrfToken}
-                  onChange={(e) => setXsrfToken(e.target.value)}
-                  placeholder="Optional XSRF token"
-                  className="bg-card/30 border-white/10 font-mono text-xs dark:border-white/5"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <p className="text-muted-foreground text-[11px]">
-                  Only required if DKB&rsquo;s API rejects requests without it.
-                  Most users can skip this.
-                </p>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Help collapsible */}
           <Collapsible open={helpOpen} onOpenChange={setHelpOpen}>

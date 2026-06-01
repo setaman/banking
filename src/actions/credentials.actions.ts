@@ -21,12 +21,10 @@ import { getDbMode } from "@/lib/db";
 const SaveCredentialInputSchema = z.object({
   institution: z.enum(["dkb", "deutscheBank"]),
   cookie: z.string().trim().min(10, "Session cookie looks too short"),
-  xsrfToken: z.string().optional(),
 });
 
 const TestConnectionInputSchema = z.object({
   cookie: z.string().trim().min(10, "Session cookie looks too short"),
-  xsrfToken: z.string().optional(),
 });
 
 // --- Action return types ---
@@ -56,7 +54,6 @@ export async function getCredentialStatusAction(): Promise<CredentialStatusResul
 export async function saveCredentialAction(input: {
   institution: "dkb" | "deutscheBank";
   cookie: string;
-  xsrfToken?: string;
 }): Promise<ActionResult> {
   const parsed = SaveCredentialInputSchema.safeParse(input);
   if (!parsed.success) {
@@ -66,11 +63,10 @@ export async function saveCredentialAction(input: {
     };
   }
 
-  const { institution, cookie, xsrfToken } = parsed.data;
+  const { institution, cookie } = parsed.data;
 
   const result = saveCredentials(institution as keyof BankingConfig, {
     cookie,
-    xsrfToken,
   });
 
   if (result.success) {
@@ -88,7 +84,6 @@ export async function saveCredentialAction(input: {
  */
 export async function testConnectionAction(input: {
   cookie: string;
-  xsrfToken?: string;
 }): Promise<TestConnectionResult> {
   // Block in demo mode — no real network calls allowed
   if (getDbMode() === "demo") {
@@ -108,7 +103,6 @@ export async function testConnectionAction(input: {
 
   const credentials: BankCredentials = {
     cookie: parsed.data.cookie,
-    ...(parsed.data.xsrfToken ? { xsrfToken: parsed.data.xsrfToken } : {}),
   };
 
   try {

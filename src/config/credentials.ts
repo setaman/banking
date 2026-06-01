@@ -72,11 +72,10 @@ export function getCredentialStatus(): {
  */
 export function saveCredentials(
   institution: keyof BankingConfig,
-  credential: { cookie: string; xsrfToken?: string }
+  credential: { cookie: string }
 ): { success: boolean; error?: string } {
   const validation = BankCredentialSchema.safeParse({
     cookie: credential.cookie?.trim(),
-    xsrfToken: credential.xsrfToken?.trim() || undefined,
   });
 
   if (!validation.success) {
@@ -88,9 +87,6 @@ export function saveCredentials(
 
   const trimmed = {
     cookie: validation.data.cookie.trim(),
-    ...(validation.data.xsrfToken
-      ? { xsrfToken: validation.data.xsrfToken.trim() }
-      : {}),
   };
 
   try {
