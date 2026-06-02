@@ -11,6 +11,7 @@ export function Nav() {
     { href: "/", label: "Dashboard" },
     { href: "/insights", label: "Insights" },
     { href: "/transactions", label: "Transactions" },
+    { href: "/settings", label: "Settings" },
   ];
 
   return (

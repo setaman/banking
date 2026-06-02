@@ -143,6 +143,7 @@ export function mapDkbAccount(
     iban: attributes.iban,
     // include holderName so sync can use it for internal transfer detection
     holderName: attributes.holderName,
+    status: "active",
   };
 }
 

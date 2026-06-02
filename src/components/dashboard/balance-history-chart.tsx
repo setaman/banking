@@ -30,7 +30,6 @@ export function BalanceHistoryChart({
     async function fetchData() {
       try {
         setLoading(true);
-        // Fetch both balances and accounts in parallel
         const [balanceData, accountsData] = await Promise.all([
           getBalanceHistory(accountId),
           getAccounts(),
@@ -65,10 +64,10 @@ export function BalanceHistoryChart({
   // Create account name lookup map
   const accountNameMap = new Map(accounts.map((acc) => [acc.id, acc.name]));
 
-  // Calculate total balance timeline (aggregate by calendar date)
+  // Calculate total balance timeline (aggregate by calendar date, all accounts)
   const totalBalanceData: [number, number][] = [];
   if (!accountId && accountIds.length > 1) {
-    // Group balances by calendar date (YYYY-MM-DD)
+    // Group balances by calendar date (YYYY-MM-DD) — all accounts with history
     const balancesByDate = new Map<
       string,
       Map<string, { amount: number; time: number }>
@@ -383,6 +382,7 @@ export function BalanceHistoryChart({
       legend:
         accountIds.length > 1 || totalBalanceData.length > 0
           ? {
+              // show legend whenever there are multiple account lines
               show: true,
               top: 0,
               right: 0,
@@ -421,7 +421,8 @@ export function BalanceHistoryChart({
         <CardTitle>Balance History</CardTitle>
         {accountIds.length > 1 && (
           <p className="text-muted-foreground text-sm">
-            Tracking {accountIds.length} accounts
+            Tracking {accountIds.length} account
+            {accountIds.length !== 1 ? "s" : ""}
             {!accountId && totalBalanceData.length > 0 && " with total balance"}
           </p>
         )}

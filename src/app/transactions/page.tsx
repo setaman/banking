@@ -651,6 +651,11 @@ function TransactionsPageContent() {
                           className="flex-1 cursor-pointer text-sm"
                         >
                           {account.name}
+                          {account.status === "closed" && (
+                            <span className="text-muted-foreground ml-1">
+                              (closed)
+                            </span>
+                          )}
                         </label>
                       </div>
                     ))}

@@ -1,9 +1,152 @@
 # Project State: BanKing
 
-**Current Phase:** Dashboard Trend Fix ✅ COMPLETE
-**Current Sprint:** UX Accuracy
-**Last Session:** 2026-05-01
-**Commit:** fix(dashboard): accurate period-comparison trends on overview cards
+**Current Phase:** Account Management UI ✅ COMPLETE
+**Current Sprint:** Monthly Averages Feature
+**Last Session:** 2026-06-01
+**Branch:** feat/monthly-average-metrics
+
+---
+
+## This session changes (2026-06-01) — Fix: CodeRabbit PR #22 review findings
+
+**Summary:** Addressed CodeRabbit review findings on the Monthly Averages PR. Removed a PII debug log, corrected `fetchData` useCallback dependency array, fixed partial-month label consistency in card bodies, and demoted stale "Current Sprint" heading in PROJECT-STATE.md.
+
+**Files Modified:**
+
+- `src/app/page.tsx` — Removed `console.log(transactionsData)` PII leak; added `preset` and `setCustomRange` to `fetchData` useCallback deps (satisfies `react-hooks/exhaustive-deps`)
+- `src/components/dashboard/monthly-average-cards.tsx` — Card body now conditionally shows "period total" / "for the selected period" when `isPartialMonth` is true, instead of always showing "/ month" / "across N month(s)"
+- `docs/PROJECT-STATE.md` — Renamed `## Current Sprint: Sync Error UI Enhancement` to `## Previous Sprint:` so only the top-level header block indicates the active sprint
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run build` — succeeds (all 9 routes emitted)
+- `npx prettier --write` — all 3 changed files reported unchanged (already formatted)
+- `npm run lint` — 44 pre-existing problems; zero new issues introduced; `exhaustive-deps` warning for `fetchData` is gone (fixed by dep array update)
+
+---
+
+## This session changes (2026-06-01) — Feature: Monthly Averages (avg income / spending / net cash flow)
+
+**Summary:** Added a "Monthly Averages" dashboard section showing average-per-month income, spending, and net cash flow over the selected date range, plus new "Last 3/6/12 Months" date-range presets. Month-count divisor is duration-based (elapsed days / 30.44, rounded, min 1) so a "Last 3 Months" range divides by 3 — matching the user's mental model rather than calendar-boundary counting. Averages are computed server-side in `getDashboardStats` and surfaced via a new `DashboardStats.averages` field. The averages cards intentionally use reduced-opacity Neo-Glass styling vs the totals row to read as a derived/secondary metric, with a labeled "Monthly Averages" section heading and a "/ month" suffix to prevent confusion with totals. A partial-month (<28 days) range shows an amber note and falls back to the period total.
+
+**Files Created:**
+
+- `src/components/dashboard/monthly-average-cards.tsx` — labeled section + 3 reduced-opacity average cards (income/spending/net), loading/error states, null when no income & no expenses
+
+**Files Modified:**
+
+- `src/hooks/use-date-range.ts` — added last3months/last6months/last12months presets
+- `src/components/dashboard/date-range-picker.tsx` — added the 3 preset buttons
+- `src/components/dashboard/overview-cards.tsx` — added trend labels for the new presets
+- `src/lib/stats/calculations.ts` — added `calculateMonthlyAverages()` + `MonthlyAveragesInput`/`Result` types (duration-based month count, `isPartialMonth` flag)
+- `src/actions/stats.actions.ts` — added `MonthlyAverages` interface, `averages` field on `DashboardStats`, wired the calculation
+- `src/app/page.tsx` — mounted `<MonthlyAverageCards>` between overview cards and charts; adjusted stagger delays
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean
+- `npm run build` — succeeds
+- `npx prettier --check .` — passes
+- `npm run lint` — no new errors (pre-existing issues unchanged)
+
+---
+
+## This session changes (2026-06-01) — Fix: Total Balance double-counted closed account + account-status feature
+
+**Root cause:** `getTotalBalance()` summed the latest-ever balance of every account, including a closed savings account that the bank no longer returns. The Total Balance card showed an inflated total while the Balance History chart correctly showed the correct total. The closed account's funds had already rolled into another active account, so the balance was double-counted. The data model had no concept of account status.
+
+**Solution:**
+
+- Added `status: "active" | "closed"` (default active) and `lastSeenAt?` to `UnifiedAccountSchema`.
+- New pure helper `src/lib/banking/account-utils.ts` — `isAccountCurrent()`: an account is excluded from totals if `status === "closed"` OR it was not returned in the most recent successful sync for its institution (stale).
+- `getTotalBalance()` / `getLatestBalances({ activeOnly })` exclude non-current accounts; `getActiveAccountIds()` added; `closeAccount()` / `reactivateAccount()` server actions added.
+- Sync now stamps `lastSeenAt` on accounts the bank returns.
+- New `/settings` "Your Accounts" card to view/close/reactivate accounts (amber "Not seen since…" badge for stale, "Closed" badge, AlertDialog confirm, toasts).
+- Total Balance card shows "Excludes N closed accounts" hint; Balance History chart total line + "Tracking N accounts" now count only active accounts; filter dropdowns label closed accounts "(closed)".
+- Behavior decided: stale accounts are excluded from totals immediately (self-heals if the bank returns them next sync); manual close/reactivate gives permanent control; history is never deleted.
+
+**Files Created:**
+
+- `src/lib/banking/account-utils.ts` — `isAccountCurrent()` pure helper and related utilities
+- `src/components/settings/account-management-card.tsx` — "Your Accounts" card with per-account status badges, DropdownMenu actions, AlertDialog confirmations, Sonner toasts, and `router.refresh()` on success
+
+**Files Modified:**
+
+- `src/lib/banking/types.ts` — Added `status` and `lastSeenAt` to `UnifiedAccountSchema`
+- `src/actions/accounts.actions.ts` — Added `getActiveAccountIds()`, `closeAccount()`, `reactivateAccount()`
+- `src/lib/banking/sync.ts` — Stamps `lastSeenAt` on returned accounts during sync
+- `src/lib/banking/adapters/dkb/mapper.ts` — Passes `lastSeenAt` through mapper
+- `src/lib/db/seed.ts` — Updated seed data to include new account fields
+- `src/app/settings/page.tsx` — Added "Your Accounts" section with `AccountManagementCard`
+- `src/components/dashboard/overview-cards.tsx` — Parallel fetch of `getActiveAccountIds()`; Total Balance card shows "Excludes N closed account(s)" tooltip hint when N > 0
+- `src/components/dashboard/balance-history-chart.tsx` — Fetches `getActiveAccountIds()` in parallel; aggregate "Total Balance" line and "Tracking N accounts" subtitle reflect only active accounts
+- `src/app/page.tsx` — Account filter Select: closed accounts labelled with " (closed)" suffix
+- `src/app/transactions/page.tsx` — Account filter checkbox popover: closed accounts show a muted "(closed)" suffix
+
+**Verification:**
+
+- `npx tsc --noEmit` — no errors
+- `npm run build` — production build succeeds, all 9 routes emitted
+- `npx prettier --check` — all changed files pass
+- `npm run lint` — no new errors introduced
+- Verified getTotalBalance now matches the chart total against local data
+
+---
+
+## This session changes (2026-06-01) — Closed/Stale Account Management UI
+
+**Feature: Closed/Stale Account Management UI**
+
+Implemented the full UI layer for the `fix/total-balance-excludes-closed-accounts` branch. Closed and stale accounts are now surfaced everywhere in the UI with correct exclusion from totals, an account management card in Settings, tooltipped exclusion notes on the balance card, a filtered balance history chart, and "(closed)" labels in dropdowns.
+
+**Files Created:**
+
+- `src/components/settings/account-management-card.tsx` — "Your Accounts" card with per-account status badges (Closed / Not seen since), DropdownMenu actions (Mark as closed / Reactivate / Dismiss), AlertDialog confirmations, Sonner toasts, and router.refresh() on success.
+
+**Files Modified:**
+
+- `src/app/settings/page.tsx` — Added Account Management section (client component, fetches accounts + activeIds via useEffect, renders AccountManagementCard below BankConnectionCard).
+- `src/components/dashboard/overview-cards.tsx` — Added `excludedCount` state (parallel fetch of getAccounts + getActiveAccountIds). Total Balance card now shows a tooltipped muted note "Excludes N closed account(s)" when N > 0.
+- `src/components/dashboard/balance-history-chart.tsx` — Fetches `getActiveAccountIds()` in parallel with existing data. Aggregate "Total Balance" line and "Tracking N accounts" subtitle now reflect only active accounts. Closed/stale account lines still render their own history but are excluded from the aggregate.
+- `src/app/page.tsx` — Account filter Select: closed accounts labelled with " (closed)" suffix.
+- `src/app/transactions/page.tsx` — Account filter checkbox popover: closed accounts show a muted "(closed)" suffix next to their name.
+
+**Verification:**
+
+- `npx tsc --noEmit` — no errors
+- `npm run build` — production build succeeds, all 9 routes emitted
+- `npx prettier --check` — all changed files pass
+- `npm run lint` — all errors in output are pre-existing (confirmed via git stash baseline); no new errors introduced by this session
+
+---
+
+## This session changes (2026-06-01 — previous)
+
+**Feature: Settings Page — Bank Connection Card**
+
+Added a new `/settings` page with a "Bank Connection" card that allows the user to paste a fresh DKB session cookie (and optional XSRF token) directly in the UI. A server action writes the values to the local `banking.config.json`. The stored cookie is never read back into the UI (write-only field); only a masked status indicator is shown. A "Test Connection" button fires a lightweight DKB accounts call to validate credentials inline. Step-by-step help text guides the user through extracting the cookie from browser DevTools. Sonner toast notifications confirm save/test results. The header sync button's "no credentials" state now navigates to `/settings`, and `sync-error-details` links there too.
+
+**Files Created:**
+
+- `src/actions/credentials.actions.ts` — `saveCredentials` and `testConnection` server actions
+- `src/components/settings/bank-connection-card.tsx` — Bank Connection UI card (write-only credential fields, masked status, inline help, Test Connection button)
+- `src/app/settings/page.tsx` — Settings page route (`/settings`)
+- `src/components/ui/textarea.tsx` — shadcn textarea primitive (installed)
+- `src/components/ui/collapsible.tsx` — shadcn collapsible primitive (installed, used for step-by-step help)
+
+**Files Modified:**
+
+- `src/config/credentials.ts` — Added `getCredentialStatus`, `saveCredentials`, exported schema and config path
+- `src/components/layout/nav.tsx` — Added Settings nav link
+- `src/components/sync-button.tsx` — "No credentials" state navigates to `/settings` instead of showing a dead tooltip
+- `src/components/sync-error-details.tsx` — Auth/config error actions link to `/settings`
+
+**Verification:**
+
+- `npx tsc --noEmit` — no errors
+- `npm run build` — production build succeeds, `/settings` route emitted
+- `npm run lint` — clean on all changed files
 
 ---
 
@@ -16,16 +159,19 @@ Replaced the broken `monthlyCashFlow`-based trend logic (which always showed `0.
 **Root Cause:** Trend calculations used the last two buckets of `monthlyCashFlow`, but for ranges like "Last 30 days" only one partial bucket existed, so diffs were always zero.
 
 **Solution:**
+
 - `stats.actions.ts`: computes a mirror "previous period" (same duration, immediately before the selected range) by fetching a second batch of transactions, and returns it as `previousPeriod` in `DashboardStats`.
 - `overview-cards.tsx`: replaced all `monthlyCashFlow` math with simple `(current − previous) / |previous| × 100` calculations against `previousPeriod`. The comparison label is now dynamic (`"vs previous 30 days"`, `"vs last month"`, etc.) based on the `preset` prop. "Total Balance" correctly shows `"current balance"` (point-in-time, no period comparison). "All Time" shows `"—"` (no comparison possible).
 - `page.tsx`: passes the `preset` prop from `useDateRange` to `<OverviewCards>`.
 
 **Files Modified:**
+
 - `src/actions/stats.actions.ts` — added `PreviousPeriodStats` interface, previous-period fetch, `previousPeriod` field on `DashboardStats`
 - `src/components/dashboard/overview-cards.tsx` — new `preset` prop, dynamic label, `previousPeriod`-based trend calc
 - `src/app/page.tsx` — passes `preset` to `<OverviewCards>`
 
 **Verification:**
+
 - ✅ `npx tsc --noEmit` — no errors
 - ✅ `npm run build` — production build succeeds
 
@@ -177,7 +323,7 @@ Implemented a complete error handling system for bank synchronization failures f
 
 ---
 
-## Current Sprint: Sync Error UI Enhancement ✅ COMPLETE
+## Previous Sprint: Sync Error UI Enhancement ✅ COMPLETE
 
 ### Phase 7 Overview
 
