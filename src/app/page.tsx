@@ -44,6 +44,7 @@ export default function Home() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const isInitialLoadRef = useRef(true);
+  const requestSeqRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
 
   // Convert date range to ISO strings for filtering
@@ -66,8 +67,10 @@ export default function Home() {
 
   // Fetch transactions when date range or account changes
   const fetchData = useCallback(async () => {
-    // Race guard: if a newer fetch starts before this one completes, discard stale results
-    const controller = new AbortController();
+    // Race guard: capture a sequence number at the start of this request.
+    // If a newer fetch starts before this one completes, seq will differ from
+    // requestSeqRef.current and we discard the stale results.
+    const seq = ++requestSeqRef.current;
 
     try {
       if (isInitialLoadRef.current) {
@@ -88,7 +91,7 @@ export default function Home() {
       });
 
       // Bail out if this fetch was superseded by a newer one
-      if (controller.signal.aborted) return;
+      if (seq !== requestSeqRef.current) return;
 
       console.log(transactionsData);
 
@@ -105,26 +108,27 @@ export default function Home() {
           const max = new Date(Math.max(...dates.map((d) => d.getTime())));
           // Only update if dates are valid
           if (!isNaN(min.getTime()) && !isNaN(max.getTime())) {
+            if (seq !== requestSeqRef.current) return;
             // Pass isUserInitiated=false so navigationUnit is not reset to "days"
             setCustomRange({ from: min, to: max }, false);
           }
         }
       }
 
+      if (seq !== requestSeqRef.current) return;
+
       // Set transactions
       setTransactions(transactionsData);
       isInitialLoadRef.current = false;
     } catch (err) {
-      if (controller.signal.aborted) return;
+      if (seq !== requestSeqRef.current) return;
       console.error("Failed to fetch transactions:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
-      if (!controller.signal.aborted) {
+      if (seq === requestSeqRef.current) {
         setLoading(false);
       }
     }
-
-    return () => controller.abort();
   }, [preset, startDate, endDate, selectedAccountId, setCustomRange]);
 
   // Fetch data when filters change
