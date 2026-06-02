@@ -14,7 +14,7 @@ The DKB API requires session credentials obtained by reverse-engineering the mai
 **Headers Required:**
 
 1. **Cookie** - Session cookies from DKB webapp
-   - Example: `_SI_VID_1.a3b974920e00011b510a49bb=d2c284950b656d2c00ecc5ab; wtstp_eid=2176876632097778123; UC_NT=false; ...`
+   - Example: `PASTE_YOUR_DKB_SESSION_COOKIE_HERE`
    - Contains multiple session identifiers
 
 **Note:** The X-XSRF-TOKEN / CSRF header is not required for the API calls used by this project; only the `Cookie` header is necessary.
@@ -31,7 +31,7 @@ The DKB API requires session credentials obtained by reverse-engineering the mai
 ```json
 {
   "dkb": {
-    "cookie": "_SI_VID_1.a3b974920e00011b510a49bb=d2c284950b656d2c00ecc5ab; wtstp_eid=2176876632097778123; ..."
+    "cookie": "PASTE_YOUR_DKB_SESSION_COOKIE_HERE"
   }
 }
 ```
