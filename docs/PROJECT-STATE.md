@@ -1,9 +1,29 @@
 # Project State: BanKing
 
 **Current Phase:** Account Management UI ✅ COMPLETE
-**Current Sprint:** Monthly Averages Feature
-**Last Session:** 2026-06-01
-**Branch:** feat/monthly-average-metrics
+**Current Sprint:** Quick Date-Range Navigation ✅ SHIPPED
+**Last Session:** 2026-06-02
+**Branch:** main
+
+---
+
+## This session changes (2026-06-02) — Feature: Quick date-range navigation (#19) merged
+
+**Summary:** PR #19 added chevron back/forward arrow buttons flanking the dashboard date-range picker, enabling keyboard-friendly period navigation without reopening the calendar. The navigation step adapts to the active preset (week / days / month / year) or, for a custom range, uses the range's own day-duration. The forward arrow is disabled when the period would extend past today; both arrows are hidden for the "All Time" preset.
+
+**Files involved (now on main):**
+
+- `src/hooks/use-date-range.ts` — Added `NavigationUnit` type, `getNavigationUnit()`, `navigateRange()`, `canNavigateBack()`, `canNavigateForward()`, and `setCustomRange(range, isUserInitiated)` overload; custom-range navigation unit resets to `"days"`.
+- `src/components/dashboard/date-range-picker.tsx` — Added chevron buttons with `aria-label="Navigate to previous period"` / `"Navigate to next period"`; added `tempRange`↔`range` sync `useEffect` so the calendar highlights the correct month after programmatic navigation.
+- `src/app/page.tsx` — Added `requestSeqRef` race guard in `fetchData` (replaces ineffective `AbortController` pattern); navigation props wired to the date-range picker.
+
+**Verification:**
+
+- Headless-browser run confirmed all 7 test-plan checks passed (arrow visibility, step sizes, forward-disable at today, "All Time" hiding).
+- CodeRabbit review findings folded in: request-sequence guard replacing ineffective AbortController, custom-range `navigationUnit` reset to `"days"`, calendar-highlight sync `useEffect`.
+- Merge conflicts with main resolved, preserving both quick-nav and the Monthly Averages feature.
+- `npx tsc --noEmit`, `npm run lint`, and `npm run build` all clean.
+- Squash-merged as commit `091d73a`; feature branch deleted.
 
 ---
 
