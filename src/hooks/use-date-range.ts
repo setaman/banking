@@ -3,12 +3,19 @@
 import { useState, useCallback } from "react";
 import {
   subDays,
+  addDays,
   startOfMonth,
   endOfMonth,
   startOfYear,
   endOfYear,
   subMonths,
+  addMonths,
   subYears,
+  addYears,
+  differenceInDays,
+  startOfDay,
+  isAfter,
+  isSameDay,
 } from "date-fns";
 
 export type DateRange = {
@@ -29,9 +36,12 @@ export type DateRangePreset =
   | "allTime"
   | "custom";
 
+export type NavigationUnit = "week" | "month" | "year" | "days" | null;
+
 export interface DateRangeState {
   range: DateRange;
   preset: DateRangePreset;
+  navigationUnit: NavigationUnit;
 }
 
 const getPresetRange = (preset: DateRangePreset): DateRange => {
@@ -68,25 +78,57 @@ const getPresetRange = (preset: DateRangePreset): DateRange => {
   }
 };
 
+const getNavigationUnit = (preset: DateRangePreset): NavigationUnit => {
+  switch (preset) {
+    case "last7days":
+      return "week";
+    case "last30days":
+      return "days";
+    case "thisMonth":
+    case "lastMonth":
+      return "month";
+    case "thisYear":
+    case "lastYear":
+      return "year";
+    case "allTime":
+      return null;
+    case "custom":
+      return "days";
+    default:
+      return "days";
+  }
+};
+
 export function useDateRange(initialPreset: DateRangePreset = "last30days") {
   const [state, setState] = useState<DateRangeState>({
     range: getPresetRange(initialPreset),
     preset: initialPreset,
+    navigationUnit: getNavigationUnit(initialPreset),
   });
 
   const setPreset = useCallback((preset: DateRangePreset) => {
     setState({
       range: getPresetRange(preset),
       preset,
+      navigationUnit: getNavigationUnit(preset),
     });
   }, []);
 
-  const setCustomRange = useCallback((range: DateRange) => {
-    setState({
-      range,
-      preset: "custom",
-    });
-  }, []);
+  const setCustomRange = useCallback(
+    (range: DateRange, isUserInitiated: boolean = true) => {
+      setState((prev) => ({
+        range,
+        preset: "custom",
+        // When called programmatically (e.g. allTime data-span update) preserve the
+        // current navigationUnit so navigation arrows keep working as expected.
+        // When triggered by the user picking a calendar range, default to "days".
+        navigationUnit: isUserInitiated
+          ? "days"
+          : (prev.navigationUnit ?? "days"),
+      }));
+    },
+    []
+  );
 
   const setRange = useCallback((range: DateRange) => {
     setState((prev) => ({
@@ -95,11 +137,72 @@ export function useDateRange(initialPreset: DateRangePreset = "last30days") {
     }));
   }, []);
 
+  const navigateRange = useCallback((direction: 1 | -1) => {
+    setState((prev) => {
+      if (prev.navigationUnit === null) return prev;
+
+      const { from, to } = prev.range;
+      let newFrom: Date;
+      let newTo: Date;
+
+      switch (prev.navigationUnit) {
+        case "week":
+          newFrom = addDays(from, direction * 7);
+          newTo = addDays(to, direction * 7);
+          break;
+        case "days": {
+          const durationDays = Math.max(1, differenceInDays(to, from));
+          newFrom = addDays(from, direction * durationDays);
+          newTo = addDays(to, direction * durationDays);
+          break;
+        }
+        case "month": {
+          const shiftedFrom =
+            direction === 1 ? addMonths(from, 1) : subMonths(from, 1);
+          newFrom = startOfMonth(shiftedFrom);
+          newTo = endOfMonth(shiftedFrom);
+          break;
+        }
+        case "year": {
+          const shiftedFrom =
+            direction === 1 ? addYears(from, 1) : subYears(from, 1);
+          newFrom = startOfYear(shiftedFrom);
+          newTo = endOfYear(shiftedFrom);
+          break;
+        }
+        default: {
+          const durationDays = Math.max(1, differenceInDays(to, from));
+          newFrom = addDays(from, direction * durationDays);
+          newTo = addDays(to, direction * durationDays);
+          break;
+        }
+      }
+
+      return {
+        range: { from: newFrom, to: newTo },
+        preset: "custom",
+        // Keep navigationUnit unchanged so subsequent navigations stay consistent
+        navigationUnit: prev.navigationUnit,
+      };
+    });
+  }, []);
+
+  const today = startOfDay(new Date());
+  const canNavigateBack = state.navigationUnit !== null;
+  const canNavigateForward =
+    state.navigationUnit !== null &&
+    !isAfter(state.range.to, today) &&
+    !isSameDay(state.range.to, today);
+
   return {
     range: state.range,
     preset: state.preset,
+    navigationUnit: state.navigationUnit,
     setPreset,
     setCustomRange,
     setRange,
+    navigateRange,
+    canNavigateForward,
+    canNavigateBack,
   };
 }

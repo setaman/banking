@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
@@ -30,14 +30,24 @@ const MotionDiv = motion.create("div");
 
 export default function Home() {
   // Date range state
-  const { range, preset, setPreset, setCustomRange } =
-    useDateRange("last30days");
+  const {
+    range,
+    preset,
+    navigationUnit,
+    setPreset,
+    setCustomRange,
+    navigateRange,
+    canNavigateForward,
+    canNavigateBack,
+  } = useDateRange("last30days");
 
   // Data state
   const [transactions, setTransactions] = useState<UnifiedTransaction[]>([]);
   const [accounts, setAccounts] = useState<UnifiedAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const isInitialLoadRef = useRef(true);
+  const requestSeqRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
     null
@@ -63,8 +73,15 @@ export default function Home() {
 
   // Fetch transactions when date range or account changes
   const fetchData = useCallback(async () => {
+    // Race guard: capture a sequence number at the start of this request.
+    // If a newer fetch starts before this one completes, seq will differ from
+    // requestSeqRef.current and we discard the stale results.
+    const seq = ++requestSeqRef.current;
+
     try {
-      setLoading(true);
+      if (isInitialLoadRef.current) {
+        setLoading(true);
+      }
       setError(null);
       setDashboardStats(null);
 
@@ -81,6 +98,9 @@ export default function Home() {
         getDashboardStats(filters),
       ]);
 
+      // Bail out if this fetch was superseded by a newer one
+      if (seq !== requestSeqRef.current) return;
+
       // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
       if (isAllTime && transactionsData && transactionsData.length > 0) {
         // Compute min/max bookingDate
@@ -94,21 +114,29 @@ export default function Home() {
           const max = new Date(Math.max(...dates.map((d) => d.getTime())));
           // Only update if dates are valid
           if (!isNaN(min.getTime()) && !isNaN(max.getTime())) {
-            setCustomRange({ from: min, to: max });
+            if (seq !== requestSeqRef.current) return;
+            // Pass isUserInitiated=false so navigationUnit is not reset to "days"
+            setCustomRange({ from: min, to: max }, false);
           }
         }
       }
 
+      if (seq !== requestSeqRef.current) return;
+
       // Set transactions and stats
       setTransactions(transactionsData);
       setDashboardStats(statsData);
+      isInitialLoadRef.current = false;
     } catch (err) {
+      if (seq !== requestSeqRef.current) return;
       console.error("Failed to fetch transactions:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
-      setLoading(false);
+      if (seq === requestSeqRef.current) {
+        setLoading(false);
+      }
     }
-  }, [startDate, endDate, selectedAccountId, preset, setCustomRange]);
+  }, [preset, startDate, endDate, selectedAccountId, setCustomRange]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -212,7 +240,7 @@ export default function Home() {
           </span>
         </h1>
         <p className="text-muted-foreground">
-          Here's what's happening with your finances today.
+          Here&apos;s what&apos;s happening with your finances today.
         </p>
       </MotionDiv>
 
@@ -252,8 +280,12 @@ export default function Home() {
         <DateRangePicker
           range={range}
           preset={preset}
+          navigationUnit={navigationUnit}
           onPresetChange={setPreset}
           onCustomRangeChange={setCustomRange}
+          onNavigate={navigateRange}
+          canNavigateForward={canNavigateForward}
+          canNavigateBack={canNavigateBack}
           className="w-full min-w-[280px] sm:w-auto"
         />
       </MotionDiv>
@@ -263,7 +295,6 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.15 }}
-        key={`overview-${startDate}-${endDate}-${selectedAccountId}`}
       >
         <OverviewCards
           filters={{
