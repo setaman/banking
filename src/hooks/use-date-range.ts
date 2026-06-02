@@ -105,16 +105,21 @@ export function useDateRange(initialPreset: DateRangePreset = "last30days") {
     });
   }, []);
 
-  const setCustomRange = useCallback((range: DateRange) => {
-    setState((prev) => ({
-      range,
-      preset: "custom",
-      // Preserve existing navigationUnit when called internally (e.g. allTime data span update)
-      // but use "days" as default for user-initiated custom ranges
-      navigationUnit:
-        prev.preset === "allTime" ? null : (prev.navigationUnit ?? "days"),
-    }));
-  }, []);
+  const setCustomRange = useCallback(
+    (range: DateRange, isUserInitiated: boolean = true) => {
+      setState((prev) => ({
+        range,
+        preset: "custom",
+        // When called programmatically (e.g. allTime data-span update) preserve the
+        // current navigationUnit so navigation arrows keep working as expected.
+        // When triggered by the user picking a calendar range, default to "days".
+        navigationUnit: isUserInitiated
+          ? "days"
+          : (prev.navigationUnit ?? "days"),
+      }));
+    },
+    []
+  );
 
   const setRange = useCallback((range: DateRange) => {
     setState((prev) => ({

@@ -66,6 +66,9 @@ export default function Home() {
 
   // Fetch transactions when date range or account changes
   const fetchData = useCallback(async () => {
+    // Race guard: if a newer fetch starts before this one completes, discard stale results
+    const controller = new AbortController();
+
     try {
       if (isInitialLoadRef.current) {
         setLoading(true);
@@ -84,6 +87,9 @@ export default function Home() {
         excludeInternal: true,
       });
 
+      // Bail out if this fetch was superseded by a newer one
+      if (controller.signal.aborted) return;
+
       console.log(transactionsData);
 
       // If the user selected 'allTime', update the date-range hook to the true data span (excluding internals)
@@ -99,7 +105,8 @@ export default function Home() {
           const max = new Date(Math.max(...dates.map((d) => d.getTime())));
           // Only update if dates are valid
           if (!isNaN(min.getTime()) && !isNaN(max.getTime())) {
-            setCustomRange({ from: min, to: max });
+            // Pass isUserInitiated=false so navigationUnit is not reset to "days"
+            setCustomRange({ from: min, to: max }, false);
           }
         }
       }
@@ -108,11 +115,16 @@ export default function Home() {
       setTransactions(transactionsData);
       isInitialLoadRef.current = false;
     } catch (err) {
+      if (controller.signal.aborted) return;
       console.error("Failed to fetch transactions:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
+
+    return () => controller.abort();
   }, [preset, startDate, endDate, selectedAccountId, setCustomRange]);
 
   // Fetch data when filters change
@@ -217,7 +229,7 @@ export default function Home() {
           </span>
         </h1>
         <p className="text-muted-foreground">
-          Here's what's happening with your finances today.
+          Here&apos;s what&apos;s happening with your finances today.
         </p>
       </MotionDiv>
 

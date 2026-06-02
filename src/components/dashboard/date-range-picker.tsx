@@ -75,6 +75,12 @@ export function DateRangePicker({
     to: range.to,
   });
 
+  // Sync tempRange with the external range prop so the calendar highlight stays
+  // accurate after navigation arrows move the range or a preset is selected.
+  React.useEffect(() => {
+    setTempRange({ from: range.from, to: range.to });
+  }, [range.from, range.to]);
+
   // Format display text based on preset or custom range
   const displayText = React.useMemo(() => {
     if (preset === "custom") {
