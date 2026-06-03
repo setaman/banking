@@ -5,13 +5,7 @@
  * Uses date-fns for date manipulation and Intl.NumberFormat for EUR formatting.
  */
 
-import {
-  differenceInDays,
-  parseISO,
-  isWithinInterval,
-  addMonths,
-  format,
-} from "date-fns";
+import { differenceInDays, parseISO, isWithinInterval, format } from "date-fns";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { classifyTransaction, type Category } from "./categories";
 
@@ -488,14 +482,16 @@ export function calculateMonthlyAverages(
 // --- Balance Prediction ---
 
 export interface BalancePredictionPoint {
-  month: string; // ISO month "YYYY-MM" for the projected month
-  projected: number; // projected balance at end of this month
+  year: number; // 1..N (years from now)
+  label: string; // calendar year as string, e.g. "2031"
+  projected: number;
   upperBound: number;
   lowerBound: number;
 }
 
 export interface BalancePrediction {
-  points: BalancePredictionPoint[]; // exactly 12 monthly points
+  points: BalancePredictionPoint[]; // exactly N yearly points
+  yearsProjected: number; // N
   monthsUsed: number; // historical months used (3..12)
   meanMonthlyNet: number;
   stdDevMonthlyNet: number; // always >= 0
@@ -509,32 +505,26 @@ export type BalancePredictionResult =
 export interface BalancePredictionInput {
   totalBalance: number;
   monthlyCashFlow: MonthlyFlow[]; // chronological, from calculateMonthlyCashFlow
+  years?: number; // default 5
   currentMonth?: string; // "YYYY-MM"; defaults to current month
 }
 
 /**
- * Increments a YYYY-MM string by `count` months, handling year rollover.
- * Uses date-fns addMonths on the 1st of the given month.
- */
-function incrementMonth(yearMonth: string, count: number): string {
-  const base = parseISO(`${yearMonth}-01`);
-  return format(addMonths(base, count), "yyyy-MM");
-}
-
-/**
- * Projects the portfolio balance 12 months forward using historical monthly
- * net cash flow. Returns a structured result indicating availability and,
- * when available, 12 prediction points with uncertainty bounds.
+ * Projects the portfolio balance forward in yearly steps using historical
+ * monthly net cash flow. Returns a structured result indicating availability
+ * and, when available, N yearly prediction points with uncertainty bounds.
  *
  * - Requires at least 3 complete historical months.
  * - Uses up to the trailing 12 complete months for mean/std-dev computation.
  * - Excludes the current (partial) month from history.
- * - Uncertainty bounds widen proportionally to sqrt(i) (random-walk model).
+ * - Uncertainty bounds widen proportionally to sqrt(months) (random-walk model).
+ * - Default projection horizon: 5 years.
  */
 export function calculateBalancePrediction(
   input: BalancePredictionInput
 ): BalancePredictionResult {
   const { totalBalance, monthlyCashFlow } = input;
+  const N = input.years ?? 5;
 
   // Derive current month string (YYYY-MM)
   const currentMonth = input.currentMonth ?? format(new Date(), "yyyy-MM");
@@ -574,14 +564,18 @@ export function calculateBalancePrediction(
     confidence = "normal";
   }
 
-  // Generate exactly 12 forward projection points
+  // Base calendar year derived from currentMonth (e.g. "2026" from "2026-06")
+  const baseYear = parseInt(currentMonth.substring(0, 4), 10);
+
+  // Generate exactly N forward yearly projection points
   const points: BalancePredictionPoint[] = [];
-  for (let i = 1; i <= 12; i++) {
-    const month = incrementMonth(currentMonth, i);
-    const projected = totalBalance + meanMonthlyNet * i;
-    const spread = stdDevMonthlyNet * Math.sqrt(i);
+  for (let y = 1; y <= N; y++) {
+    const months = 12 * y;
+    const projected = totalBalance + meanMonthlyNet * months;
+    const spread = stdDevMonthlyNet * Math.sqrt(months);
     points.push({
-      month,
+      year: y,
+      label: String(baseYear + y),
       projected,
       upperBound: projected + spread,
       lowerBound: projected - spread,
@@ -592,6 +586,7 @@ export function calculateBalancePrediction(
     available: true,
     prediction: {
       points,
+      yearsProjected: N,
       monthsUsed,
       meanMonthlyNet,
       stdDevMonthlyNet,

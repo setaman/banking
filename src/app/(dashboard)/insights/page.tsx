@@ -506,13 +506,10 @@ export default function InsightsPage() {
     const bandTopAlpha = isDark ? 0.12 : 0.08;
     const bandBotAlpha = isDark ? 0.03 : 0.02;
 
-    // x-axis labels: "Now" + 12 projected month labels
-    const xLabels = [
-      "Now",
-      ...points.map((p) => format(parseISO(p.month + "-01"), "MMM yy")),
-    ];
+    // x-axis labels: "Now" + one label per projected year (e.g. "2027", "2028", …)
+    const xLabels = ["Now", ...points.map((p) => p.label)];
 
-    // Projected line: anchor at current balance (index 0) then 12 points
+    // Projected line: anchor at current balance (index 0) then N yearly points
     const projectedValues = [balance, ...points.map((p) => p.projected)];
 
     // Confidence band lower series (transparent base, stacked)
@@ -765,22 +762,6 @@ export default function InsightsPage() {
         <div className="flex flex-col gap-6">
           {/* ── Balance Forecast (flagship forward-looking section) ── */}
           <div>
-            {/* Section heading */}
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <Target className="text-muted-foreground h-4 w-4" />
-              <h2 className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-                Balance Forecast
-              </h2>
-              <div className="h-px flex-1 bg-gradient-to-r from-violet-500/20 to-transparent" />
-              {balancePrediction.available && (
-                <span className="text-muted-foreground text-xs">
-                  based on your last {balancePrediction.prediction.monthsUsed}{" "}
-                  month
-                  {balancePrediction.prediction.monthsUsed === 1 ? "" : "s"}
-                </span>
-              )}
-            </div>
-
             {balancePrediction.available ? (
               <MotionCard
                 initial={{ opacity: 0, y: 20 }}
@@ -794,33 +775,52 @@ export default function InsightsPage() {
                   <div className="flex-1">
                     <CardTitle className="flex items-center gap-2">
                       <Target className="h-5 w-5 text-violet-400" />
-                      12-Month Balance Projection
+                      Balance Projection
                     </CardTitle>
                     <p className="text-muted-foreground mt-1 text-sm">
                       A rough estimate of where your total balance is heading,
                       based on your recent monthly income vs spending. Not a
                       guarantee.
                     </p>
+                    <p className="text-muted-foreground/70 mt-1 text-xs">
+                      Based on your last{" "}
+                      {balancePrediction.prediction.monthsUsed} month
+                      {balancePrediction.prediction.monthsUsed === 1
+                        ? ""
+                        : "s"}{" "}
+                      of history.
+                    </p>
                   </div>
-                  {/* Summary stat */}
+                  {/* Summary stat — final projected year */}
                   <div className="shrink-0 text-right">
                     <p className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-2xl font-bold text-transparent">
                       ~
                       {formatCurrency(
-                        balancePrediction.prediction.points[11].projected
+                        balancePrediction.prediction.points[
+                          balancePrediction.prediction.points.length - 1
+                        ].projected
                       )}
                     </p>
                     <p className="text-muted-foreground/80 text-xs">
-                      expected in 12 months
+                      expected by{" "}
+                      {
+                        balancePrediction.prediction.points[
+                          balancePrediction.prediction.points.length - 1
+                        ].label
+                      }
                     </p>
                     <p className="text-muted-foreground/70 mt-0.5 text-xs">
                       between{" "}
                       {formatCurrency(
-                        balancePrediction.prediction.points[11].lowerBound
+                        balancePrediction.prediction.points[
+                          balancePrediction.prediction.points.length - 1
+                        ].lowerBound
                       )}{" "}
                       and{" "}
                       {formatCurrency(
-                        balancePrediction.prediction.points[11].upperBound
+                        balancePrediction.prediction.points[
+                          balancePrediction.prediction.points.length - 1
+                        ].upperBound
                       )}
                     </p>
                   </div>

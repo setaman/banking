@@ -1,9 +1,39 @@
 # Project State: BanKing
 
-**Current Phase:** Balance Prediction — Relocated to Insights ✅ COMPLETE
+**Current Phase:** Balance Prediction — Multi-year forecast (5-year yearly steps) ✅ COMPLETE
 **Current Sprint:** feat/balance-prediction
 **Last Session:** 2026-06-04
 **Branch:** feat/balance-prediction
+
+---
+
+## This session changes (2026-06-04) — Balance Forecast: multi-year yearly projection
+
+**Summary:** Changed the Balance Forecast from a 12-monthly-point projection to a 5-year yearly-step projection, and removed the redundant standalone "Balance Forecast" heading strip from the Insights page.
+
+**Part 1 — Calculation layer (`src/lib/stats/calculations.ts`):**
+- Updated `BalancePredictionPoint` type: replaced `month: string` with `year: number` (1..N) and `label: string` (calendar year, e.g. "2031").
+- Updated `BalancePrediction` type: added `yearsProjected: number`; `points` is now N yearly points (not 12 monthly).
+- Updated `BalancePredictionInput` type: added optional `years?: number` (default 5); removed reliance on `addMonths` (now unused — import cleaned up).
+- Rewrote `calculateBalancePrediction` loop: for y=1..N, `months = 12*y`, `projected = totalBalance + meanMonthlyNet * months`, `spread = stdDevMonthlyNet * Math.sqrt(months)`. Label is `String(baseYear + y)` where `baseYear` is parsed from `currentMonth`. All existing guards (no-data, insufficient-history, confidence, trailing-12-month window) preserved unchanged.
+- Removed unused `addMonths` import from `date-fns`; `format` retained (still used for `currentMonth` default).
+
+**Part 2 — Insights page (`src/app/(dashboard)/insights/page.tsx`):**
+- Removed the standalone section heading strip (`<div className="mb-4 flex flex-wrap items-center gap-3">`) containing the `Target` icon, "BALANCE FORECAST" uppercase label, gradient rule, and "based on last N months" note. The card now renders directly inside `<div>`.
+- Card title updated from "12-Month Balance Projection" to "Balance Projection".
+- "Based on your last N months of history." moved into the card as a third `<p>` under the explainer.
+- Summary stat (top-right): now uses `points[points.length - 1]` (final year) for projected, lower/upper values; caption changed from "expected in 12 months" to "expected by {label}" (e.g. "expected by 2031").
+- Forecast chart `forecastChartOption` updated: x-axis labels are now `["Now", ...points.map(p => p.label)]` (e.g. Now, 2027, 2028, 2029, 2030, 2031) instead of month strings; data arrays derived from the new point shape. All other chart config (confidence band, dashed line, tooltip, legend, no markPoint/markLine) unchanged.
+
+**Verification:**
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing in unrelated files; zero new issues in changed files
+- `npm run build` — succeeds, all routes emitted cleanly
+- `npx prettier --write` — `calculations.ts` reformatted (import collapsed); `page.tsx` already formatted
+- Visual check: Playwright headless screenshot saved to `.tmp-qa/insights-forecast-yearly.png`. Confirmed: no heading strip, yearly x-axis (Now + 2027–2031), dashed violet projected line + widening confidence band, summary stat shows final-year value + "expected by 2031". No stray markers.
+
+**Next actions:**
+- PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
 
