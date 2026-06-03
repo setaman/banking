@@ -1,9 +1,67 @@
 # Project State: BanKing
 
-**Current Phase:** Account Management UI ✅ COMPLETE
-**Current Sprint:** Quick Date-Range Navigation ✅ SHIPPED
-**Last Session:** 2026-06-02
-**Branch:** main
+**Current Phase:** Balance Prediction — UI ✅ COMPLETE
+**Current Sprint:** feat/balance-prediction
+**Last Session:** 2026-06-03
+**Branch:** feat/balance-prediction
+
+---
+
+## This session changes (2026-06-03) — UI: Balance Forecast card + chart projection layer
+
+**Summary:** Built the full UI for the yearly balance prediction feature. Created the "Balance Forecast" section card, extended the Balance History chart with a 12-month projection overlay (dashed line + confidence band + "Today" markLine), and wired everything into the dashboard page.
+
+**Files Created:**
+- `src/components/dashboard/balance-prediction-card.tsx` — "Balance Forecast" section with gradient card. Shows ~projected value at month 12, lower/upper bound range, confidence notes ("volatile" / "low"), shadcn Tooltip on card title, skeleton loading state, and a graceful "not enough data yet" unavailable state that keeps the violet gradient alive.
+
+**Files Modified:**
+- `src/components/dashboard/balance-history-chart.tsx` — Added optional `prediction?: BalancePredictionResult` prop. When in aggregate view (`!accountId`, multiple accounts) and prediction is available: renders a dashed violet "Projected Balance" line connecting from the last actual point, a stacked-area confidence band (`_bandBase` + `_bandFill` series, filtered from legend/tooltip), a "Today" markLine separating actual from projected, and extends the x-axis max to cover the 12th projected month. Tooltip enriched to show `~value`, possible range, and `(estimated)` hint for projected points. Legend shows a dashed-line swatch for "Projected Balance". Added `/* eslint-disable @typescript-eslint/no-explicit-any */` (ECharts callback types require it, same pattern as sibling chart files). Added `monthToTimestamp()` pure helper (YYYY-MM → end-of-month UTC noon timestamp).
+- `src/app/page.tsx` — Imported `BalancePredictionCard`. Mounted it between Monthly Averages and the charts grid with `delay: 0.225` stagger. Passed `prediction={dashboardStats?.balancePrediction}` to `<BalanceHistoryChart>`.
+
+**Prediction data flow:**
+`getDashboardStats()` → `DashboardStats.balancePrediction` (server) → `dashboardStats` state (page) → both `<BalancePredictionCard stats={dashboardStats}>` and `<BalanceHistoryChart prediction={dashboardStats?.balancePrediction}>` (client components).
+
+**Verification:**
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 34 problems (all pre-existing; down from 49 pre-task baseline because the chart file's `no-explicit-any` is now covered by a file-level disable, net zero new issues introduced)
+- `npm run build` — succeeds, all 9 routes emitted
+- `npx prettier --write` — all 3 changed files formatted
+
+**Next actions:**
+- PR / merge `feat/balance-prediction` into main once reviewed.
+
+---
+
+## This session changes (2026-06-03) — Infra: Yearly balance prediction calculation layer
+
+**Summary:** Added the pure calculation function and types for the "yearly balance prediction" feature, plus server-action wiring. No UI components — infrastructure only. A future task builds the chart/widget on top of this.
+
+**New exported types in `src/lib/stats/calculations.ts`:**
+- `BalancePredictionPoint` — a single projected month (month, projected, upperBound, lowerBound)
+- `BalancePrediction` — 12-point prediction result with monthsUsed, meanMonthlyNet, stdDevMonthlyNet, confidence
+- `BalancePredictionResult` — discriminated union `{ available: true; prediction }` | `{ available: false; reason }`
+- `BalancePredictionInput` — input shape (totalBalance, monthlyCashFlow, optional currentMonth)
+
+**New function in `src/lib/stats/calculations.ts`:**
+- `calculateBalancePrediction(input)` — pure function, no I/O. Excludes current (partial) month, requires ≥3 complete months, uses trailing ≤12 months for mean/stdDev, generates 12 forward points with sqrt(i) uncertainty spread. Confidence: "volatile" / "low" / "normal". Uses `date-fns` `addMonths`+`format` for robust month increment.
+
+**Changes to `src/actions/stats.actions.ts`:**
+- Imports `calculateBalancePrediction` and `type BalancePredictionResult` from calculations.
+- Re-exports `BalancePredictionResult`, `BalancePrediction`, `BalancePredictionPoint` for component consumers.
+- Added `balancePrediction: BalancePredictionResult` field to `DashboardStats` interface.
+- `getDashboardStats()`: added a 4th parallel fetch (`getTransactions(undefined, { excludeInternal: true })`) for full portfolio history; computes `balancePrediction` from that history + `getTotalBalance()` independent of the dashboard date-range/account filter.
+
+**Files Modified:**
+- `src/lib/stats/calculations.ts`
+- `src/actions/stats.actions.ts`
+
+**Verification:**
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — zero new issues in changed files (all existing errors are pre-existing in unrelated files)
+- `npx prettier --write` — both files formatted
+
+**Next actions:**
+- Build the UI widget (chart + card) consuming `DashboardStats.balancePrediction` on the dashboard.
 
 ---
 

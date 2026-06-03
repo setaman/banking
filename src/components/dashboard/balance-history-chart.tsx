@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,18 +9,32 @@ import { motion } from "motion/react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getBalanceHistory, getAccounts } from "@/actions/accounts.actions";
 import type { UnifiedBalance, UnifiedAccount } from "@/lib/banking/types";
-import { format, parseISO } from "date-fns";
+import type { BalancePredictionResult } from "@/actions/stats.actions";
+import { format, parseISO, endOfMonth } from "date-fns";
 
 const MotionCard = motion.create(Card);
 
 interface BalanceHistoryChartProps {
   accountId?: string;
   className?: string;
+  prediction?: BalancePredictionResult;
+}
+
+/**
+ * Converts a "YYYY-MM" month string to a timestamp at end-of-month (noon UTC).
+ * Using end-of-month ensures the projected point sits visually past the last
+ * actual data point which is recorded at noon UTC on a mid-month date.
+ */
+function monthToTimestamp(month: string): number {
+  const [year, mo] = month.split("-").map(Number);
+  const eom = endOfMonth(new Date(year, mo - 1, 1));
+  return Date.UTC(eom.getFullYear(), eom.getMonth(), eom.getDate(), 12, 0, 0);
 }
 
 export function BalanceHistoryChart({
   accountId,
   className,
+  prediction,
 }: BalanceHistoryChartProps) {
   const [balances, setBalances] = useState<UnifiedBalance[]>([]);
   const [accounts, setAccounts] = useState<UnifiedAccount[]>([]);
@@ -133,12 +148,27 @@ export function BalanceHistoryChart({
     chart5Color,
   ];
 
-  const textColor = isDark ? "rgba(226, 232, 240, 1)" : "rgba(71, 85, 105, 1)"; // slate-700 instead of slate-400 equivalent
+  const textColor = isDark ? "rgba(226, 232, 240, 1)" : "rgba(71, 85, 105, 1)";
   const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+
+  // Projection colors — violet family, mode-aware
+  const projLineColor = isDark
+    ? "rgba(139, 92, 246, 0.85)"
+    : "rgba(124, 58, 237, 0.85)";
+  const projBandTopAlpha = isDark ? 0.12 : 0.08;
+  const projBandBotAlpha = isDark ? 0.03 : 0.02;
+
+  // Whether projection should be rendered:
+  // only on the aggregate view (no single-account filter) and when available
+  const showProjection =
+    !accountId &&
+    accountIds.length > 1 &&
+    totalBalanceData.length > 0 &&
+    prediction?.available === true;
 
   // Build ECharts option
   const getOption = (): EChartsOption => {
-    const series = accountIds.map((accId, index) => {
+    const series: any[] = accountIds.map((accId, index) => {
       const accountBalances = balancesByAccount[accId];
       const color = accountColors[index % accountColors.length];
 
@@ -192,17 +222,17 @@ export function BalanceHistoryChart({
 
     // Add Total Balance series (the "Luminance" design)
     if (!accountId && accountIds.length > 1 && totalBalanceData.length > 0) {
-      const masterLineColor = isDark ? "#ffffff" : "#020617"; // Pure white / Slate-950
+      const masterLineColor = isDark ? "#ffffff" : "#020617";
       const glowColor = isDark
-        ? "rgba(139, 92, 246, 0.6)" // Primary purple glow (stronger in dark)
-        : "rgba(124, 58, 237, 0.25)"; // Primary purple glow (subtle in light)
+        ? "rgba(139, 92, 246, 0.6)"
+        : "rgba(124, 58, 237, 0.25)";
 
       series.push({
         name: "Total Balance",
         type: "line" as const,
         smooth: true,
         showSymbol: true,
-        symbol: "diamond", // Distinct from account circles
+        symbol: "diamond",
         symbolSize: 8,
         z: 10,
         itemStyle: {
@@ -213,13 +243,11 @@ export function BalanceHistoryChart({
         lineStyle: {
           width: 3,
           color: masterLineColor,
-          // THE KEY: Colored shadow creates "neon/glass" effect
           shadowColor: glowColor,
           shadowBlur: 15,
-          shadowOffsetY: 5, // Lifts the line off the chart
+          shadowOffsetY: 5,
         } as any,
         areaStyle: {
-          // Very subtle "mist" below the total line
           color: {
             type: "linear" as const,
             x: 0,
@@ -245,7 +273,7 @@ export function BalanceHistoryChart({
           },
           lineStyle: {
             width: 4,
-            shadowBlur: 20, // Stronger glow on hover
+            shadowBlur: 20,
           } as any,
           areaStyle: {
             color: "inherit",
@@ -253,6 +281,135 @@ export function BalanceHistoryChart({
         },
         data: totalBalanceData,
       } as any);
+    }
+
+    // Projection series — only injected in aggregate view with available prediction
+    let projectionMarkLineXAxis: number | undefined;
+    if (showProjection && prediction?.available) {
+      const pts = prediction.prediction.points;
+
+      // Projected line data: bridge from last actual point then all 12 projection points
+      const lastActual = totalBalanceData[totalBalanceData.length - 1];
+      const projLineData: [number, number][] = [
+        [lastActual[0], lastActual[1]], // connect seamlessly from actual
+        ...pts.map(
+          (p) => [monthToTimestamp(p.month), p.projected] as [number, number]
+        ),
+      ];
+
+      // Confidence band: stacked-area technique.
+      // Series "_bandBase": invisible line at lowerBound (no area fill, transparent)
+      // Series "_bandFill": stacked area of (upper - lower) height with violet gradient
+      const bandBaseData: [number, number][] = pts.map((p) => [
+        monthToTimestamp(p.month),
+        p.lowerBound,
+      ]);
+      const bandFillData: [number, number][] = pts.map((p) => [
+        monthToTimestamp(p.month),
+        p.upperBound - p.lowerBound,
+      ]);
+
+      // "Today" markLine x-value: timestamp of the last actual balance point
+      projectionMarkLineXAxis = lastActual[0];
+
+      // ---- Band base (invisible, just sets the stack floor) ----
+      series.push({
+        name: "_bandBase",
+        type: "line",
+        smooth: true,
+        symbol: "none",
+        stack: "projectionBand",
+        z: 4,
+        lineStyle: { width: 0, color: "transparent" },
+        areaStyle: { color: "transparent", opacity: 0 },
+        itemStyle: { color: "transparent", opacity: 0 },
+        showSymbol: false,
+        legendHoverLink: false,
+        silent: true,
+        data: bandBaseData,
+      } as any);
+
+      // ---- Band fill (stacked on top of base = upper - lower height) ----
+      series.push({
+        name: "_bandFill",
+        type: "line",
+        smooth: true,
+        symbol: "none",
+        stack: "projectionBand",
+        z: 4,
+        lineStyle: { width: 0, color: "transparent" },
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: `rgba(139, 92, 246, ${projBandTopAlpha})`,
+              },
+              {
+                offset: 1,
+                color: `rgba(139, 92, 246, ${projBandBotAlpha})`,
+              },
+            ],
+          },
+        },
+        itemStyle: { color: "transparent", opacity: 0 },
+        showSymbol: false,
+        legendHoverLink: false,
+        silent: true,
+        data: bandFillData,
+      } as any);
+
+      // ---- Projected Balance dashed line ----
+      series.push({
+        name: "Projected Balance",
+        type: "line",
+        smooth: true,
+        symbol: "circle",
+        symbolSize: 5,
+        z: 8,
+        lineStyle: {
+          width: 2.5,
+          color: projLineColor,
+          type: "dashed",
+          shadowColor: projLineColor,
+          shadowBlur: 6,
+        },
+        itemStyle: {
+          color: projLineColor,
+          borderColor: projLineColor,
+          borderWidth: 1.5,
+        },
+        emphasis: {
+          focus: "series" as const,
+          lineStyle: { width: 3, shadowBlur: 10 },
+        },
+        // No areaStyle — we use the explicit band series for that
+        data: projLineData,
+      } as any);
+    }
+
+    // Determine x-axis max: extend to cover last projection point when shown
+    let xAxisMax: number | undefined;
+    if (showProjection && prediction?.available) {
+      const lastPt =
+        prediction.prediction.points[prediction.prediction.points.length - 1];
+      xAxisMax = monthToTimestamp(lastPt.month) + 1000 * 60 * 60 * 24 * 3; // +3 day padding
+    }
+
+    const legendData: string[] = [];
+    if (accountIds.length > 1) {
+      accountIds.forEach((id) =>
+        legendData.push(accountNameMap.get(id) || "Unknown Account")
+      );
+      legendData.push("Total Balance");
+    }
+    if (showProjection) {
+      legendData.push("Projected Balance");
     }
 
     return {
@@ -284,20 +441,80 @@ export function BalanceHistoryChart({
         formatter: (params: any) => {
           if (!Array.isArray(params)) return "";
 
-          const date = format(new Date(params[0].value[0]), "dd MMM yyyy");
+          // Filter out internal band helper series from tooltip
+          const visible = params.filter(
+            (p: any) =>
+              !String(p.seriesName).startsWith("_") &&
+              p.seriesName !== "_bandBase" &&
+              p.seriesName !== "_bandFill"
+          );
+          if (visible.length === 0) return "";
 
-          // Separate Total Balance from individual accounts
-          const totalParam = params.find(
+          const date = format(new Date(visible[0].value[0]), "dd MMM yyyy");
+
+          const totalParam = visible.find(
             (p: any) => p.seriesName === "Total Balance"
           );
-          const accountParams = params.filter(
-            (p: any) => p.seriesName !== "Total Balance"
+          const projParam = visible.find(
+            (p: any) => p.seriesName === "Projected Balance"
+          );
+          const accountParams = visible.filter(
+            (p: any) =>
+              p.seriesName !== "Total Balance" &&
+              p.seriesName !== "Projected Balance"
           );
 
           let html = `<div style="padding: 4px 0;">`;
           html += `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? "rgba(148, 163, 184, 1)" : "rgba(100, 116, 139, 1)"};">${date}</div>`;
 
-          // Show Total Balance first (if present) with prominence
+          // Projected Balance block — shown when hovering a projected point
+          if (projParam) {
+            const projValue = new Intl.NumberFormat("de-DE", {
+              style: "currency",
+              currency: "EUR",
+              minimumFractionDigits: 2,
+            }).format(projParam.value[1]);
+
+            // Look up upper/lower bounds from prediction data for this timestamp
+            let rangeHtml = "";
+            if (prediction?.available) {
+              const ts = projParam.value[0] as number;
+              const matchedPt = prediction.prediction.points.find(
+                (pt) =>
+                  Math.abs(monthToTimestamp(pt.month) - ts) <
+                  1000 * 60 * 60 * 25
+              );
+              if (matchedPt) {
+                const lower = new Intl.NumberFormat("de-DE", {
+                  style: "currency",
+                  currency: "EUR",
+                  minimumFractionDigits: 2,
+                }).format(matchedPt.lowerBound);
+                const upper = new Intl.NumberFormat("de-DE", {
+                  style: "currency",
+                  currency: "EUR",
+                  minimumFractionDigits: 2,
+                }).format(matchedPt.upperBound);
+                rangeHtml = `
+                  <div style="margin-top: 4px; font-size: 11px; color: ${isDark ? "rgba(148, 163, 184, 0.8)" : "rgba(100, 116, 139, 0.8)"};">
+                    Possible range: ${lower} — ${upper}
+                  </div>
+                  <div style="margin-top: 2px; font-size: 11px; font-style: italic; color: ${isDark ? "rgba(148, 163, 184, 0.6)" : "rgba(100, 116, 139, 0.6)"};">(estimated)</div>
+                `;
+              }
+            }
+
+            html += `
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid ${isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"};">
+                <span style="display: inline-block; width: 14px; height: 2px; border-top: 2px dashed ${projLineColor}; flex-shrink: 0;"></span>
+                <span style="flex: 1; font-weight: 700; font-size: 13px;">Projected Balance:</span>
+                <span style="font-weight: 700; font-size: 13px;">~${projValue}</span>
+              </div>
+              ${rangeHtml}
+            `;
+          }
+
+          // Total Balance first (if present) with prominence
           if (totalParam) {
             const value = new Intl.NumberFormat("de-DE", {
               style: "currency",
@@ -314,7 +531,7 @@ export function BalanceHistoryChart({
             `;
           }
 
-          // Show individual accounts
+          // Individual accounts
           accountParams.forEach((param: any) => {
             const value = new Intl.NumberFormat("de-DE", {
               style: "currency",
@@ -338,6 +555,7 @@ export function BalanceHistoryChart({
       xAxis: {
         type: "time",
         boundaryGap: false as any,
+        ...(xAxisMax ? { max: xAxisMax } : {}),
         axisLine: {
           lineStyle: {
             color: gridColor,
@@ -378,11 +596,42 @@ export function BalanceHistoryChart({
           },
         },
       },
-      series,
+      series: series.map((s) => {
+        // Inject "Today" markLine on the Projected Balance series
+        if (
+          s.name === "Projected Balance" &&
+          projectionMarkLineXAxis !== undefined
+        ) {
+          return {
+            ...s,
+            markLine: {
+              silent: true,
+              symbol: ["none", "none"],
+              lineStyle: {
+                color: isDark
+                  ? "rgba(255, 255, 255, 0.25)"
+                  : "rgba(0, 0, 0, 0.2)",
+                type: "dashed",
+                width: 1.5,
+              },
+              label: {
+                show: true,
+                position: "insideStartTop",
+                formatter: "Today",
+                color: isDark
+                  ? "rgba(148, 163, 184, 0.8)"
+                  : "rgba(100, 116, 139, 0.8)",
+                fontSize: 11,
+              },
+              data: [{ xAxis: projectionMarkLineXAxis }],
+            },
+          };
+        }
+        return s;
+      }),
       legend:
-        accountIds.length > 1 || totalBalanceData.length > 0
+        legendData.length > 0
           ? {
-              // show legend whenever there are multiple account lines
               show: true,
               top: 0,
               right: 0,
@@ -392,14 +641,29 @@ export function BalanceHistoryChart({
                 rich: {
                   bold: {
                     fontWeight: 700,
-                    color: isDark ? "#ffffff" : "#020617", // Match masterLineColor
+                    color: isDark ? "#ffffff" : "#020617",
                     fontSize: 13,
                   },
                 },
               },
               itemGap: 16,
+              // Filter out internal underscore-prefixed band helper series
+              data: legendData.map((name) => {
+                if (name === "Projected Balance") {
+                  return {
+                    name,
+                    icon: "path://M0,5 L4,5 M8,5 L12,5 M16,5 L20,5",
+                    itemStyle: { color: projLineColor },
+                    lineStyle: {
+                      color: projLineColor,
+                      type: "dashed",
+                      width: 2,
+                    },
+                  };
+                }
+                return { name };
+              }),
               formatter: (name: string) => {
-                // Bold the Total Balance in legend
                 if (name === "Total Balance") {
                   return `{bold|${name}}`;
                 }
@@ -424,6 +688,7 @@ export function BalanceHistoryChart({
             Tracking {accountIds.length} account
             {accountIds.length !== 1 ? "s" : ""}
             {!accountId && totalBalanceData.length > 0 && " with total balance"}
+            {showProjection && " · 12-month projection"}
           </p>
         )}
       </CardHeader>

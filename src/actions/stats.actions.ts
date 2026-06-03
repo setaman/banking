@@ -14,8 +14,16 @@ import {
   calculateMonthOverMonthTrend,
   calculateEmergencyFundCoverage,
   calculateMonthlyAverages,
+  calculateBalancePrediction,
+  type BalancePredictionResult,
 } from "@/lib/stats/calculations";
 import { getTotalBalance } from "./accounts.actions";
+
+export type {
+  BalancePredictionResult,
+  BalancePrediction,
+  BalancePredictionPoint,
+} from "@/lib/stats/calculations";
 
 export interface MonthlyAverages {
   avgMonthlyIncome: number;
@@ -53,6 +61,7 @@ export interface DashboardStats {
   emergencyFundCoverage: number;
   previousPeriod: PreviousPeriodStats | null;
   averages: MonthlyAverages;
+  balancePrediction: BalancePredictionResult;
 }
 
 function computePeriodStats(
@@ -87,14 +96,17 @@ export async function getDashboardStats(
     };
   }
 
-  const [transactions, totalBalance, prevTransactions] = await Promise.all([
-    // Exclude internal transfers from KPI calculations by default
-    getTransactions(filters, { excludeInternal: true }),
-    getTotalBalance(),
-    prevFilters
-      ? getTransactions(prevFilters, { excludeInternal: true })
-      : Promise.resolve(null),
-  ]);
+  const [transactions, totalBalance, prevTransactions, allTransactions] =
+    await Promise.all([
+      // Exclude internal transfers from KPI calculations by default
+      getTransactions(filters, { excludeInternal: true }),
+      getTotalBalance(),
+      prevFilters
+        ? getTransactions(prevFilters, { excludeInternal: true })
+        : Promise.resolve(null),
+      // Full history (no date/account filter) for portfolio-level balance prediction
+      getTransactions(undefined, { excludeInternal: true }),
+    ]);
 
   const income = transactions
     .filter((t) => t.direction === "credit")
@@ -123,6 +135,11 @@ export async function getDashboardStats(
     endDate: filters?.endDate,
   });
 
+  const balancePrediction = calculateBalancePrediction({
+    totalBalance,
+    monthlyCashFlow: calculateMonthlyCashFlow(allTransactions),
+  });
+
   return {
     totalBalance,
     totalIncome: income,
@@ -146,5 +163,6 @@ export async function getDashboardStats(
     ),
     previousPeriod,
     averages,
+    balancePrediction,
   };
 }
