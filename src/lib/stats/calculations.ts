@@ -5,7 +5,7 @@
  * Uses date-fns for date manipulation and Intl.NumberFormat for EUR formatting.
  */
 
-import { differenceInDays, parseISO, isWithinInterval } from "date-fns";
+import { differenceInDays, parseISO, isWithinInterval, format } from "date-fns";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { classifyTransaction, type Category } from "./categories";
 
@@ -476,6 +476,122 @@ export function calculateMonthlyAverages(
     avgMonthlyNet: Math.round((netCashFlow / monthsCount) * 100) / 100,
     monthsCount,
     isPartialMonth,
+  };
+}
+
+// --- Balance Prediction ---
+
+export interface BalancePredictionPoint {
+  year: number; // 1..N (years from now)
+  label: string; // calendar year as string, e.g. "2031"
+  projected: number;
+  upperBound: number;
+  lowerBound: number;
+}
+
+export interface BalancePrediction {
+  points: BalancePredictionPoint[]; // exactly N yearly points
+  yearsProjected: number; // N
+  monthsUsed: number; // historical months used (3..12)
+  meanMonthlyNet: number;
+  stdDevMonthlyNet: number; // always >= 0
+  confidence: "low" | "normal" | "volatile";
+}
+
+export type BalancePredictionResult =
+  | { available: true; prediction: BalancePrediction }
+  | { available: false; reason: "insufficient-history" | "no-data" };
+
+export interface BalancePredictionInput {
+  totalBalance: number;
+  monthlyCashFlow: MonthlyFlow[]; // chronological, from calculateMonthlyCashFlow
+  years?: number; // default 5
+  currentMonth?: string; // "YYYY-MM"; defaults to current month
+}
+
+/**
+ * Projects the portfolio balance forward in yearly steps using historical
+ * monthly net cash flow. Returns a structured result indicating availability
+ * and, when available, N yearly prediction points with uncertainty bounds.
+ *
+ * - Requires at least 3 complete historical months.
+ * - Uses up to the trailing 12 complete months for mean/std-dev computation.
+ * - Excludes the current (partial) month from history.
+ * - Uncertainty bounds widen proportionally to sqrt(months) (random-walk model).
+ * - Default projection horizon: 5 years.
+ */
+export function calculateBalancePrediction(
+  input: BalancePredictionInput
+): BalancePredictionResult {
+  const { totalBalance, monthlyCashFlow } = input;
+  const N = input.years ?? 5;
+
+  // Derive current month string (YYYY-MM)
+  const currentMonth = input.currentMonth ?? format(new Date(), "yyyy-MM");
+
+  // Exclude the current (partial) month from history
+  const completeMonths = monthlyCashFlow.filter(
+    (m) => m.month !== currentMonth
+  );
+
+  // Guard: no-data if truly empty with zero balance
+  if (completeMonths.length === 0 && totalBalance === 0) {
+    return { available: false, reason: "no-data" };
+  }
+
+  // Guard: need at least 3 complete months
+  if (completeMonths.length < 3) {
+    return { available: false, reason: "insufficient-history" };
+  }
+
+  // Take trailing min(count, 12) months
+  const historyWindow = completeMonths.slice(-12);
+  const monthsUsed = historyWindow.length;
+
+  const netValues = historyWindow.map((m) => m.net);
+
+  const meanMonthlyNet = netValues.reduce((sum, v) => sum + v, 0) / monthsUsed;
+
+  const stdDevMonthlyNet = calculateStandardDeviation(netValues);
+
+  // Confidence classification
+  let confidence: BalancePrediction["confidence"];
+  if (stdDevMonthlyNet > Math.abs(meanMonthlyNet) * 2) {
+    confidence = "volatile";
+  } else if (monthsUsed < 6) {
+    confidence = "low";
+  } else {
+    confidence = "normal";
+  }
+
+  // Base calendar year derived from currentMonth (e.g. "2026" from "2026-06")
+  const baseYear = parseInt(currentMonth.substring(0, 4), 10);
+
+  // Generate exactly N forward yearly projection points
+  const points: BalancePredictionPoint[] = [];
+  for (let y = 1; y <= N; y++) {
+    const months = 12 * y;
+    const projected = totalBalance + meanMonthlyNet * months;
+    const spread = stdDevMonthlyNet * Math.sqrt(months);
+    points.push({
+      year: y,
+      label: String(baseYear + y),
+      projected,
+      upperBound: projected + spread,
+      lowerBound: projected - spread,
+    });
+  }
+
+  return {
+    available: true,
+    prediction: {
+      points,
+      yearsProjected: N,
+      monthsUsed,
+      meanMonthlyNet,
+      stdDevMonthlyNet,
+      confidence,
+    },
   };
 }
 
