@@ -1,9 +1,45 @@
 # Project State: BanKing
 
-**Current Phase:** Balance Prediction — UI ✅ COMPLETE
+**Current Phase:** Balance Prediction — Relocated to Insights ✅ COMPLETE
 **Current Sprint:** feat/balance-prediction
-**Last Session:** 2026-06-03
+**Last Session:** 2026-06-04
 **Branch:** feat/balance-prediction
+
+---
+
+## This session changes (2026-06-04) — Relocation: Balance Forecast moved to Insights; dashboard reverted
+
+**Summary:** Reverted all dashboard prediction additions (broken overlay rendering) and rebuilt the Balance Forecast as a clean, self-contained section at the top of the Insights page.
+
+**Part 1 — Dashboard reverted to origin/main:**
+- `src/components/dashboard/balance-history-chart.tsx` — restored via `git checkout origin/main`. All projection additions removed: `prediction` prop, `_bandBase`/`_bandFill`/`Projected Balance` series, "Today" markLine, `monthToTimestamp` helper, `xAxisMax` extension, file-level eslint-disable, tooltip/legend changes.
+- `src/app/page.tsx` — restored via `git checkout origin/main`. `BalancePredictionCard` import+mount removed, `prediction={...}` prop removed from `BalanceHistoryChart`.
+- `src/actions/stats.actions.ts` — restored via `git checkout origin/main`. `balancePrediction` field removed from `DashboardStats`, 4th `allTransactions` fetch removed, `calculateBalancePrediction` import removed, type re-exports removed.
+
+**Part 2 — Calculation layer kept intact:**
+- `src/lib/stats/calculations.ts` — NOT reverted. `calculateBalancePrediction`, `BalancePredictionInput`, `BalancePredictionPoint`, `BalancePrediction`, `BalancePredictionResult` all preserved.
+
+**Part 3 — Balance Forecast section added to Insights:**
+- `src/app/(dashboard)/insights/page.tsx` — added "Balance Forecast" section at the top of the analytics content. Computes prediction client-side with `useMemo` using `calculateBalancePrediction` + `calculateMonthlyCashFlow`. Renders:
+  - Section heading row with `Target` icon, "Balance Forecast" label, gradient divider, "based on your last N months" note.
+  - Summary stat block (top-right of card): `~projected`, "expected in 12 months", lower/upper bound range.
+  - Explainer caption: "A rough estimate of where your total balance is heading, based on your recent monthly income vs spending. Not a guarantee."
+  - Confidence notes for "volatile" and "low" cases.
+  - Self-contained `ReactECharts` forecast chart: category x-axis ("Now" + 12 "MMM yy" labels), dashed violet projected line (`showSymbol: false`), stacked confidence band (`_bandBase` + `_bandFill`, excluded from legend via explicit legend data array), `trigger: "axis"` tooltip showing projected + range + "(estimated)". No `markPoint`, no `markLine`, no large symbols.
+  - Unavailable state (insufficient-history / no-data): friendly message, no chart rendered.
+
+**Orphaned component deleted:**
+- `src/components/dashboard/balance-prediction-card.tsx` — deleted (no longer referenced anywhere).
+
+**Verification:**
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing in unrelated files; zero new issues introduced
+- `npm run build` — succeeds, all 9 routes emitted
+- `npx prettier --write` — all 4 changed files formatted
+- Visual check: Playwright headless screenshot saved to `.tmp-qa/insights-forecast.png`. Forecast section renders cleanly at top of Insights page — dashed violet line, soft confidence band, no stray markers, no overlapping text. Existing sections unaffected.
+
+**Next actions:**
+- PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
 

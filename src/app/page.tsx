@@ -6,7 +6,6 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { MonthlyAverageCards } from "@/components/dashboard/monthly-average-cards";
 import { BalanceHistoryChart } from "@/components/dashboard/balance-history-chart";
-import { BalancePredictionCard } from "@/components/dashboard/balance-prediction-card";
 import { IncomeExpensesChart } from "@/components/dashboard/income-expenses-chart";
 import { CategoryBreakdownChart } from "@/components/dashboard/category-breakdown-chart";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
@@ -329,16 +328,6 @@ export default function Home() {
         />
       </MotionDiv>
 
-      {/* Balance Forecast Card */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.225 }}
-        key={`prediction-${startDate}-${endDate}-${selectedAccountId}`}
-      >
-        <BalancePredictionCard stats={dashboardStats} />
-      </MotionDiv>
-
       {/* Charts Grid */}
       <div className="grid items-stretch gap-6 lg:grid-cols-2">
         {/* Balance History Chart */}
@@ -353,7 +342,6 @@ export default function Home() {
             accountId={
               selectedAccountId === "all" ? undefined : selectedAccountId
             }
-            prediction={dashboardStats?.balancePrediction}
           />
         </MotionDiv>
 
