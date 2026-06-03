@@ -1,9 +1,28 @@
 # Project State: BanKing
 
-**Current Phase:** Balance Prediction — Multi-year forecast (5-year yearly steps) ✅ COMPLETE
+**Current Phase:** Balance Prediction — 10-year forecast horizon ✅ COMPLETE
 **Current Sprint:** feat/balance-prediction
 **Last Session:** 2026-06-04
 **Branch:** feat/balance-prediction
+
+---
+
+## This session changes (2026-06-04) — Balance Forecast: extend horizon from 5 to 10 years
+
+**Summary:** Extended the Balance Projection forecast from 5 years to 10 years. Changed the call site in `insights/page.tsx` to pass `years: 10` explicitly (function default remains 5 for any future consumers). Added `interval: 0, rotate: 30` to the forecast chart x-axis `axisLabel` so all 11 labels (Now + 2027–2036) render legibly without overlap. No changes to the calculation logic, confidence band, or any other chart config.
+
+**Files Modified:**
+- `src/app/(dashboard)/insights/page.tsx` — `calculateBalancePrediction` call now passes `years: 10`; forecast chart x-axis axisLabel gets `interval: 0, rotate: 30`.
+
+**Verification:**
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 41 problems, all pre-existing in unrelated files; zero new issues in changed files
+- `npm run build` — succeeds, all routes emitted cleanly
+- `npx prettier --write` — `page.tsx` already formatted (unchanged)
+- Visual check: Playwright headless screenshots saved to `.tmp-qa/forecast-10yr.png` (full page) and `.tmp-qa/forecast-10yr-zoom.png` (card crop). Confirmed: x-axis shows Now, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036 — 11 labels, 30° rotation, no overlap. Dashed violet projected line + widening confidence band render cleanly. Y-axis auto-scales (€0 to €300k). Summary headline reads "~258.170,75 € expected by 2036".
+
+**Next actions:**
+- PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
 

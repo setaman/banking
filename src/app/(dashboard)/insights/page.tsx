@@ -133,11 +133,13 @@ export default function InsightsPage() {
   );
 
   // Balance prediction — client-side, uses full transaction history + current balance
+  // Explicitly request 10-year horizon (function default is 5).
   const balancePrediction = useMemo(
     () =>
       calculateBalancePrediction({
         totalBalance: balance,
         monthlyCashFlow: calculateMonthlyCashFlow(transactions),
+        years: 10,
       }),
     [balance, transactions]
   );
@@ -597,7 +599,14 @@ export default function InsightsPage() {
         data: xLabels,
         boundaryGap: false,
         axisLine: { lineStyle: { color: gridColor } },
-        axisLabel: { color: textColor, fontSize: 11 },
+        axisLabel: {
+          color: textColor,
+          fontSize: 11,
+          // With 11 labels (Now + 10 years) rotate slightly so they never overlap,
+          // and show every label (interval: 0).
+          interval: 0,
+          rotate: 30,
+        },
         splitLine: { show: false },
       },
       yAxis: {
