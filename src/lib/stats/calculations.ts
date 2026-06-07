@@ -479,6 +479,42 @@ export function calculateMonthlyAverages(
   };
 }
 
+// --- Shared Projection Helpers ---
+
+/**
+ * Selects the trailing window of complete monthly-flow records to use for
+ * balance projections. Mirrors the window-selection logic in
+ * `calculateBalancePrediction` so that the sandbox baseline matches the
+ * Insights forecast at yearly marks.
+ *
+ * Rules:
+ * - Excludes `currentMonth` (partial month).
+ * - Requires at least `minMonths` complete months (default 3).
+ * - Uses at most the trailing 12 complete months.
+ *
+ * Returns `null` when the data is insufficient.
+ */
+export function selectProjectionWindow(
+  monthlyCashFlow: readonly MonthlyFlow[],
+  currentMonth: string,
+  minMonths: number = 3
+): { window: MonthlyFlow[]; mean: number; stdDev: number } | null {
+  const completeMonths = monthlyCashFlow.filter(
+    (m) => m.month !== currentMonth
+  );
+
+  if (completeMonths.length < minMonths) {
+    return null;
+  }
+
+  const historyWindow = completeMonths.slice(-12);
+  const netValues = historyWindow.map((m) => m.net);
+  const mean = netValues.reduce((sum, v) => sum + v, 0) / historyWindow.length;
+  const stdDev = calculateStandardDeviation(netValues);
+
+  return { window: historyWindow, mean, stdDev };
+}
+
 // --- Balance Prediction ---
 
 export interface BalancePredictionPoint {
@@ -529,30 +565,22 @@ export function calculateBalancePrediction(
   // Derive current month string (YYYY-MM)
   const currentMonth = input.currentMonth ?? format(new Date(), "yyyy-MM");
 
-  // Exclude the current (partial) month from history
+  // Guard: no-data if truly empty with zero balance
   const completeMonths = monthlyCashFlow.filter(
     (m) => m.month !== currentMonth
   );
-
-  // Guard: no-data if truly empty with zero balance
   if (completeMonths.length === 0 && totalBalance === 0) {
     return { available: false, reason: "no-data" };
   }
 
-  // Guard: need at least 3 complete months
-  if (completeMonths.length < 3) {
+  // Derive mean/stdDev using the shared window-selection helper
+  const projection = selectProjectionWindow(monthlyCashFlow, currentMonth);
+  if (projection === null) {
     return { available: false, reason: "insufficient-history" };
   }
 
-  // Take trailing min(count, 12) months
-  const historyWindow = completeMonths.slice(-12);
+  const { window: historyWindow, mean: meanMonthlyNet, stdDev: stdDevMonthlyNet } = projection;
   const monthsUsed = historyWindow.length;
-
-  const netValues = historyWindow.map((m) => m.net);
-
-  const meanMonthlyNet = netValues.reduce((sum, v) => sum + v, 0) / monthsUsed;
-
-  const stdDevMonthlyNet = calculateStandardDeviation(netValues);
 
   // Confidence classification
   let confidence: BalancePrediction["confidence"];
