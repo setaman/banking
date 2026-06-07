@@ -85,7 +85,7 @@ export function RuleCard({
   return (
     <div
       className={cn(
-        "bg-card/40 relative rounded-xl border border-white/10 p-4 backdrop-blur-xl transition-all duration-200",
+        "bg-card relative rounded-xl border border-border p-4 backdrop-blur-xl transition-all duration-200 dark:bg-card/80",
         !rule.enabled && "opacity-50"
       )}
     >
@@ -156,7 +156,7 @@ function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element
 
   return (
     <div className="space-y-4">
-      {/* Amount slider: -2000 to +2000, step 50 */}
+      {/* Amount slider: -5000 to +5000, step 50 */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label className="text-muted-foreground text-xs">
@@ -173,16 +173,16 @@ function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element
           </span>
         </div>
         <Slider
-          min={-2000}
-          max={2000}
+          min={-5000}
+          max={5000}
           step={50}
           value={[amount]}
           onValueChange={([v]) => onUpdate(rule.id, { amount: v })}
           className="w-full"
         />
         <div className="text-muted-foreground/60 flex justify-between text-xs">
-          <span>-€2 000</span>
-          <span>+€2 000</span>
+          <span>-€5 000</span>
+          <span>+€5 000</span>
         </div>
       </div>
 
@@ -239,7 +239,7 @@ function OneTimeControls({ rule, onUpdate }: ControlsProps): React.JSX.Element {
           value={rule.amount}
           onChange={handleAmountChange}
           placeholder="e.g. 5000"
-          className="bg-card/50 border-white/10 h-8 text-sm"
+          className="bg-background border-border h-8 text-sm"
           step={100}
         />
         <p className="text-muted-foreground/60 text-xs">
@@ -318,7 +318,7 @@ function SubscriptionControls({
             value={selectedName}
             onValueChange={handleSelect}
           >
-            <SelectTrigger className="bg-card/50 border-white/10 h-8 text-sm">
+            <SelectTrigger className="bg-background border-border h-8 text-sm">
               <SelectValue placeholder="Select merchant…" />
             </SelectTrigger>
             <SelectContent>
@@ -370,7 +370,7 @@ function InvestmentControls({ rule, onUpdate }: ControlsProps): React.JSX.Elemen
         </div>
         <Slider
           min={0}
-          max={2000}
+          max={5000}
           step={50}
           value={[rule.amount]}
           onValueChange={([v]) => onUpdate(rule.id, { amount: v })}
@@ -378,7 +378,7 @@ function InvestmentControls({ rule, onUpdate }: ControlsProps): React.JSX.Elemen
         />
         <div className="text-muted-foreground/60 flex justify-between text-xs">
           <span>€0</span>
-          <span>€2 000</span>
+          <span>€5 000</span>
         </div>
       </div>
 

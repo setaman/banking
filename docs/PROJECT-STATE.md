@@ -1,9 +1,60 @@
 # Project State: BanKing
 
-**Current Phase:** What-If Financial Sandbox — Visual QA ✅ COMPLETE
+**Current Phase:** What-If Financial Sandbox — Bug Fixes ✅ COMPLETE
 **Current Sprint:** feat/what-if-sandbox
 **Last Session:** 2026-06-07
 **Branch:** feat/what-if-sandbox
+
+---
+
+## This session changes (2026-06-07) — /sandbox four bug fixes
+
+**Summary:** Fixed four bugs in the `/sandbox` feature. All changes in `src/` only; no commits made per task scope. `npx tsc --noEmit` clean, `npm run lint` at 36 problems (all pre-existing, zero new). Three QA screenshots captured to `qa/` (gitignored).
+
+**Bug 1 — Duplicate React key crash (subscription Select)**
+
+- **Root cause:** `detectRecurring()` emits multiple `RecurringTransactionGroup` entries for the same `counterparty` (different amount clusters). `rule-card.tsx` used `key={g.counterparty}` on Select items, crashing when two groups shared the same counterparty string.
+- **Fix:** In `page.tsx`, the `recurringGroups` useMemo now deduplicates by `counterparty.trim().toLowerCase()`, merging clusters into one entry whose `averageAmount` is the SUM of all merged clusters. This ensures the full recurring monthly cost is reflected when a merchant is cancelled, and `counterparty` is now unique so the key is safe.
+- **File:** `src/app/(dashboard)/sandbox/page.tsx`
+
+**Bug 2 — ETF "Monthly contribution" slider does nothing**
+
+- **Root cause:** `computeRecurringDelta()` in `sandbox-projector.ts` did not handle `investment` rules. Only `computeInterest()` (yield) was applied, so the monthly deposit amount had no effect on the balance.
+- **Fix:** Added `investment` rule handling inside `computeRecurringDelta()` — `rule.amount` is added to the delta every month, growing the balance that `computeInterest()` then compounds on. Updated JSDoc comment. Verified: enabling an ETF rule with +€800/mo at 0% yield shows Year 1 +€9,600, Year 5 +€48,000, Year 10 +€96,000 above baseline.
+- **File:** `src/lib/stats/sandbox-projector.ts`
+
+**Bug 3 — Recurring "Monthly delta" range too small**
+
+- **Fix:** Changed recurring amount slider `min`/`max` from ±2000 to ±5000 (step 50 kept). Updated range labels to "-€5 000" / "+€5 000". Changed investment "Monthly contribution" slider `max` from 2000 to 5000 and label from "€2 000" to "€5 000".
+- **File:** `src/components/sandbox/rule-card.tsx`
+
+**Bug 4 — Light-mode contrast (cards invisible)**
+
+- **Root cause:** Hardcoded `border-white/10` / `border-white/5` and translucent `bg-card/40` / `bg-card/30` / `bg-card/20` only read well on dark backgrounds; in light mode the cards were invisible.
+- **Fix:** Replaced all `border-white/10` / `border-white/5` container borders with `border-border` (theme token). Replaced `bg-card/40` container backgrounds with `bg-card dark:bg-card/80` to stay opaque in light mode while preserving the glass effect in dark mode. Inner controls (Select trigger, Input) changed from `bg-card/50 border-white/10` to `bg-background border-border`. Empty-state "No rules yet" changed from `bg-card/20 border-white/5` to `bg-muted/30 border-border dark:bg-card/20`. SafetyNetBadge changed from `border-white/10` to `border-border dark:border-emerald-500/20`.
+- **Files:** `src/app/(dashboard)/sandbox/page.tsx`, `src/components/sandbox/rule-card.tsx`
+
+**Files Modified:**
+
+- `src/app/(dashboard)/sandbox/page.tsx` — Bug 1 dedupe + Bug 4 border/bg tokens
+- `src/lib/stats/sandbox-projector.ts` — Bug 2 investment monthly deposit
+- `src/components/sandbox/rule-card.tsx` — Bug 3 slider ranges + Bug 4 border/bg tokens
+
+**QA screenshots (gitignored `qa/`):**
+
+- `qa/bugfix-a-light-mode-cards.png` — light mode, cards visibly distinguishable with solid backgrounds and theme borders
+- `qa/bugfix-b-etf-800-0pct-yield.png` — dark mode, ETF +€800/mo contribution at 0% yield, scenario line clearly above baseline
+- `qa/bugfix-c-subscription-select-open.png` — dark mode, subscription Select open, no console errors, no duplicate-key crash
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing; zero new issues
+- QA script (`node qa/bug-fixes-qa.mjs`) — "All checks passed. Zero runtime errors."
+
+**Next actions:**
+
+- PR / merge `feat/what-if-sandbox` into main once lead reviews.
 
 ---
 

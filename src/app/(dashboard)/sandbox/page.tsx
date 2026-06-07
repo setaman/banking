@@ -86,7 +86,7 @@ function DeltaWidget({ points }: DeltaWidgetProps): React.JSX.Element {
         return (
           <div
             key={label}
-            className="bg-card/30 flex flex-col items-center gap-1 rounded-xl border border-white/10 p-3 text-center"
+            className="bg-card flex flex-col items-center gap-1 rounded-xl border border-border p-3 text-center dark:bg-card/80"
           >
             <p className="text-muted-foreground text-xs font-medium">{label}</p>
             {delta !== null ? (
@@ -133,7 +133,7 @@ function SafetyNetBadge({
   const diff = scenarioFund.months - baselineFund.months;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-emerald-500/5 p-3">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-emerald-500/5 p-3 dark:border-emerald-500/20">
       <Shield className="h-5 w-5 shrink-0 text-emerald-400" />
       <div className="min-w-0 flex-1 text-sm">
         <p className="text-foreground font-semibold">Safety Net</p>
@@ -268,7 +268,7 @@ function ScenarioPanel({
   return (
     <div className="flex flex-col gap-4">
       {/* Scenario selector */}
-      <div className="bg-card/40 rounded-xl border border-white/10 p-4 backdrop-blur-xl">
+      <div className="bg-card rounded-xl border border-border p-4 backdrop-blur-xl dark:bg-card/80">
         <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
           Active Scenario
         </p>
@@ -278,7 +278,7 @@ function ScenarioPanel({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="border-white/10 bg-card/50 w-full justify-between"
+              className="border-border bg-background w-full justify-between"
             >
               <span className="truncate">
                 {activeScenario?.name ?? "Default"}
@@ -307,7 +307,7 @@ function ScenarioPanel({
             <Input
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="border-white/10 bg-card/50 h-8 flex-1 text-sm"
+              className="border-border bg-background h-8 flex-1 text-sm"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleRenameConfirm();
                 if (e.key === "Escape") setRenaming(false);
@@ -327,7 +327,7 @@ function ScenarioPanel({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Scenario name…"
-              className="border-white/10 bg-card/50 h-8 flex-1 text-sm"
+              className="border-border bg-background h-8 flex-1 text-sm"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSaveNew();
                 if (e.key === "Escape") setSavingNew(false);
@@ -345,7 +345,7 @@ function ScenarioPanel({
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 gap-1.5"
+            className="border-border gap-1.5"
             onClick={handleRenameStart}
           >
             <Pencil className="h-3 w-3" />
@@ -354,7 +354,7 @@ function ScenarioPanel({
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 gap-1.5"
+            className="border-border gap-1.5"
             onClick={() => setSavingNew(true)}
           >
             <Save className="h-3 w-3" />
@@ -375,7 +375,7 @@ function ScenarioPanel({
       </div>
 
       {/* Add rule buttons */}
-      <div className="bg-card/40 rounded-xl border border-white/10 p-4 backdrop-blur-xl">
+      <div className="bg-card rounded-xl border border-border p-4 backdrop-blur-xl dark:bg-card/80">
         <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
           Add Rule
         </p>
@@ -433,7 +433,7 @@ function ScenarioPanel({
           ))}
         </div>
       ) : (
-        <div className="bg-card/20 flex flex-col items-center justify-center gap-2 rounded-xl border border-white/5 py-10 text-center">
+        <div className="bg-muted/30 flex flex-col items-center justify-center gap-2 rounded-xl border border-border py-10 text-center dark:bg-card/20">
           <FlaskConical className="text-muted-foreground/40 h-8 w-8" />
           <p className="text-muted-foreground text-sm">No rules yet</p>
           <p className="text-muted-foreground/60 text-xs">
@@ -496,10 +496,31 @@ export default function SandboxPage(): React.JSX.Element {
     [transactions]
   );
 
-  const recurringGroups = useMemo(
-    () => detectRecurring(transactions),
-    [transactions]
-  );
+  // Dedupe recurring groups by counterparty — detectRecurring() can emit
+  // multiple clusters for the same merchant (different amount tiers). Merge
+  // them into one entry whose averageAmount is the SUM of all clusters so
+  // that cancelling a merchant reflects its full recurring monthly cost.
+  // The merged counterparty name comes from the first (highest-frequency)
+  // cluster, preserving original casing.
+  const recurringGroups = useMemo((): RecurringTransactionGroup[] => {
+    const raw = detectRecurring(transactions);
+    const merged = new Map<string, RecurringTransactionGroup>();
+    for (const group of raw) {
+      const key = group.counterparty.trim().toLowerCase();
+      const existing = merged.get(key);
+      if (existing) {
+        // Merge: sum averageAmount, concatenate transactions list.
+        merged.set(key, {
+          ...existing,
+          averageAmount: existing.averageAmount + group.averageAmount,
+          transactions: [...existing.transactions, ...group.transactions],
+        });
+      } else {
+        merged.set(key, group);
+      }
+    }
+    return Array.from(merged.values());
+  }, [transactions]);
 
   // Active scenario rules
   const rules = useMemo(

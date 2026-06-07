@@ -96,7 +96,10 @@ function roundCents(value: number): number {
  *
  * - `recurring` rules contribute `amount` when `m >= startMonthOffset`.
  * - `subscription` rules contribute `amount` (treated as positive) every month.
- * - `onetime` and `investment` rules are NOT handled here.
+ * - `investment` rules contribute `amount` as a monthly deposit every month
+ *   (the deposit is added to the running balance before interest compounds,
+ *   so the yield then applies to the growing principal).
+ * - `onetime` rules are NOT handled here (see `computeOneTimeDelta`).
  */
 function computeRecurringDelta(
   rules: readonly ScenarioRule[],
@@ -115,6 +118,12 @@ function computeRecurringDelta(
       // Cancelling a subscription removes an expense, adding the amount back.
       // `amount` should already be positive (absolute cost per month).
       delta += Math.abs(rule.amount);
+    }
+
+    if (rule.type === "investment") {
+      // Monthly contribution — deposited every month regardless of start offset.
+      // This grows the balance that `computeInterest` then compounds on.
+      delta += rule.amount;
     }
   }
 
