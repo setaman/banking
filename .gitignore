@@ -74,3 +74,4 @@ logs/security/
 /playwright-report/
 /.last-run.json
 /.tmp-qa/
+/qa/

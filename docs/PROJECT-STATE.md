@@ -1,9 +1,178 @@
 # Project State: BanKing
 
-**Current Phase:** Balance Prediction — 10-year forecast horizon ✅ COMPLETE
-**Current Sprint:** feat/balance-prediction
-**Last Session:** 2026-06-04
-**Branch:** feat/balance-prediction
+**Current Phase:** What-If Financial Sandbox — Bug Fixes ✅ COMPLETE
+**Current Sprint:** feat/what-if-sandbox
+**Last Session:** 2026-06-07
+**Branch:** feat/what-if-sandbox
+
+---
+
+## This session changes (2026-06-07) — /sandbox four bug fixes
+
+**Summary:** Fixed four bugs in the `/sandbox` feature. All changes in `src/` only; no commits made per task scope. `npx tsc --noEmit` clean, `npm run lint` at 36 problems (all pre-existing, zero new). Three QA screenshots captured to `qa/` (gitignored).
+
+**Bug 1 — Duplicate React key crash (subscription Select)**
+
+- **Root cause:** `detectRecurring()` emits multiple `RecurringTransactionGroup` entries for the same `counterparty` (different amount clusters). `rule-card.tsx` used `key={g.counterparty}` on Select items, crashing when two groups shared the same counterparty string.
+- **Fix:** In `page.tsx`, the `recurringGroups` useMemo now deduplicates by `counterparty.trim().toLowerCase()`, merging clusters into one entry whose `averageAmount` is the SUM of all merged clusters. This ensures the full recurring monthly cost is reflected when a merchant is cancelled, and `counterparty` is now unique so the key is safe.
+- **File:** `src/app/(dashboard)/sandbox/page.tsx`
+
+**Bug 2 — ETF "Monthly contribution" slider does nothing**
+
+- **Root cause:** `computeRecurringDelta()` in `sandbox-projector.ts` did not handle `investment` rules. Only `computeInterest()` (yield) was applied, so the monthly deposit amount had no effect on the balance.
+- **Fix:** Added `investment` rule handling inside `computeRecurringDelta()` — `rule.amount` is added to the delta every month, growing the balance that `computeInterest()` then compounds on. Updated JSDoc comment. Verified: enabling an ETF rule with +€800/mo at 0% yield shows Year 1 +€9,600, Year 5 +€48,000, Year 10 +€96,000 above baseline.
+- **File:** `src/lib/stats/sandbox-projector.ts`
+
+**Bug 3 — Recurring "Monthly delta" range too small**
+
+- **Fix:** Changed recurring amount slider `min`/`max` from ±2000 to ±5000 (step 50 kept). Updated range labels to "-€5 000" / "+€5 000". Changed investment "Monthly contribution" slider `max` from 2000 to 5000 and label from "€2 000" to "€5 000".
+- **File:** `src/components/sandbox/rule-card.tsx`
+
+**Bug 4 — Light-mode contrast (cards invisible)**
+
+- **Root cause:** Hardcoded `border-white/10` / `border-white/5` and translucent `bg-card/40` / `bg-card/30` / `bg-card/20` only read well on dark backgrounds; in light mode the cards were invisible.
+- **Fix:** Replaced all `border-white/10` / `border-white/5` container borders with `border-border` (theme token). Replaced `bg-card/40` container backgrounds with `bg-card dark:bg-card/80` to stay opaque in light mode while preserving the glass effect in dark mode. Inner controls (Select trigger, Input) changed from `bg-card/50 border-white/10` to `bg-background border-border`. Empty-state "No rules yet" changed from `bg-card/20 border-white/5` to `bg-muted/30 border-border dark:bg-card/20`. SafetyNetBadge changed from `border-white/10` to `border-border dark:border-emerald-500/20`.
+- **Files:** `src/app/(dashboard)/sandbox/page.tsx`, `src/components/sandbox/rule-card.tsx`
+
+**Files Modified:**
+
+- `src/app/(dashboard)/sandbox/page.tsx` — Bug 1 dedupe + Bug 4 border/bg tokens
+- `src/lib/stats/sandbox-projector.ts` — Bug 2 investment monthly deposit
+- `src/components/sandbox/rule-card.tsx` — Bug 3 slider ranges + Bug 4 border/bg tokens
+
+**QA screenshots (gitignored `qa/`):**
+
+- `qa/bugfix-a-light-mode-cards.png` — light mode, cards visibly distinguishable with solid backgrounds and theme borders
+- `qa/bugfix-b-etf-800-0pct-yield.png` — dark mode, ETF +€800/mo contribution at 0% yield, scenario line clearly above baseline
+- `qa/bugfix-c-subscription-select-open.png` — dark mode, subscription Select open, no console errors, no duplicate-key crash
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing; zero new issues
+- QA script (`node qa/bug-fixes-qa.mjs`) — "All checks passed. Zero runtime errors."
+
+**Next actions:**
+
+- PR / merge `feat/what-if-sandbox` into main once lead reviews.
+
+---
+
+## This session changes (2026-06-07) — Visual QA: /sandbox page
+
+**Summary:** Full Playwright headless QA of the `/sandbox` page. All 7 test cases pass after fixing two bugs in `comparison-chart.tsx`. Screenshots saved to `qa/` (gitignored). No source commits made — bugs fixed in-place per task scope.
+
+**Bugs found and fixed:**
+
+1. **`ComparisonChart` dispose crash** (`src/components/sandbox/comparison-chart.tsx`, line ~289)
+   - **Symptom:** `Runtime TypeError: Cannot read properties of null (reading 'getAttribute')` — page crashed on load in React 18 Strict Mode's double-invoke cleanup pass.
+   - **Root cause:** `useEffect` cleanup called `chartRef.current.getEchartsInstance()` where `getEchartsInstance()` throws when the echarts instance is already disposed (Strict Mode runs cleanup → remount).
+   - **Fix:** Wrapped in `try/catch`; added `isDisposed()` guard before calling `.dispose()`. Also moved ref access inside the cleanup closure (not captured at setup time).
+
+2. **`visualMap` ECharts crash on rule add/change** (`src/components/sandbox/comparison-chart.tsx`, line ~172)
+   - **Symptom:** `Runtime TypeError: Cannot read properties of undefined (reading 'coord')` — fired 8 times during QA interactions (every slider click / rule add). Stack: `getVisualGradient → LineView.render → ECharts._onframe`.
+   - **Root cause:** ECharts' `visualMap` with `dimension: 1` (y-value gradient coloring) calls `getVisualGradient` from the animation frame loop. When React state updates trigger a chart option rebuild, the internal coordinate system is transiently `undefined` while the animation frame fires, crashing `getVisualGradient`.
+   - **Fix:** Removed `visualMap` entirely. Replaced with two split series: `Scenario` (violet, `≥0` values) and `_scenarioCrimson` (crimson, `<0` values) with `connectNulls: false`. This achieves the same visual coloring without any coordinate-system dependency during rendering. Also changed `notMerge={false}` + `lazyUpdate={true}` and added a one-tick `setTimeout` debounce on the option state to prevent mid-frame option updates.
+
+**Files Modified:**
+
+- `src/components/sandbox/comparison-chart.tsx` — dispose guard + split violet/crimson series replacing visualMap + debounced option state + `notMerge={false}` / `lazyUpdate={true}`
+- `.gitignore` — added `/qa/` to ensure QA scripts and screenshots are not committed
+
+**QA tooling added (gitignored, not committed):**
+
+- `qa/sandbox-qa.mjs` — Playwright headless QA script
+- `qa/sandbox-*.png` — 6 screenshots from the test run
+
+**Test results (all PASS):**
+
+| TC  | Description                                    | Result |
+| --- | ---------------------------------------------- | ------ |
+| 1   | Load /sandbox — nav, title, badge, layout, chart, delta widget | PASS |
+| 2   | Add Recurring +€500 — scenario line rises above baseline | PASS |
+| 3   | One-Time -€200k at Yr2 — drop + crimson below zero | PASS |
+| 4   | Toggle all rules OFF — scenario snaps to baseline | PASS |
+| 5   | Delta widget (Yr1/Yr5/Yr10) + Safety-Net badge update | PASS |
+| 6   | Browser console — zero runtime errors, no React warnings | PASS |
+| 7   | Reload — localStorage persistence of rules | PASS |
+
+**Console warnings (non-critical, pre-existing):**
+
+- `Image with src "/logo-light.png" has "fill" but is missing "sizes" prop` — pre-existing Next.js image optimization warning in the layout header, unrelated to sandbox.
+
+**Visual observations:**
+
+- TC-1: Neo-Glass styling renders correctly. Violet gradient title, "Simulation Mode" badge, two-column layout, ECharts chart with dotted grey baseline and solid violet scenario line.
+- TC-2: Recurring rule card shows "+200 € / mo" slider, delta widget shows Year 1 +2,399.97 € / Year 5 +11,999.85 € / Year 10 +23,999.70 €. Violet scenario line visibly above baseline.
+- TC-3: Sharp drop at Year 2 to -€200k. Crimson red segment clearly visible below zero. Y-axis extends to accommodate the one-time expense input. Safety Net badge updates to a lower coverage value when the large expense is added.
+- TC-4: Both rule cards show 50% opacity. Chart scenario line perfectly overlaps dotted baseline. Safety Net badge restores to its baseline coverage value.
+- TC-5: Delta widget shows positive surplus at Year 1 (function of the +€200/mo input) and large negative deltas at Year 5 / Year 10 (function of the -€200k one-time input). Safety-Net badge coverage change is readable in the widget.
+- TC-7: After reload, both rules restored with correct state (slider positions, amounts). Chart renders the full crimson-drop pattern from localStorage.
+
+**Next actions:**
+
+- PR / merge `feat/what-if-sandbox` into main once lead reviews QA screenshots.
+
+---
+
+## This session changes (2026-06-07) — What-If Sandbox: Phase 2 UI
+
+**Summary:** Built the complete `/sandbox` UI — scenario manager, rule editors, 10-year comparison chart, delta widget, safety-net badge, and nav link. Consumes Phase 1 exports (`calculateSandboxPrediction`, `useScenarios`) and existing action/stat helpers. Zero new lint errors; 36 pre-existing problems unchanged. Build clean with `/sandbox` route emitted.
+
+**Files Created:**
+
+- `src/app/(dashboard)/sandbox/page.tsx` — Main "Scenario Playground" client page. On mount fetches transactions + total balance, computes `calculateMonthlyFlow`, `detectRecurring`. Uses `useScenarios()` for all scenario/rule state. Calls `calculateSandboxPrediction` via `useMemo`. Renders loading skeleton, insufficient-data onboarding state, or 12-col desktop layout (left: scenario panel col-span-4, right: visualization col-span-8). Insufficient-data message: "Not enough history yet to simulate — we need at least 3 months of data."
+- `src/components/sandbox/comparison-chart.tsx` — ECharts comparison chart. Baseline dotted grey series, scenario violet glow series with `visualMap` coloring segments crimson (≤0) / violet (>0), scenario confidence band via `_bandBase`/`_bandFill` stacked-area convention matching insights. X-axis in yearly labels (Now, Year 1 … Year 10). Responsive, disposes ECharts instance on unmount. `/* eslint-disable @typescript-eslint/no-explicit-any */` at file top (ECharts formatter callbacks).
+- `src/components/sandbox/rule-card.tsx` — Per-rule editor card. Type-specific controls: `recurring` (amount slider ±€2000 step €50, start-month slider 0–12), `onetime` (amount Input + target year slider 1–10), `subscription` (Select from detected recurring groups + savings note), `investment` (monthly contribution slider + annual yield slider 0–12%). Each card: name, enabled Switch, delete button. Calls `updateRule`/`removeRule`.
+
+**Files Modified:**
+
+- `src/components/layout/nav.tsx` — Added `{ href: "/sandbox", label: "Sandbox" }` between Transactions and Settings.
+
+**shadcn components installed:**
+
+- `slider` — `npx shadcn@latest add slider` (was missing; all others already present).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing in unrelated files; zero new issues in created/modified files
+- `npm run build` — succeeds; `/sandbox` route emitted as static page
+
+**Next actions:**
+
+- PR / merge `feat/what-if-sandbox` into main once reviewed.
+
+---
+
+## This session changes (2026-06-07) — What-If Sandbox: Phase 1 foundation (non-UI)
+
+**Summary:** Implemented the non-UI foundation for the What-If Financial Sandbox at `/sandbox`. No page, chart, or card was built — this is the pure math engine and client-side persistence layer only.
+
+**Files Created:**
+
+- `src/lib/stats/sandbox-projector.ts` — Simulation engine. Exports `ScenarioRule`, `SandboxPoint`, `SandboxResult`, and `calculateSandboxPrediction(totalBalance, monthlyCashFlow, rules, years?, currentMonth?)`. Produces 120 monthly points (10-year default). Baseline is numerically consistent with the Insights forecast at yearly marks. Scenario layer iterates month-by-month: recurring deltas, subscription cancellations (expense added back), compound investment interest on running balance, one-time lump sums at exact target months. Spread model (`stdDev * sqrt(m)`) is identical to `calculateBalancePrediction`. All outputs rounded to cents. No I/O, no DB access.
+- `src/hooks/use-scenarios.ts` — Client hook `useScenarios()`. Manages `Record<string, Scenario>` persisted to `localStorage` key `banking:sandbox:scenarios:v1`. SSR-safe via lazy `useState` initialiser (no `useEffect` setState). Skips initial persist via `useRef` guard. Exports: `scenarios`, `activeScenarioId`, `setActiveScenarioId`, `addRule`, `updateRule`, `removeRule`, `saveAsNew`, `renameScenario`, `deleteScenario`. IDs generated with `crypto.randomUUID()`. Default scenario (`"default"`) always exists and cannot be deleted.
+
+**Files Modified:**
+
+- `src/lib/stats/calculations.ts` — Extracted the trailing-window selection logic from `calculateBalancePrediction` into a new exported helper `selectProjectionWindow(monthlyCashFlow, currentMonth, minMonths?)`. Returns `{ window, mean, stdDev } | null`. `calculateBalancePrediction` now delegates to this helper; public behaviour is unchanged. The export allows `sandbox-projector.ts` to reuse the exact same mean/stdDev derivation without copy-pasting.
+
+**Constraints respected:**
+
+- No page, chart, or card components created (Phase 2 scope).
+- No DB writes; no mutation actions called.
+- Strict TypeScript (`readonly` on all interface fields, explicit return types, no `any`).
+- Named imports, `@/` path aliases, project conventions followed throughout.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing in unrelated files; zero new issues in changed/created files
+
+**Next actions:**
+
+- Phase 2: Build the `/sandbox` page, scenario editor UI, and projection chart consuming these exports.
 
 ---
 
