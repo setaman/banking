@@ -1,9 +1,32 @@
 # Project State: BanKing
 
-**Current Phase:** Wants vs. Needs Budget Splitter ✅ COMPLETE
-**Current Sprint:** feat/budget-split-insights
+**Current Phase:** Income vs Expenses → Transactions drill-down ✅ COMPLETE
+**Current Sprint:** feat/income-expenses-drilldown
 **Last Session:** 2026-06-08
-**Branch:** feat/budget-split-insights
+**Branch:** main (feature branch merged & deleted)
+
+---
+
+## This session changes (2026-06-08) — Income vs Expenses month drill-down
+
+**Summary:** Made the dashboard "Income vs Expenses" chart interactive. Clicking any month (bar or net-flow line point) now navigates to the Transactions page with that full calendar month preselected as a custom date range. Single-file change; merged to main as PR #28 (squash commit 08e4024).
+
+**Files Modified:**
+
+- `src/components/dashboard/income-expenses-chart.tsx` — Added `useRouter` (next/navigation) and a `handleChartClick` callback wired via the ECharts `onEvents={{ click: ... }}` prop. On click it maps the clicked point's `dataIndex` back to `monthlyFlow[index].month` (YYYY-MM), computes the month range with date-fns `startOfMonth`/`endOfMonth`, and `router.push`es to `/transactions?dateFrom=<1st>&dateTo=<last day>` (both yyyy-MM-dd). Added a subtle discoverability hint paragraph ("Click a month to view its transactions.", `text-muted-foreground text-xs`) under the existing card subtitle. The Transactions page already reads `dateFrom`/`dateTo` and treats them as a custom-range preset, so no changes were needed there.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing; zero new.
+- `npm run build` — succeeds, all routes emitted.
+- Visual/interaction QA (headless): clicking the May 2026 bar navigated to Transactions filtered to "May 01, 2026 – May 31, 2026" with the correct rows; hint text visible. QA screenshots saved to gitignored `qa/` (`drilldown-dashboard.png`, `drilldown-transactions.png`).
+
+**Merge:** PR #28 — gates cleared in order (CodeRabbit review clean / CI green / user functionality sign-off), then squash-merged with admin override; feature branch deleted.
+
+**Next actions:**
+
+- None; feature complete and on main.
 
 ---
 
@@ -22,9 +45,9 @@
 
 **Category mapping used (all match real Category union exactly):**
 
-| Bucket | Categories |
-|--------|-----------|
-| Needs  | `Rent`, `Bills`, `Groceries`, `Transport`, `Healthcare` |
+| Bucket | Categories                                                      |
+| ------ | --------------------------------------------------------------- |
+| Needs  | `Rent`, `Bills`, `Groceries`, `Transport`, `Healthcare`         |
 | Wants  | `Dining`, `Entertainment`, `Shopping`, `Subscriptions`, `Other` |
 
 No deviations from the spec — all category names match the `CATEGORIES` const in `src/lib/stats/categories.ts`.
@@ -128,15 +151,15 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 
 **Test results (all PASS):**
 
-| TC  | Description                                    | Result |
-| --- | ---------------------------------------------- | ------ |
-| 1   | Load /sandbox — nav, title, badge, layout, chart, delta widget | PASS |
-| 2   | Add Recurring +€500 — scenario line rises above baseline | PASS |
-| 3   | One-Time -€200k at Yr2 — drop + crimson below zero | PASS |
-| 4   | Toggle all rules OFF — scenario snaps to baseline | PASS |
-| 5   | Delta widget (Yr1/Yr5/Yr10) + Safety-Net badge update | PASS |
-| 6   | Browser console — zero runtime errors, no React warnings | PASS |
-| 7   | Reload — localStorage persistence of rules | PASS |
+| TC  | Description                                                    | Result |
+| --- | -------------------------------------------------------------- | ------ |
+| 1   | Load /sandbox — nav, title, badge, layout, chart, delta widget | PASS   |
+| 2   | Add Recurring +€500 — scenario line rises above baseline       | PASS   |
+| 3   | One-Time -€200k at Yr2 — drop + crimson below zero             | PASS   |
+| 4   | Toggle all rules OFF — scenario snaps to baseline              | PASS   |
+| 5   | Delta widget (Yr1/Yr5/Yr10) + Safety-Net badge update          | PASS   |
+| 6   | Browser console — zero runtime errors, no React warnings       | PASS   |
+| 7   | Reload — localStorage persistence of rules                     | PASS   |
 
 **Console warnings (non-critical, pre-existing):**
 
@@ -223,9 +246,11 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 **Summary:** Extended the Balance Projection forecast from 5 years to 10 years. Changed the call site in `insights/page.tsx` to pass `years: 10` explicitly (function default remains 5 for any future consumers). Added `interval: 0, rotate: 30` to the forecast chart x-axis `axisLabel` so all 11 labels (Now + 2027–2036) render legibly without overlap. No changes to the calculation logic, confidence band, or any other chart config.
 
 **Files Modified:**
+
 - `src/app/(dashboard)/insights/page.tsx` — `calculateBalancePrediction` call now passes `years: 10`; forecast chart x-axis axisLabel gets `interval: 0, rotate: 30`.
 
 **Verification:**
+
 - `npx tsc --noEmit` — clean (no errors)
 - `npm run lint` — 41 problems, all pre-existing in unrelated files; zero new issues in changed files
 - `npm run build` — succeeds, all routes emitted cleanly
@@ -233,6 +258,7 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 - Visual check: Playwright headless screenshots saved to `.tmp-qa/forecast-10yr.png` (full page) and `.tmp-qa/forecast-10yr-zoom.png` (card crop). Confirmed: x-axis shows Now, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036 — 11 labels, 30° rotation, no overlap. Dashed violet projected line + widening confidence band render cleanly. Y-axis auto-scales (€0 to €300k). Summary headline reads "~258.170,75 € expected by 2036".
 
 **Next actions:**
+
 - PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
@@ -242,6 +268,7 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 **Summary:** Changed the Balance Forecast from a 12-monthly-point projection to a 5-year yearly-step projection, and removed the redundant standalone "Balance Forecast" heading strip from the Insights page.
 
 **Part 1 — Calculation layer (`src/lib/stats/calculations.ts`):**
+
 - Updated `BalancePredictionPoint` type: replaced `month: string` with `year: number` (1..N) and `label: string` (calendar year, e.g. "2031").
 - Updated `BalancePrediction` type: added `yearsProjected: number`; `points` is now N yearly points (not 12 monthly).
 - Updated `BalancePredictionInput` type: added optional `years?: number` (default 5); removed reliance on `addMonths` (now unused — import cleaned up).
@@ -249,6 +276,7 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 - Removed unused `addMonths` import from `date-fns`; `format` retained (still used for `currentMonth` default).
 
 **Part 2 — Insights page (`src/app/(dashboard)/insights/page.tsx`):**
+
 - Removed the standalone section heading strip (`<div className="mb-4 flex flex-wrap items-center gap-3">`) containing the `Target` icon, "BALANCE FORECAST" uppercase label, gradient rule, and "based on last N months" note. The card now renders directly inside `<div>`.
 - Card title updated from "12-Month Balance Projection" to "Balance Projection".
 - "Based on your last N months of history." moved into the card as a third `<p>` under the explainer.
@@ -256,6 +284,7 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 - Forecast chart `forecastChartOption` updated: x-axis labels are now `["Now", ...points.map(p => p.label)]` (e.g. Now, 2027, 2028, 2029, 2030, 2031) instead of month strings; data arrays derived from the new point shape. All other chart config (confidence band, dashed line, tooltip, legend, no markPoint/markLine) unchanged.
 
 **Verification:**
+
 - `npx tsc --noEmit` — clean (no errors)
 - `npm run lint` — 36 problems, all pre-existing in unrelated files; zero new issues in changed files
 - `npm run build` — succeeds, all routes emitted cleanly
@@ -263,6 +292,7 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 - Visual check: Playwright headless screenshot saved to `.tmp-qa/insights-forecast-yearly.png`. Confirmed: no heading strip, yearly x-axis (Now + 2027–2031), dashed violet projected line + widening confidence band, summary stat shows final-year value + "expected by 2031". No stray markers.
 
 **Next actions:**
+
 - PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
@@ -272,14 +302,17 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 **Summary:** Reverted all dashboard prediction additions (broken overlay rendering) and rebuilt the Balance Forecast as a clean, self-contained section at the top of the Insights page.
 
 **Part 1 — Dashboard reverted to origin/main:**
+
 - `src/components/dashboard/balance-history-chart.tsx` — restored via `git checkout origin/main`. All projection additions removed: `prediction` prop, `_bandBase`/`_bandFill`/`Projected Balance` series, "Today" markLine, `monthToTimestamp` helper, `xAxisMax` extension, file-level eslint-disable, tooltip/legend changes.
 - `src/app/page.tsx` — restored via `git checkout origin/main`. `BalancePredictionCard` import+mount removed, `prediction={...}` prop removed from `BalanceHistoryChart`.
 - `src/actions/stats.actions.ts` — restored via `git checkout origin/main`. `balancePrediction` field removed from `DashboardStats`, 4th `allTransactions` fetch removed, `calculateBalancePrediction` import removed, type re-exports removed.
 
 **Part 2 — Calculation layer kept intact:**
+
 - `src/lib/stats/calculations.ts` — NOT reverted. `calculateBalancePrediction`, `BalancePredictionInput`, `BalancePredictionPoint`, `BalancePrediction`, `BalancePredictionResult` all preserved.
 
 **Part 3 — Balance Forecast section added to Insights:**
+
 - `src/app/(dashboard)/insights/page.tsx` — added "Balance Forecast" section at the top of the analytics content. Computes prediction client-side with `useMemo` using `calculateBalancePrediction` + `calculateMonthlyCashFlow`. Renders:
   - Section heading row with `Target` icon, "Balance Forecast" label, gradient divider, "based on your last N months" note.
   - Summary stat block (top-right of card): `~projected`, "expected in 12 months", lower/upper bound range.
@@ -289,9 +322,11 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
   - Unavailable state (insufficient-history / no-data): friendly message, no chart rendered.
 
 **Orphaned component deleted:**
+
 - `src/components/dashboard/balance-prediction-card.tsx` — deleted (no longer referenced anywhere).
 
 **Verification:**
+
 - `npx tsc --noEmit` — clean (no errors)
 - `npm run lint` — 36 problems, all pre-existing in unrelated files; zero new issues introduced
 - `npm run build` — succeeds, all 9 routes emitted
@@ -299,6 +334,7 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 - Visual check: Playwright headless screenshot saved to `.tmp-qa/insights-forecast.png`. Forecast section renders cleanly at top of Insights page — dashed violet line, soft confidence band, no stray markers, no overlapping text. Existing sections unaffected.
 
 **Next actions:**
+
 - PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
@@ -308,9 +344,11 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 **Summary:** Built the full UI for the yearly balance prediction feature. Created the "Balance Forecast" section card, extended the Balance History chart with a 12-month projection overlay (dashed line + confidence band + "Today" markLine), and wired everything into the dashboard page.
 
 **Files Created:**
+
 - `src/components/dashboard/balance-prediction-card.tsx` — "Balance Forecast" section with gradient card. Shows ~projected value at month 12, lower/upper bound range, confidence notes ("volatile" / "low"), shadcn Tooltip on card title, skeleton loading state, and a graceful "not enough data yet" unavailable state that keeps the violet gradient alive.
 
 **Files Modified:**
+
 - `src/components/dashboard/balance-history-chart.tsx` — Added optional `prediction?: BalancePredictionResult` prop. When in aggregate view (`!accountId`, multiple accounts) and prediction is available: renders a dashed violet "Projected Balance" line connecting from the last actual point, a stacked-area confidence band (`_bandBase` + `_bandFill` series, filtered from legend/tooltip), a "Today" markLine separating actual from projected, and extends the x-axis max to cover the 12th projected month. Tooltip enriched to show `~value`, possible range, and `(estimated)` hint for projected points. Legend shows a dashed-line swatch for "Projected Balance". Added `/* eslint-disable @typescript-eslint/no-explicit-any */` (ECharts callback types require it, same pattern as sibling chart files). Added `monthToTimestamp()` pure helper (YYYY-MM → end-of-month UTC noon timestamp).
 - `src/app/page.tsx` — Imported `BalancePredictionCard`. Mounted it between Monthly Averages and the charts grid with `delay: 0.225` stagger. Passed `prediction={dashboardStats?.balancePrediction}` to `<BalanceHistoryChart>`.
 
@@ -318,12 +356,14 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 `getDashboardStats()` → `DashboardStats.balancePrediction` (server) → `dashboardStats` state (page) → both `<BalancePredictionCard stats={dashboardStats}>` and `<BalanceHistoryChart prediction={dashboardStats?.balancePrediction}>` (client components).
 
 **Verification:**
+
 - `npx tsc --noEmit` — clean (no errors)
 - `npm run lint` — 34 problems (all pre-existing; down from 49 pre-task baseline because the chart file's `no-explicit-any` is now covered by a file-level disable, net zero new issues introduced)
 - `npm run build` — succeeds, all 9 routes emitted
 - `npx prettier --write` — all 3 changed files formatted
 
 **Next actions:**
+
 - PR / merge `feat/balance-prediction` into main once reviewed.
 
 ---
@@ -333,30 +373,36 @@ No deviations from the spec — all category names match the `CATEGORIES` const 
 **Summary:** Added the pure calculation function and types for the "yearly balance prediction" feature, plus server-action wiring. No UI components — infrastructure only. A future task builds the chart/widget on top of this.
 
 **New exported types in `src/lib/stats/calculations.ts`:**
+
 - `BalancePredictionPoint` — a single projected month (month, projected, upperBound, lowerBound)
 - `BalancePrediction` — 12-point prediction result with monthsUsed, meanMonthlyNet, stdDevMonthlyNet, confidence
 - `BalancePredictionResult` — discriminated union `{ available: true; prediction }` | `{ available: false; reason }`
 - `BalancePredictionInput` — input shape (totalBalance, monthlyCashFlow, optional currentMonth)
 
 **New function in `src/lib/stats/calculations.ts`:**
+
 - `calculateBalancePrediction(input)` — pure function, no I/O. Excludes current (partial) month, requires ≥3 complete months, uses trailing ≤12 months for mean/stdDev, generates 12 forward points with sqrt(i) uncertainty spread. Confidence: "volatile" / "low" / "normal". Uses `date-fns` `addMonths`+`format` for robust month increment.
 
 **Changes to `src/actions/stats.actions.ts`:**
+
 - Imports `calculateBalancePrediction` and `type BalancePredictionResult` from calculations.
 - Re-exports `BalancePredictionResult`, `BalancePrediction`, `BalancePredictionPoint` for component consumers.
 - Added `balancePrediction: BalancePredictionResult` field to `DashboardStats` interface.
 - `getDashboardStats()`: added a 4th parallel fetch (`getTransactions(undefined, { excludeInternal: true })`) for full portfolio history; computes `balancePrediction` from that history + `getTotalBalance()` independent of the dashboard date-range/account filter.
 
 **Files Modified:**
+
 - `src/lib/stats/calculations.ts`
 - `src/actions/stats.actions.ts`
 
 **Verification:**
+
 - `npx tsc --noEmit` — clean (no errors)
 - `npm run lint` — zero new issues in changed files (all existing errors are pre-existing in unrelated files)
 - `npx prettier --write` — both files formatted
 
 **Next actions:**
+
 - Build the UI widget (chart + card) consuming `DashboardStats.balancePrediction` on the dashboard.
 
 ---
