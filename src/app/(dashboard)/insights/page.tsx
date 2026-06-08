@@ -24,13 +24,16 @@ import {
   calculateExpenseVolatility,
   calculateBalancePrediction,
   calculateMonthlyCashFlow,
+  calculateBudgetSplit,
   type EmergencyFund,
   type ExpenseVolatility,
+  type BudgetSplitResult,
 } from "@/lib/stats/calculations";
 import {
   detectRecurring,
   type RecurringTransactionGroup,
 } from "@/lib/stats/categories";
+import { BudgetSplitStrip } from "@/components/dashboard/budget-split-strip";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { format, parseISO, getDay } from "date-fns";
 
@@ -142,6 +145,12 @@ export default function InsightsPage() {
         years: 10,
       }),
     [balance, transactions]
+  );
+
+  // Budget split — Wants vs. Needs (50/30/20 framework)
+  const budgetSplit = useMemo(
+    (): BudgetSplitResult => calculateBudgetSplit(transactions),
+    [transactions]
   );
 
   // Calculate daily spending with income markers
@@ -883,6 +892,15 @@ export default function InsightsPage() {
               </MotionCard>
             )}
           </div>
+
+          {/* ── Budget Allocation (full-width, below forecast) ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+          >
+            <BudgetSplitStrip result={budgetSplit} />
+          </motion.div>
 
           {/* ── Existing analytics grid ── */}
           <div className="grid gap-6 md:grid-cols-2">

@@ -579,7 +579,11 @@ export function calculateBalancePrediction(
     return { available: false, reason: "insufficient-history" };
   }
 
-  const { window: historyWindow, mean: meanMonthlyNet, stdDev: stdDevMonthlyNet } = projection;
+  const {
+    window: historyWindow,
+    mean: meanMonthlyNet,
+    stdDev: stdDevMonthlyNet,
+  } = projection;
   const monthsUsed = historyWindow.length;
 
   // Confidence classification
@@ -620,6 +624,140 @@ export function calculateBalancePrediction(
       stdDevMonthlyNet,
       confidence,
     },
+  };
+}
+
+// --- Budget Split (Wants vs. Needs) ---
+
+export interface BudgetSplitResult {
+  /** Total essential spend (absolute value, rounded to cents). */
+  needs: number;
+  /** Total discretionary spend (absolute value, rounded to cents). */
+  wants: number;
+  /**
+   * Amount saved: max(0, income − outflow).
+   * Zero when spending exceeds income.
+   */
+  saved: number;
+  /** Percentage of income (or outflow) allocated to needs. */
+  needsPercentage: number;
+  /** Percentage of income (or outflow) allocated to wants. */
+  wantsPercentage: number;
+  /**
+   * Percentage of income allocated to savings (0 when in deficit).
+   * When saved > 0, denominator is income; else 0.
+   */
+  savedPercentage: number;
+  /**
+   * How much spending exceeded income this period (negative number).
+   * 0 when income ≥ outflow.
+   */
+  deficit: number;
+}
+
+/** Category names that map to essential / "Needs" spending. */
+const NEEDS_CATEGORIES = new Set<string>([
+  "Rent",
+  "Bills",
+  "Groceries",
+  "Transport",
+  "Healthcare",
+]);
+
+/** Category names that map to discretionary / "Wants" spending. */
+const WANTS_CATEGORIES = new Set<string>([
+  "Dining",
+  "Entertainment",
+  "Shopping",
+  "Subscriptions",
+  "Other",
+]);
+
+/**
+ * Splits all transactions into Needs / Wants / Saved buckets following the
+ * 50/30/20 budgeting framework.
+ *
+ * - Income  = sum of positive `tx.amount` values.
+ * - Needs   = absolute expense amounts whose category is in NEEDS_CATEGORIES.
+ * - Wants   = absolute expense amounts whose category is in WANTS_CATEGORIES.
+ * - Saved   = max(0, income − (needs + wants)).
+ * - Deficit = min(0, income − (needs + wants)) — negative when overspending.
+ *
+ * Percentages:
+ *   - When saved > 0: denominator = income (50/30/20 benchmark basis).
+ *   - When saved ≤ 0: denominator = outflow; savedPercentage = 0.
+ *   - When denominator = 0: all percentages = 0 (divide-by-zero guard).
+ *
+ * Uses `classifyTransaction` for transactions without a pre-set category,
+ * mirroring the pattern used by `calculateTopCategories`.
+ */
+export function calculateBudgetSplit(
+  transactions: readonly UnifiedTransaction[]
+): BudgetSplitResult {
+  let income = 0;
+  let needs = 0;
+  let wants = 0;
+
+  for (const tx of transactions) {
+    if (tx.amount > 0) {
+      income += tx.amount;
+      continue;
+    }
+
+    // Expense — classify then bucket
+    const category: string =
+      tx.category ?? classifyTransaction(tx.description, tx.counterparty);
+    const absAmount = Math.abs(tx.amount);
+
+    if (NEEDS_CATEGORIES.has(category)) {
+      needs += absAmount;
+    } else if (WANTS_CATEGORIES.has(category)) {
+      wants += absAmount;
+    }
+    // "Income" category on a negative tx (rare edge case) falls through untracked.
+  }
+
+  // Round to cents
+  income = Math.round(income * 100) / 100;
+  needs = Math.round(needs * 100) / 100;
+  wants = Math.round(wants * 100) / 100;
+
+  const outflow = Math.round((needs + wants) * 100) / 100;
+  const raw = income - outflow;
+  const saved = Math.round(Math.max(0, raw) * 100) / 100;
+  const deficit = Math.round(Math.min(0, raw) * 100) / 100;
+
+  // Percentage denominator: income when saving; outflow when overspending
+  let needsPercentage = 0;
+  let wantsPercentage = 0;
+  let savedPercentage = 0;
+
+  if (saved > 0) {
+    // 50/30/20 benchmark basis — denominator = income
+    const denom = income;
+    if (denom > 0) {
+      needsPercentage = Math.round((needs / denom) * 10000) / 100;
+      wantsPercentage = Math.round((wants / denom) * 10000) / 100;
+      savedPercentage = Math.round((saved / denom) * 10000) / 100;
+    }
+  } else {
+    // In deficit — show how needs vs wants share the outflow
+    const denom = outflow;
+    if (denom > 0) {
+      needsPercentage = Math.round((needs / denom) * 10000) / 100;
+      wantsPercentage = Math.round((wants / denom) * 10000) / 100;
+      // savedPercentage stays 0
+    }
+  }
+
+  return {
+    needs,
+    wants,
+    saved,
+    needsPercentage,
+    wantsPercentage,
+    savedPercentage,
+    deficit,
   };
 }
 
