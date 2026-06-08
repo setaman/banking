@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { calculateMonthlyFlow } from "@/lib/stats/calculations";
 import type { UnifiedTransaction } from "@/lib/banking/types";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 
 const MotionCard = motion.create(Card);
 
@@ -23,10 +24,24 @@ export function IncomeExpensesChart({
 }: IncomeExpensesChartProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const router = useRouter();
 
   const monthlyFlow = useMemo(
     () => calculateMonthlyFlow(transactions),
-    [transactions],
+    [transactions]
+  );
+
+  const handleChartClick = useCallback(
+    (params: { dataIndex?: number }) => {
+      const index = params?.dataIndex;
+      if (index == null || !monthlyFlow[index]) return;
+      const monthStr = monthlyFlow[index].month; // "YYYY-MM"
+      const baseDate = parseISO(`${monthStr}-01`);
+      const dateFrom = format(startOfMonth(baseDate), "yyyy-MM-dd");
+      const dateTo = format(endOfMonth(baseDate), "yyyy-MM-dd");
+      router.push(`/transactions?dateFrom=${dateFrom}&dateTo=${dateTo}`);
+    },
+    [monthlyFlow, router]
   );
 
   const hasData = monthlyFlow.length > 0;
@@ -38,16 +53,10 @@ export function IncomeExpensesChart({
   const expensesColor = isDark
     ? "rgba(244, 63, 94, 1)"
     : "rgba(225, 29, 72, 1)"; // Red/Orange-Red
-  const netColor = isDark
-    ? "rgba(167, 139, 250, 1)"
-    : "rgba(124, 58, 237, 1)"; // Primary Purple
+  const netColor = isDark ? "rgba(167, 139, 250, 1)" : "rgba(124, 58, 237, 1)"; // Primary Purple
 
-  const textColor = isDark
-    ? "rgba(226, 232, 240, 1)"
-    : "rgba(71, 85, 105, 1)";
-  const gridColor = isDark
-    ? "rgba(255, 255, 255, 0.1)"
-    : "rgba(0, 0, 0, 0.1)";
+  const textColor = isDark ? "rgba(226, 232, 240, 1)" : "rgba(71, 85, 105, 1)";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
 
   const getOption = (): EChartsOption => {
     // Prepare data arrays
@@ -205,7 +214,9 @@ export function IncomeExpensesChart({
             },
             borderRadius: [4, 4, 0, 0],
             shadowBlur: isDark ? 0 : 8,
-            shadowColor: isDark ? "transparent" : incomeColor.replace(")", " / 0.2)"),
+            shadowColor: isDark
+              ? "transparent"
+              : incomeColor.replace(")", " / 0.2)"),
             shadowOffsetY: isDark ? 0 : 4,
           },
           emphasis: {
@@ -236,7 +247,9 @@ export function IncomeExpensesChart({
             },
             borderRadius: [4, 4, 0, 0],
             shadowBlur: isDark ? 0 : 8,
-            shadowColor: isDark ? "transparent" : expensesColor.replace(")", " / 0.2)"),
+            shadowColor: isDark
+              ? "transparent"
+              : expensesColor.replace(")", " / 0.2)"),
             shadowOffsetY: isDark ? 0 : 4,
           },
           emphasis: {
@@ -295,6 +308,9 @@ export function IncomeExpensesChart({
         <p className="text-muted-foreground text-sm">
           Monthly cash flow analysis with net balance trend
         </p>
+        <p className="text-muted-foreground text-xs">
+          Click a month to view its transactions.
+        </p>
       </CardHeader>
 
       <CardContent className="p-6 pt-0">
@@ -314,6 +330,7 @@ export function IncomeExpensesChart({
               style={{ height: "100%", width: "100%" }}
               notMerge={true}
               lazyUpdate={true}
+              onEvents={{ click: handleChartClick }}
             />
           </div>
         )}
