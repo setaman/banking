@@ -278,15 +278,15 @@ function ScenarioPanel({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="border-border bg-background w-full justify-between"
+              className="w-full min-w-0 justify-between bg-card/50 border-white/10 backdrop-blur-xl dark:border-white/5 hover:bg-card/70 hover:border-primary/20 transition-all duration-200"
             >
-              <span className="truncate">
+              <span className="min-w-0 truncate">
                 {activeScenario?.name ?? "Default"}
               </span>
               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
+          <DropdownMenuContent className="w-56 bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5 shadow-primary/5 shadow-xl">
             {scenarioList.map((s) => (
               <DropdownMenuItem
                 key={s.id}

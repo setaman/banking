@@ -318,15 +318,15 @@ function SubscriptionControls({
             value={selectedName}
             onValueChange={handleSelect}
           >
-            <SelectTrigger className="bg-background border-border h-8 text-sm">
+            <SelectTrigger className="h-8 w-full min-w-0 text-sm">
               <SelectValue placeholder="Select merchant…" />
             </SelectTrigger>
             <SelectContent>
               {recurringGroups.map((g) => (
                 <SelectItem key={g.counterparty} value={g.counterparty}>
-                  <span className="flex items-center justify-between gap-4">
-                    <span className="truncate">{g.counterparty}</span>
-                    <span className="text-muted-foreground text-xs">
+                  <span className="flex w-full min-w-0 items-center justify-between gap-2">
+                    <span className="min-w-0 truncate">{g.counterparty}</span>
+                    <span className="text-muted-foreground shrink-0 text-xs">
                       {formatCurrency(Math.abs(g.averageAmount))}/mo
                     </span>
                   </span>
