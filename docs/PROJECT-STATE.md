@@ -1,9 +1,51 @@
 # Project State: BanKing
 
-**Current Phase:** What-If Financial Sandbox — Bug Fixes ✅ COMPLETE
-**Current Sprint:** feat/what-if-sandbox
-**Last Session:** 2026-06-07
-**Branch:** feat/what-if-sandbox
+**Current Phase:** Wants vs. Needs Budget Splitter ✅ COMPLETE
+**Current Sprint:** feat/budget-split-insights
+**Last Session:** 2026-06-08
+**Branch:** feat/budget-split-insights
+
+---
+
+## This session changes (2026-06-08) — Wants vs. Needs Budget Splitter
+
+**Summary:** Implemented the "Budget Allocation" (Wants vs. Needs) feature on the Insights page. Added a pure calculation function, a new presentational component, and wired both into the existing Insights client page. Zero new lint errors (baseline 36 unchanged). `npx tsc --noEmit` clean. Visual QA passed in both dark and light modes.
+
+**Files Created:**
+
+- `src/components/dashboard/budget-split-strip.tsx` — Presentational "Budget Allocation" card. Renders three labeled figures (Needs/Wants/Saved), a three-segment animated bar, 50/30/20 benchmark coaching line, and an amber deficit banner. Uses `border-border` (theme-aware) for light-mode safety. Full ARIA attributes on the `role="meter"` bar.
+
+**Files Modified:**
+
+- `src/lib/stats/calculations.ts` — Added `BudgetSplitResult` interface and `calculateBudgetSplit(transactions)` pure function. Needs = `Rent | Bills | Groceries | Transport | Healthcare`. Wants = `Dining | Entertainment | Shopping | Subscriptions | Other`. Percentage denominator = income when saving, outflow when in deficit. Divide-by-zero guarded. Strict TypeScript, `readonly` parameter.
+- `src/app/(dashboard)/insights/page.tsx` — Imported `calculateBudgetSplit`, `BudgetSplitResult`, `BudgetSplitStrip`. Added `budgetSplit` useMemo. Mounted `<BudgetSplitStrip>` in a `motion.div` entrance between the Balance Forecast card and the `md:grid-cols-2` analytics grid.
+
+**Category mapping used (all match real Category union exactly):**
+
+| Bucket | Categories |
+|--------|-----------|
+| Needs  | `Rent`, `Bills`, `Groceries`, `Transport`, `Healthcare` |
+| Wants  | `Dining`, `Entertainment`, `Shopping`, `Subscriptions`, `Other` |
+
+No deviations from the spec — all category names match the `CATEGORIES` const in `src/lib/stats/categories.ts`.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run lint` — 36 problems, all pre-existing; zero new issues in created/modified files
+- `npx prettier --write` — all three changed files formatted
+- Visual QA: Playwright headless screenshots saved to `qa/budget-split-{dark,light}-{full,card}.png`. Confirmed both themes: card renders with correct glassmorphic styling, segmented bar shows three distinct colored segments (violet-blue/pink/emerald), coaching line present, borders legible in light mode (`border-border` token), amounts in de-DE EUR format.
+
+**QA screenshots (gitignored `qa/`):**
+
+- `qa/budget-split-dark-full.png` — dark mode, full Insights page
+- `qa/budget-split-dark-card.png` — dark mode, card crop
+- `qa/budget-split-light-full.png` — light mode, full Insights page
+- `qa/budget-split-light-card.png` — light mode, card crop
+
+**Next actions:**
+
+- PR / merge `feat/budget-split-insights` into main once lead reviews.
 
 ---
 
