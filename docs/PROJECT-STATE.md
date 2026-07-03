@@ -1,9 +1,41 @@
 # Project State: BanKing
 
-**Current Phase:** Bug fix — duplicate transactions from pending→booked sync ✅ COMPLETE
-**Current Sprint:** fix/pending-transaction-duplicates
+**Current Phase:** Dashboard UX — date range defaults & session persistence ✅ COMPLETE
+**Current Sprint:** feat/dashboard-date-range-defaults
 **Last Session:** 2026-07-03
-**Branch:** fix/pending-transaction-duplicates (not merged; awaiting lead review)
+**Branch:** feat/dashboard-date-range-defaults (not merged; awaiting lead review)
+
+---
+
+## This session changes (2026-07-03) — Dashboard date range default + session persistence
+
+**Summary:** Two small dashboard UX improvements to the date range selector. First, the dashboard now opens with the current calendar month selected by default instead of "Last 30 days" — the existing "This Month" preset was reused as-is (it already had correct trend-label wiring and month-based chevron navigation), so this only required changing the default preset passed into the hook. Second, the user's date range selection (preset or custom range) is now remembered for the rest of the browser session: navigating to Transactions, Insights, Settings, etc. and back to the dashboard restores the previously selected range; closing and reopening the app resets to the current-month default.
+
+**Files Modified:**
+
+- `src/hooks/use-date-range.ts` — Changed the hook's default preset parameter from `"last30days"` to `"thisMonth"`. Added `sessionStorage`-backed persistence under key `banking:dashboard:date-range:v1`, following the SSR-safe lazy-`useState` initializer pattern already used by `useScenarios` (`src/hooks/use-scenarios.ts`): a `buildInitialState()` function reads and validates a stored `{ preset, navigationUnit, fromISO, toISO }` payload before ever touching `window`, falling back to the current-month default preset on the server, on first visit, or when stored data fails validation (unknown preset/navigation-unit value, unparseable dates, `from` after `to`). Non-custom presets are recomputed fresh from "now" on restore (rather than replayed from stored timestamps) so a preset like "This Month" still behaves like a proper preset if the session spans a day boundary; only `"custom"` selections replay the exact stored `from`/`to`. A `useEffect` persists the committed state to `sessionStorage` on every change after the initial mount, so preset clicks, custom calendar picks, and chevron navigation are all captured uniformly.
+- `src/app/page.tsx` — Updated the `useDateRange("last30days")` call site to `useDateRange("thisMonth")` to match the new default.
+
+**Verified untouched / no changes needed:**
+
+- `src/components/dashboard/overview-cards.tsx` already had a correct `"vs last month"` trend-label mapping for the `thisMonth` preset.
+- `src/components/dashboard/date-range-picker.tsx` already listed "This Month" in its preset menu with correct display/navigation behavior.
+- The Transactions page (`src/app/transactions/page.tsx`) manages its own independent picker state driven entirely by URL search params (`dateFrom`/`dateTo`) — it does not use `useDateRange` at all, so the Income vs Expenses month drill-down flow and the dashboard's new session persistence do not interact or conflict.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing baseline; zero new issues.
+- `npm run build` — succeeds, all routes emitted.
+- Rendered/interaction QA (headless Playwright, `qa/date-range-defaults-qa.mjs`, gitignored):
+  - (a) Fresh load with empty `sessionStorage` → picker shows "This Month" with "vs last month" trend labels. Screenshot: `qa/date-range-a-fresh-load.png`.
+  - (b) Selecting "Last 3 Months" then navigating to `/transactions` and back to the dashboard → selection correctly restored as "Last 3 Months" with "vs previous 3 months" trend labels. Screenshots: `qa/date-range-b-preset-switched.png`, `qa/date-range-c-restored-after-nav.png`.
+  - (c) Simulated new session (`sessionStorage.clear()` + reload) → resets to "This Month" default. Screenshot: `qa/date-range-d-new-session-reset.png`.
+  - All checks passed; zero console errors during the run.
+
+**Next actions:**
+
+- Lead to review and merge `feat/dashboard-date-range-defaults` (not pushed; no PR opened per task scope).
 
 ---
 
