@@ -1,9 +1,46 @@
 # Project State: BanKing
 
-**Current Phase:** Income vs Expenses → Transactions drill-down ✅ COMPLETE
-**Current Sprint:** feat/income-expenses-drilldown
-**Last Session:** 2026-06-08
-**Branch:** main (feature branch merged & deleted)
+**Current Phase:** Bug fix — duplicate transactions from pending→booked sync ✅ COMPLETE
+**Current Sprint:** fix/pending-transaction-duplicates
+**Last Session:** 2026-07-03
+**Branch:** fix/pending-transaction-duplicates (not merged; awaiting lead review)
+
+---
+
+## This session changes (2026-07-03) — Fix duplicate transactions from pending→booked sync
+
+**Summary:** Fixed a data-integrity bug where bank transactions could be permanently duplicated. Deduplication is based on a hash of an account, date, amount, description, and counterparty. Some pending transactions are later confirmed ("booked") by the bank with an updated date and a rewritten description (common for card payments), which produces a different hash than the original pending record. The old pending record was never removed, so both the original and the confirmed version stayed in storage as separate entries. A local data audit confirmed the pattern: several stored pending records had a confirmed twin (duplicates), a couple were leftover pending records from months ago that never got confirmed or removed (stale phantoms), and one was a genuinely still-pending, recently-dated record.
+
+**Root cause:** The sync process kept every previously-stored "pending" record indefinitely, even after a newer fetch had already re-delivered its current state (still pending, or now confirmed under a new identity). There was no logic to retire superseded or abandoned pending records.
+
+**Fix — two reconciliation rules applied to stored pending records, per account, right after a successful fetch and before new records are inserted:**
+
+- **Rule A (refresh window):** A stored pending record is removed if its date falls inside the window that was just re-fetched. The fresh fetch already re-delivers the current truth for that period — if the item is still pending it comes back and gets re-added; if it has since been confirmed, the confirmed version is added under its own identity.
+- **Rule B (staleness):** A stored pending record is removed if it is older than 14 days relative to the current date, regardless of the fetch window. In practice nothing stays unconfirmed at the bank that long, so its real outcome is already represented elsewhere or the charge never went through.
+- Removals only ever apply to pending records for the account currently being synced, only run after that account's fetch has succeeded (a failed fetch never triggers a deletion), and never touch non-pending (already confirmed) records.
+
+**Files Created:**
+
+- `src/lib/banking/pending-reconciliation.ts` — New pure, unit-testable helper `reconcilePendingTransactions()` implementing Rules A and B described above. Strict TypeScript, no `any` (a narrow status-extractor handles the bank-specific raw payload shape safely), `readonly` inputs.
+
+**Files Modified:**
+
+- `src/lib/banking/sync.ts` — After a successful per-account transaction fetch and before the existing dedup/insert step, calls `reconcilePendingTransactions()` against the currently stored transactions for that account, using the same "since" cutoff that was used for the fetch. Logs a concise count of removed records per account (no amounts or descriptions in the log).
+
+**One-time local data cleanup:**
+
+- Ran a throwaway script (`qa/cleanup-stale-pending.mjs`, gitignored, not committed) that applied Rule B directly against the local data store, after first writing a backup copy. Result: 8 stale/duplicate pending records removed, 1 genuinely recent pending record kept, total transaction count went from 1758 to 1750.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing; zero new issues in created/modified files.
+- `npm run build` — succeeds, all routes emitted.
+- Confirmed after cleanup: no remaining pending record older than 14 days in the local data store; the one genuinely pending, recently-dated record survived untouched.
+
+**Next actions:**
+
+- Lead to review and merge `fix/pending-transaction-duplicates` (not pushed; no PR opened per task scope).
 
 ---
 
