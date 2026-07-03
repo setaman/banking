@@ -47,9 +47,9 @@ next-env.d.ts
 # Banking specific
 /uploads/*.json
 db.json
-/data/db.json
-/data/db-demo.json
-/data/db-backup.json
+/data/
+!/data/.gitkeep
+!/data/db_empty.json
 banking.config.json
 
 # Auto Claude data directory

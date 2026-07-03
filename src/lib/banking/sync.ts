@@ -7,6 +7,7 @@ import type {
   UnifiedAccount,
 } from "@/lib/banking/types";
 import { createTransactionId } from "@/lib/banking/utils";
+import { reconcilePendingTransactions } from "@/lib/banking/pending-reconciliation";
 import { createBackup } from "@/lib/db/backup";
 
 export async function syncBank(
@@ -119,6 +120,22 @@ export async function syncBank(
       );
 
       totalFetched += transactions.length;
+
+      // Fetch succeeded for this account: reconcile previously-stored pending
+      // transactions before dedup/insert. This prevents permanent duplicates
+      // when a pending transaction later books under a rewritten
+      // description/date (see docs/PROJECT-STATE.md for details). Only runs
+      // after a successful fetch so a failed fetch never deletes data.
+      const { kept, removedCount } = reconcilePendingTransactions(
+        db.data.transactions,
+        { accountId: account.id, since }
+      );
+      if (removedCount > 0) {
+        db.data.transactions = kept;
+        console.log(
+          `[Sync] Removed ${removedCount} superseded/stale pending transactions for account ${account.id}`
+        );
+      }
 
       // Map and tag internal transfers before dedup
       const mappedTransactions = transactions.map((t) => t);
