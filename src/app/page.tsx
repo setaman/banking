@@ -39,7 +39,7 @@ export default function Home() {
     navigateRange,
     canNavigateForward,
     canNavigateBack,
-  } = useDateRange("last30days");
+  } = useDateRange("thisMonth");
 
   // Data state
   const [transactions, setTransactions] = useState<UnifiedTransaction[]>([]);

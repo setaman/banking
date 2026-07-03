@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   subDays,
   addDays,
@@ -78,6 +78,148 @@ const getPresetRange = (preset: DateRangePreset): DateRange => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Session persistence
+//
+// The dashboard's selected date range should survive client-side navigation
+// away from and back to the dashboard (e.g. visiting Transactions, Insights,
+// Settings) within the same browser session, but must NOT survive closing
+// and reopening the app — so `sessionStorage` is used rather than
+// `localStorage`. Access is guarded for SSR (Next.js renders this hook's
+// initial state on the server first) following the same lazy-`useState`
+// pattern used by `useScenarios` (see `src/hooks/use-scenarios.ts`).
+// ---------------------------------------------------------------------------
+
+const STORAGE_KEY = "banking:dashboard:date-range:v1";
+
+const ALL_PRESETS: readonly DateRangePreset[] = [
+  "last7days",
+  "last30days",
+  "thisMonth",
+  "lastMonth",
+  "last3months",
+  "last6months",
+  "last12months",
+  "thisYear",
+  "lastYear",
+  "allTime",
+  "custom",
+];
+
+const ALL_NAVIGATION_UNITS: readonly NavigationUnit[] = [
+  "week",
+  "month",
+  "year",
+  "days",
+  null,
+];
+
+interface StoredDateRangeSelection {
+  preset: DateRangePreset;
+  navigationUnit: NavigationUnit;
+  fromISO: string;
+  toISO: string;
+}
+
+function isDateRangePreset(value: unknown): value is DateRangePreset {
+  return (
+    typeof value === "string" &&
+    (ALL_PRESETS as readonly string[]).includes(value)
+  );
+}
+
+function isNavigationUnit(value: unknown): value is NavigationUnit {
+  return (ALL_NAVIGATION_UNITS as readonly unknown[]).includes(value);
+}
+
+/**
+ * Attempts to read and validate the persisted selection from
+ * `sessionStorage`. Returns `null` on the server, when the key is absent, or
+ * when the stored value fails validation — callers should fall back to the
+ * default preset in that case.
+ */
+function loadPersistedSelection(): StoredDateRangeSelection | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+
+    const { preset, navigationUnit, fromISO, toISO } = parsed as Record<
+      string,
+      unknown
+    >;
+
+    if (!isDateRangePreset(preset)) return null;
+    if (!isNavigationUnit(navigationUnit)) return null;
+    if (typeof fromISO !== "string" || typeof toISO !== "string") return null;
+
+    const from = new Date(fromISO);
+    const to = new Date(toISO);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return null;
+    }
+    if (isAfter(from, to)) return null;
+
+    return { preset, navigationUnit, fromISO, toISO };
+  } catch {
+    return null;
+  }
+}
+
+/** Persists the current selection to `sessionStorage`. Fails silently. */
+function savePersistedSelection(state: DateRangeState): void {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: StoredDateRangeSelection = {
+      preset: state.preset,
+      navigationUnit: state.navigationUnit,
+      fromISO: state.range.from.toISOString(),
+      toISO: state.range.to.toISOString(),
+    };
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // Intentionally silent (quota exceeded or storage disabled).
+  }
+}
+
+/**
+ * Lazy initialiser for the `state` useState call. Runs once on the client
+ * and restores a previously persisted selection when one exists and passes
+ * validation. Non-custom presets are recomputed relative to "now" rather
+ * than replayed from stored timestamps, so a preset like "This Month"
+ * behaves like a proper preset (not a stale custom range) if the session
+ * happens to span a day boundary.
+ */
+function buildInitialState(defaultPreset: DateRangePreset): DateRangeState {
+  const persisted = loadPersistedSelection();
+
+  if (persisted) {
+    if (persisted.preset === "custom") {
+      return {
+        range: {
+          from: new Date(persisted.fromISO),
+          to: new Date(persisted.toISO),
+        },
+        preset: "custom",
+        navigationUnit: persisted.navigationUnit,
+      };
+    }
+    return {
+      range: getPresetRange(persisted.preset),
+      preset: persisted.preset,
+      navigationUnit: getNavigationUnit(persisted.preset),
+    };
+  }
+
+  return {
+    range: getPresetRange(defaultPreset),
+    preset: defaultPreset,
+    navigationUnit: getNavigationUnit(defaultPreset),
+  };
+}
+
 const getNavigationUnit = (preset: DateRangePreset): NavigationUnit => {
   switch (preset) {
     case "last7days":
@@ -99,12 +241,24 @@ const getNavigationUnit = (preset: DateRangePreset): NavigationUnit => {
   }
 };
 
-export function useDateRange(initialPreset: DateRangePreset = "last30days") {
-  const [state, setState] = useState<DateRangeState>({
-    range: getPresetRange(initialPreset),
-    preset: initialPreset,
-    navigationUnit: getNavigationUnit(initialPreset),
-  });
+export function useDateRange(initialPreset: DateRangePreset = "thisMonth") {
+  // Lazy initialiser restores a persisted selection from sessionStorage on
+  // the client (falls back to `initialPreset` on the server and when no
+  // valid persisted selection exists).
+  const [state, setState] = useState<DateRangeState>(() =>
+    buildInitialState(initialPreset)
+  );
+
+  // Persist every committed selection change, skipping the mount so we
+  // don't re-write back the value we just read.
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    savePersistedSelection(state);
+  }, [state]);
 
   const setPreset = useCallback((preset: DateRangePreset) => {
     setState({
