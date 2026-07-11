@@ -74,7 +74,25 @@ export function AiProfileForm({
   const [isTesting, setIsTesting] = React.useState(false);
   const busy = isSaving || isTesting;
 
+  // The provider a saved profile currently belongs to — used to decide
+  // whether a provider switch should restore or discard the stored
+  // key/base URL (both belong to a specific provider and never round-trip
+  // across a switch, see `handleProviderChange`).
+  const initialProviderRef = React.useRef(initialProfile?.provider);
+
+  // OpenAI's Base URL field is an optional "advanced" affordance (custom
+  // OpenAI-compatible endpoints like Groq/OpenRouter) — collapsed by
+  // default, expanded up front only if this profile already has one saved.
+  const [showAdvancedEndpoint, setShowAdvancedEndpoint] = React.useState(
+    initialProfile?.provider === "ollama" ||
+      (initialProfile?.provider === "openai" &&
+        Boolean(initialProfile?.baseUrl))
+  );
+
   const isOllama = provider === "ollama";
+  // Anthropic/Google don't support a custom base URL in our provider
+  // factory (`src/lib/ai/provider.ts`); OpenAI and Ollama do.
+  const supportsBaseUrl = isOllama || provider === "openai";
   const modelEmpty = model.trim() === "";
   const apiKeyEmpty = apiKey.trim() === "";
   const hasStoredKey = Boolean(keyPreview);
@@ -82,6 +100,32 @@ export function AiProfileForm({
   const showModelError = touched && modelEmpty;
   const showKeyError = touched && keyRequired && apiKeyEmpty;
   const canSave = !modelEmpty && !(keyRequired && apiKeyEmpty);
+
+  const handleProviderChange = (value: string): void => {
+    const next = value as AiProvider;
+    if (next === provider) return;
+
+    const isReturningToOriginal = next === initialProviderRef.current;
+
+    setProvider(next);
+    // The stored API key/base URL belong to whichever provider this profile
+    // was last saved with — reapplying them to a different provider would
+    // silently produce mismatched credentials/endpoint. Restore them when
+    // switching back to the original provider; otherwise start clean and
+    // require fresh input for the new provider.
+    setKeyPreview(
+      isReturningToOriginal ? initialProfile?.keyPreview : undefined
+    );
+    setApiKey("");
+    setApiKeyVisible(false);
+    setBaseUrl(isReturningToOriginal ? (initialProfile?.baseUrl ?? "") : "");
+    setShowAdvancedEndpoint(
+      next === "ollama" ||
+        (next === "openai" &&
+          isReturningToOriginal &&
+          Boolean(initialProfile?.baseUrl))
+    );
+  };
 
   const handleSave = async (): Promise<void> => {
     setTouched(true);
@@ -95,7 +139,12 @@ export function AiProfileForm({
         provider,
         model: model.trim(),
         apiKey: apiKey.trim() ? apiKey.trim() : undefined,
-        baseUrl: isOllama ? baseUrl.trim() || undefined : undefined,
+        // Always send the current value for providers whose base-URL field
+        // is visible (blank means "explicitly clear", per `saveAiProfile`'s
+        // merge-safe semantics); omit entirely for providers where the
+        // field isn't rendered at all, so any existing stored value is left
+        // untouched rather than silently wiped.
+        baseUrl: supportsBaseUrl ? baseUrl.trim() : undefined,
       };
 
       const result = await saveAiProfile(input);
@@ -175,10 +224,7 @@ export function AiProfileForm({
         >
           Provider
         </label>
-        <Select
-          value={provider}
-          onValueChange={(value) => setProvider(value as AiProvider)}
-        >
+        <Select value={provider} onValueChange={handleProviderChange}>
           <SelectTrigger id="ai-profile-provider" className="w-full">
             <SelectValue placeholder="Select a provider" />
           </SelectTrigger>
@@ -315,6 +361,55 @@ export function AiProfileForm({
             </p>
           </div>
         </>
+      )}
+
+      {/* Base URL (OpenAI only) — optional advanced custom endpoint, e.g. for
+          OpenAI-compatible free providers like Groq or OpenRouter. Collapsed
+          by default so it stays out of the way for the common case (plain
+          OpenAI). */}
+      {provider === "openai" && (
+        <div className="space-y-1.5">
+          {showAdvancedEndpoint ? (
+            <>
+              <label
+                htmlFor="ai-profile-base-url"
+                className="text-sm leading-none font-medium"
+              >
+                Base URL{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </label>
+              <Input
+                id="ai-profile-base-url"
+                placeholder="https://api.openai.com/v1"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                className="border-border bg-card/30 focus:border-primary/40 font-mono text-sm"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="text-muted-foreground text-[11px]">
+                Leave blank to use OpenAI directly. For an OpenAI-compatible
+                provider, use its API root, e.g. Groq (
+                <span className="font-mono">
+                  https://api.groq.com/openai/v1
+                </span>
+                ) or OpenRouter (
+                <span className="font-mono">https://openrouter.ai/api/v1</span>
+                ).
+              </p>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAdvancedEndpoint(true)}
+              className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
+            >
+              Advanced: use a custom endpoint (Groq, OpenRouter, &hellip;)
+            </button>
+          )}
+        </div>
       )}
 
       {/* Footer actions */}

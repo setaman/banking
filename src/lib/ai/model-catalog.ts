@@ -92,12 +92,18 @@ async function listOpenAiModels(
     return { error: "An API key is required to list OpenAI models." };
   }
 
-  const baseUrl = (profile.baseUrl ?? "https://api.openai.com").replace(
-    /\/+$/,
-    ""
-  );
+  // `resolveModel`'s `createOpenAI({ baseURL: profile.baseUrl })` (see
+  // `src/lib/ai/provider.ts`) treats a configured `baseUrl` as the
+  // already-versioned API root — its own default is
+  // `https://api.openai.com/v1`, and it never appends a `/v1` segment
+  // itself. Model listing must build its URL the same way (trim a trailing
+  // slash, then append `/models` directly) so an OpenAI-compatible base URL
+  // that already includes its own version segment — e.g. Groq's
+  // `https://api.groq.com/openai/v1` — doesn't get a doubled `/v1/v1/models`.
+  const trimmedBaseUrl = profile.baseUrl?.trim().replace(/\/+$/, "");
+  const baseUrl = trimmedBaseUrl || "https://api.openai.com/v1";
 
-  const response = await fetchWithTimeout(`${baseUrl}/v1/models`, {
+  const response = await fetchWithTimeout(`${baseUrl}/models`, {
     headers: { Authorization: `Bearer ${profile.apiKey}` },
   });
 

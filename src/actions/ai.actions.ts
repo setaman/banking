@@ -49,6 +49,16 @@ export interface SaveAiProfileInput {
   model: string;
   /** Omit on update to keep the previously saved key unchanged. */
   apiKey?: string;
+  /**
+   * Merge-safe, same idea as `apiKey`, but with an explicit clear semantic
+   * since `baseUrl` isn't a secret and the form always shows its current
+   * value when the field is visible for a provider:
+   * - Omit (`undefined`) to keep the previously saved base URL unchanged
+   *   (e.g. the provider's base-URL field isn't rendered at all, as for
+   *   Anthropic/Google).
+   * - Pass `""` to explicitly clear a previously saved base URL.
+   * - Pass a non-empty absolute URL to set/replace it.
+   */
   baseUrl?: string;
 }
 
@@ -118,7 +128,13 @@ const SaveAiProfileInputSchema = z.object({
   provider: AiProviderSchema,
   model: z.string().trim().min(1, "Model is required"),
   apiKey: z.string().trim().min(1).optional(),
-  baseUrl: z.string().trim().url().optional(),
+  // Trimmed first so whitespace-only input is treated as "" (explicit
+  // clear) rather than failing URL validation. See `SaveAiProfileInput`'s
+  // `baseUrl` doc for the full omit/clear/set semantics.
+  baseUrl: z.preprocess(
+    (value) => (typeof value === "string" ? value.trim() : value),
+    z.union([z.literal(""), z.string().url()]).optional()
+  ),
 });
 
 /**
@@ -127,7 +143,10 @@ const SaveAiProfileInputSchema = z.object({
  * keeps the previously saved key (the client never receives the real key
  * back from `getAiProfilesStatus`, so it can't round-trip it — this lets
  * the settings form save changes to the model/name/base URL without
- * forcing the user to re-paste their key every time).
+ * forcing the user to re-paste their key every time). `baseUrl` is
+ * merge-safe the same way, but — since it isn't a secret — also supports an
+ * explicit clear: omit it to keep the stored value, pass `""` to clear it,
+ * or a non-empty URL to replace it (see `SaveAiProfileInput`).
  */
 export async function saveAiProfile(
   input: SaveAiProfileInput
@@ -143,6 +162,13 @@ export async function saveAiProfile(
   const data = parsed.data;
   const existing = data.id ? getAiProfileById(data.id) : null;
 
+  const baseUrl =
+    data.baseUrl === undefined
+      ? existing?.baseUrl
+      : data.baseUrl === ""
+        ? undefined
+        : data.baseUrl;
+
   const profile: AiProfile = {
     id: data.id ?? randomUUID(),
     name:
@@ -152,7 +178,7 @@ export async function saveAiProfile(
     provider: data.provider,
     model: data.model,
     apiKey: data.apiKey ?? existing?.apiKey,
-    baseUrl: data.baseUrl,
+    baseUrl,
   };
 
   const result = saveAiProfileToDisk(profile);
