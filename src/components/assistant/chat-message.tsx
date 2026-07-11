@@ -15,6 +15,10 @@ import {
 
 import { parseVisualizationSpec } from "@/lib/ai/visualization";
 import { VisualizationRenderer } from "@/components/assistant/visualization-renderer";
+import {
+  DataTable,
+  type ColumnAlign,
+} from "@/components/assistant/charts/data-table";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -188,6 +192,65 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 const BULLET_LINE_RE = /^[-*]\s+(.*)$/;
 const NUMBERED_LINE_RE = /^\d+\.\s+(.*)$/;
 
+// ---------------------------------------------------------------------------
+// GFM table parsing — detects a contiguous header + `|---|`-style separator
+// + body-row block and splits it into cells. A block whose separator row
+// doesn't validate as GFM syntax is left alone (falls through to normal
+// paragraph rendering, pipes and all) rather than being force-rendered as a
+// broken table.
+// ---------------------------------------------------------------------------
+
+/** Splits a single `| a | b |` row into trimmed cell strings, honoring `\|` escapes. */
+function splitTableRow(line: string): string[] {
+  let trimmed = line.trim();
+  if (trimmed.startsWith("|")) trimmed = trimmed.slice(1);
+  if (trimmed.endsWith("|") && !trimmed.endsWith("\\|")) {
+    trimmed = trimmed.slice(0, -1);
+  }
+  const cells: string[] = [];
+  let current = "";
+  for (let idx = 0; idx < trimmed.length; idx++) {
+    const ch = trimmed[idx];
+    if (ch === "\\" && trimmed[idx + 1] === "|") {
+      current += "|";
+      idx++;
+      continue;
+    }
+    if (ch === "|") {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+const TABLE_SEPARATOR_CELL_RE = /^:?-+:?$/;
+
+/**
+ * Parses a GFM separator row (e.g. `| :--- | ---: | :---: |`) into a
+ * per-column alignment array, or returns `null` if the row isn't valid GFM
+ * separator syntax — the caller then treats the candidate block as plain
+ * text instead of a table.
+ */
+function parseTableSeparatorRow(line: string): (ColumnAlign | null)[] | null {
+  if (!line.includes("|") && !line.includes("-")) return null;
+  const cells = splitTableRow(line);
+  if (cells.length === 0) return null;
+  const aligns: (ColumnAlign | null)[] = [];
+  for (const cell of cells) {
+    if (cell === "" || !TABLE_SEPARATOR_CELL_RE.test(cell)) return null;
+    const left = cell.startsWith(":");
+    const right = cell.endsWith(":");
+    aligns.push(
+      left && right ? "center" : right ? "right" : left ? "left" : null
+    );
+  }
+  return aligns;
+}
+
 function MarkdownLite({ text }: { text: string }): React.JSX.Element {
   const lines = text.split("\n");
   const blocks: ReactNode[] = [];
@@ -200,6 +263,55 @@ function MarkdownLite({ text }: { text: string }): React.JSX.Element {
     if (trimmed === "") {
       i++;
       continue;
+    }
+
+    if (trimmed.includes("|")) {
+      const separatorLine = i + 1 < lines.length ? lines[i + 1] : undefined;
+      const aligns =
+        separatorLine !== undefined
+          ? parseTableSeparatorRow(separatorLine)
+          : null;
+      const headerCells = aligns ? splitTableRow(lines[i]) : null;
+      if (
+        aligns &&
+        headerCells &&
+        headerCells.length > 0 &&
+        aligns.length === headerCells.length
+      ) {
+        const bodyRows: string[][] = [];
+        let j = i + 2;
+        while (
+          j < lines.length &&
+          lines[j].trim() !== "" &&
+          lines[j].includes("|")
+        ) {
+          bodyRows.push(splitTableRow(lines[j]));
+          j++;
+        }
+        const key = blockKey++;
+        blocks.push(
+          <div key={`b${key}`} className="my-1.5">
+            <DataTable
+              columns={headerCells.map((cell, ci) => (
+                <span key={`h${ci}`}>
+                  {renderInline(cell, `b${key}-h${ci}`)}
+                </span>
+              ))}
+              rows={bodyRows.map((row, ri) =>
+                headerCells.map((_, ci) => (
+                  <span key={`c${ri}-${ci}`}>
+                    {renderInline(row[ci] ?? "", `b${key}-r${ri}-${ci}`)}
+                  </span>
+                ))
+              )}
+              aligns={aligns}
+              rowKeyPrefix={`b${key}`}
+            />
+          </div>
+        );
+        i = j;
+        continue;
+      }
     }
 
     const bulletMatch = BULLET_LINE_RE.exec(trimmed);

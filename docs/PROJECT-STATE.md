@@ -1,9 +1,36 @@
 # Project State: BanKing
 
-**Current Phase:** AI Financial Assistant — feature-complete (Phases A-F), awaiting PR/review
+**Current Phase:** AI Financial Assistant — feature-complete (Phases A-F), plus post-review client fixes, awaiting PR/review
 **Current Sprint:** feat/ai-assistant
 **Last Session:** 2026-07-11
 **Branch:** feat/ai-assistant (not merged; no commits made per task scope)
+
+---
+
+## This session changes (2026-07-11) — AI Assistant: client-reported fixes (Markdown tables, initial scroll position, hydration mismatch)
+
+**Summary:** Three client-reported bugs on `/assistant`, fixed in one pass: (1) GFM Markdown tables in assistant replies rendered as raw pipe text instead of a styled table; (2) navigating to `/assistant` with a restored conversation opened scrolled to the top instead of the latest message; (3) a live React hydration-mismatch warning (Clear button's `disabled` attribute differed between server and client) caused by `useChatPersistence` reading `localStorage` synchronously during the component's first render. 6 files modified, 1 file created. No commits made, per task scope. `banking.config.json` was not read, logged, or modified.
+
+**Files Modified/Created:**
+
+- `src/components/assistant/charts/data-table.tsx` (new) — Extracted a shared, theme-aware table shell (`DataTable`) out of `table-view.tsx`: sticky header, alternating row tint, `border-border`, scrollable container, `text-sm`, optional per-column alignment (`left`/`center`/`right`) and an optional `maxVisibleRows` cap with a "Showing N of M" note. Generic over `ReactNode` cells (not just strings) so it can render either plain visualization-spec strings or inline-Markdown-formatted (bold/inline-code) cell content.
+- `src/components/assistant/charts/table-view.tsx` — Now a thin wrapper around `DataTable` (same `MAX_VISIBLE_ROWS = 20` behavior as before, byte-for-byte equivalent rendering) — no visible change, just de-duplicated styling.
+- `src/components/assistant/chat-message.tsx` — Added GFM table parsing to `MarkdownLite`: detects a contiguous header row + `| :--- | ---: | :---: |`-style separator row + body rows, splits cells (honoring `\|` escapes), derives per-column alignment from the separator, and renders via the shared `DataTable` with inline bold/code support inside cells (via the existing `renderInline`). A block whose separator row doesn't validate as GFM syntax is left untouched (renders as plain paragraphs, pipes and all) rather than being force-rendered as a broken table — the "malformed input falls back to plain text" edge case. Handles tables at message start/end and multiple tables per message (loop-based, not regex-based, so each table block is parsed independently).
+- `src/lib/ai/system-prompt.ts` — Added a "Tables" section telling the model that plain GFM Markdown tables are fully supported and rendered nicely (with alignment), and that it may use either a Markdown table (compact, inline) or the `table` visualization block (when a title/"View data" affordance helps) — removed the implication that tabular data must go through the visualization spec.
+- `src/hooks/use-chat-persistence.ts` — Rewritten to be hydration-safe: `initialMessages` is now always `[]` (matching the server-rendered output), and the real `localStorage` read is exposed via `useSyncExternalStore` (`restoredMessages` + `hasHydrated`) instead of reading inside a `useState` lazy initializer (the previous approach, which differed between the server-rendered pass — no `window` — and the client's initial hydration pass — `window` present — causing React's "tree hydrated but some attributes didn't match" warning on the Clear button's `disabled` prop). `useSyncExternalStore` is the React-native fix for this exact class of bug: it returns the given server snapshot during hydration (always consistent) and automatically schedules a client-only re-render with the real snapshot right after. (A first attempt using a plain `useEffect` + `setState` for the restore was rejected by the project's `react-hooks/set-state-in-effect` ESLint rule and rewritten to this approach instead.)
+- `src/app/(dashboard)/assistant/page.tsx` — (1) Added an effect that applies `restoredMessages` to `useChat` via `setMessages` once `hasHydrated` is true (since `useChat`'s `messages` option only seeds the chat on its very first construction, not as a controlled prop — the restore has to be applied imperatively, post-mount). (2) Added a `useLayoutEffect` that scrolls the message list to the bottom instantly (`el.scrollTop = el.scrollHeight`, no animation) the _first_ time the list becomes visible — guarded so it waits for hydration and, if a conversation was restored, waits for it to actually land in `chatMessages` before firing (avoiding a race where it fires against a still-empty list and then misses the real jump). The pre-existing smooth `scrollIntoView` auto-scroll effect (for new streamed content) is unchanged and still respects the existing "don't fight the user if they've scrolled up" guard (`shouldAutoScrollRef`, driven by `handleScroll`).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing (same baseline as Phase F's notes); zero new issues in the files touched this session (verified via an isolated `npx eslint` run against exactly those files, both before and after the `useSyncExternalStore` rewrite).
+- `npm run build` — succeeds; route list unchanged (`/assistant`, `/api/chat` present as before).
+- `npx prettier --write` — run on all files touched this session; all clean (no reformatting needed after the final pass, aside from import wrapping the formatter itself applied).
+- **Headless Playwright QA** (gitignored `qa/assistant-table-scroll-qa.mjs`, not persisted/committed; `banking.config.json` was never read, logged, or modified — the real `ai` config already present was used as-is via `/api/chat` route stubbing, no config swap needed this time): (a) stubbed an assistant reply containing a 4-column GFM table with bold/inline-code cells and explicit left/right/center column alignment (generic "Category A/B" sample data) — confirmed exactly one real `<table>` element rendered, zero raw `"| Category"` pipe text nodes, and captured dark + light screenshots (`assistant-md-table-dark.png`, `assistant-md-table-light.png`) showing the sticky header, right-aligned amount columns, and centered "Change" column; (b) seeded `localStorage` with a 30-message stubbed conversation via `context.addInitScript`, loaded `/assistant` fresh, and confirmed the message list's `scrollTop` lands exactly at `scrollHeight - clientHeight` (0px from bottom) with the last message and the message input both visible without any manual scroll (screenshot: `assistant-restored-scrolled-to-bottom.png`) — zero console errors and zero hydration-mismatch warnings/errors captured (explicitly asserted, matching on "hydration"/"didn't match"/etc. in all console and page-error output).
+
+**Next actions:**
+
+- Lead to review this fix pass together with the rest of `feat/ai-assistant` (Phases A-F) for PR/review/merge.
 
 ---
 

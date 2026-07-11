@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
@@ -100,6 +107,8 @@ export default function AssistantPage(): React.JSX.Element {
 
   const {
     initialMessages,
+    restoredMessages,
+    hasHydrated,
     persist,
     getTimestamp,
     clear: clearPersisted,
@@ -135,6 +144,20 @@ export default function AssistantPage(): React.JSX.Element {
   });
 
   const isBusy = status === "streaming" || status === "submitted";
+
+  // Apply a localStorage-restored conversation *after* mount, once hydration
+  // has finished. `useChat`'s `messages` option only seeds the chat on its
+  // very first construction (it is not a controlled prop), so `useChat` is
+  // always seeded with the hydration-safe `initialMessages` ([]) above, and
+  // any restored conversation is applied imperatively here via
+  // `setMessages` — a normal post-hydration client update, not part of the
+  // initial render, so it can never cause a hydration mismatch.
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (restoredMessages && restoredMessages.length > 0) {
+      setMessages(restoredMessages);
+    }
+  }, [hasHydrated, restoredMessages, setMessages]);
 
   // ---------------------------------------------------------------------------
   // Load AI config status + transaction count once on mount to decide the
@@ -238,7 +261,37 @@ export default function AssistantPage(): React.JSX.Element {
     (chatMessages.length === 0 ||
       chatMessages[chatMessages.length - 1]?.role === "user");
 
-  // Auto-scroll to the bottom on new content, unless the user has scrolled up.
+  // Instant scroll-to-bottom the first time the message list becomes
+  // visible (e.g. a restored conversation on initial load) — runs
+  // synchronously after the DOM update but before the browser paints, so
+  // there's no visible top-to-bottom jump. Waits for localStorage hydration
+  // to finish (and, if a conversation was restored, for it to actually land
+  // in `chatMessages`) so it doesn't fire against a still-empty list and
+  // then miss the real jump. Subsequent content changes are handled by the
+  // smooth auto-scroll effect below.
+  const hasInitialScrolledRef = useRef(false);
+  useLayoutEffect(() => {
+    if (hasInitialScrolledRef.current) return;
+    if (!hasHydrated) return;
+    const restorePending =
+      restoredMessages !== null &&
+      restoredMessages.length > 0 &&
+      chatMessages.length === 0;
+    if (restorePending) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    hasInitialScrolledRef.current = true;
+  }, [
+    pageStatus,
+    chatMessages.length,
+    showThinkingBubble,
+    hasHydrated,
+    restoredMessages,
+  ]);
+
+  // Auto-scroll to the bottom on new content (smooth), unless the user has
+  // scrolled up to read earlier messages.
   useEffect(() => {
     if (shouldAutoScrollRef.current) {
       scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth" });
