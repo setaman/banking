@@ -1,4 +1,5 @@
 import type { AiProfile, AiProvider } from "@/config/ai";
+import { normalizeOllamaBaseUrl } from "@/lib/ai/ollama-base-url";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -222,10 +223,15 @@ async function listGoogleModels(
 async function listOllamaModels(
   profile: ModelCatalogInput
 ): Promise<ModelCatalogResult> {
-  const baseUrl = (profile.baseUrl ?? "http://localhost:11434").replace(
-    /\/+$/,
-    ""
-  );
+  // Shares `normalizeOllamaBaseUrl` with `resolveModel` (see
+  // `src/lib/ai/provider.ts`) so the SAME stored `baseUrl` resolves to a
+  // consistent server root for both the catalog and chat paths — the
+  // catalog appends `/api/tags` directly onto the root, while the chat
+  // provider needs `{root}/api` as its own `baseURL` (it appends bare paths
+  // like `/chat` itself). Kept in one place so a bare host and a
+  // `.../api`-suffixed host the user might paste both normalize the same
+  // way in both places.
+  const baseUrl = normalizeOllamaBaseUrl(profile.baseUrl);
 
   const response = await fetchWithTimeout(`${baseUrl}/api/tags`);
 

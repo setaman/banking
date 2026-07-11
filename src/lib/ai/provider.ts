@@ -5,8 +5,7 @@ import type { LanguageModel } from "ai";
 import { createOllama } from "ollama-ai-provider-v2";
 
 import type { AiProfile } from "@/config/ai";
-
-export const OLLAMA_DEFAULT_BASE_URL = "http://localhost:11434";
+import { ollamaApiBaseUrl } from "@/lib/ai/ollama-base-url";
 
 /**
  * Resolves a provider-agnostic `AiProfile` into a concrete Vercel AI SDK
@@ -36,8 +35,12 @@ export function resolveModel(profile: AiProfile): LanguageModel {
       return google(profile.model);
     }
     case "ollama": {
+      // `profile.baseUrl` is stored as the bare server root (the same value
+      // the model catalog uses to build `{root}/api/tags`) — normalize it to
+      // the `{root}/api` form this provider's `baseURL` expects. See
+      // `ollamaApiBaseUrl`'s doc for why the bare root would 404 here.
       const ollama = createOllama({
-        baseURL: profile.baseUrl ?? OLLAMA_DEFAULT_BASE_URL,
+        baseURL: ollamaApiBaseUrl(profile.baseUrl),
       });
       return ollama(profile.model);
     }

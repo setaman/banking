@@ -7,6 +7,38 @@
 
 ---
 
+## This session changes (2026-07-11) — Live bug fix: Ollama chat wrongly reported "model not found" for a pulled, working model
+
+**Summary:** Client reported that a working, pulled Ollama model (`llama3.1:8b`) — confirmed working via Ollama's own UI and a direct `POST http://localhost:11434/api/generate` — triggered our "Model not found on your Ollama server. Pull it first..." message both from the Settings "Test Connection" button and in actual chat, while the model dropdown (catalog) correctly listed the model from the same stored base URL. Root cause found and fixed; no commits made per task scope.
+
+**Root cause:** `resolveModel` (`src/lib/ai/provider.ts`) passed the profile's stored base URL — the bare server root, e.g. `http://localhost:11434`, the same value the model catalog (`listOllamaModels`) correctly appends `/api/tags` onto — straight through as `createOllama({ baseURL })`. But the installed `ollama-ai-provider-v2` package (`node_modules/ollama-ai-provider-v2/dist/index.mjs`) concatenates its endpoint paths directly onto whatever `baseURL` it's given (`url: ({ path }) => \`${baseURL}${path}\``, paths `/chat`, `/generate`, `/embed`) — its own default `baseURL`is`http://127.0.0.1:11434/api`, i.e. it expects the `/api` root already appended, unlike OpenAI-compatible providers that resolve against a `/v1` root. With the bare host, the chat call actually hit `http://localhost:11434/chat`, confirmed live against the real local Ollama server to 404 with body `"404 page not found"` — and `describeAiError`'s substring match on `"not found"`/`"404"` (intended to catch a genuinely-missing model, whose real 404 body is `{"error":"model '<x>' not found"}`) couldn't tell a wrong-path 404 from a true model-404, so it mislabeled the wrong-path failure as "model not found," even though the model was pulled and fine.
+
+**Fix:** Added `src/lib/ai/ollama-base-url.ts` — one normalization module (`normalizeOllamaBaseUrl` / `ollamaApiBaseUrl`) that both `resolveModel` (now passes `ollamaApiBaseUrl(profile.baseUrl)`, i.e. `{root}/api`) and `listOllamaModels` (now builds `{root}/api/tags` via `normalizeOllamaBaseUrl`, replacing its own ad-hoc trailing-slash trim) derive from, so the exact same stored `baseUrl` produces a consistent, correct request on both paths. Removed the now-redundant `OLLAMA_DEFAULT_BASE_URL` export from `provider.ts` (the client-safe copy in `src/components/settings/ai-provider-constants.ts`, used only for the settings-form placeholder, is untouched/unrelated). No change was needed to the "genuinely missing model" error mapping in `describeAiError` — with the URL fixed, only a real model-404 (Ollama's own `{"error":"model '<x>' not found"}` body) can still reach that branch.
+
+**Reproduction & end-to-end verification (against the client's real local Ollama server on this machine, `llama3.1:8b` pulled):**
+
+- Backed up `banking.config.json` byte-for-byte to `%TEMP%/banking.config.json.bak` before touching anything.
+- Confirmed via direct `curl`: `POST http://localhost:11434/chat` → `404`/`"404 page not found"` (the pre-fix bug's actual request); `POST http://localhost:11434/api/generate` and `POST http://localhost:11434/api/chat` (the correct, post-fix endpoint) both succeed against `llama3.1:8b`.
+- Ran a scratch script (`tsx`, deleted after use) calling the real `saveAiProfile`/`setActiveAiProfile`/`testAiConnection`/`listAvailableModels` server actions directly (not stubbed) against an Ollama profile with `baseUrl: "http://localhost:11434"` (bare host, as instructed) and `model: "llama3.1:8b"`:
+  - `testAiConnection` → **succeeds** (916ms) — previously would have failed with the "Model not found" message.
+  - `listAvailableModels` (catalog) → unchanged, still lists `["llama3.1:8b"]`.
+  - A second profile with `model: "nonexistent:1b"` (genuinely not pulled) → `testAiConnection` still correctly returns "Model not found on your Ollama server. Pull it first with `ollama pull <model>`." — the friendly mapping is preserved for TRUE model-404s.
+- End-to-end through the real app: started the dev server (Turbopack), then `curl -N -X POST http://localhost:3000/api/chat` with a real user message and the fixed profile active — received an actual streamed reply from the local `llama3.1:8b` model (`"PONG"` in response to "Reply with exactly the single word: PONG"), full SSE stream (`start` → `text-delta` × 2 → `finish`), no `provider_error`/`ollama_unreachable`.
+- **Config restored:** `banking.config.json` restored from the pre-task backup; `diff` and `cmp` both confirmed **byte-identical** to the backup afterward. Scratch test script deleted (was never part of the repo).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` (full project) — same 28 errors / 8 warnings as the existing baseline, all pre-existing and unrelated to this fix (none in `src/lib/ai/*`); an isolated `npx eslint` run against the 3 files touched/added this session (`provider.ts`, `model-catalog.ts`, `ollama-base-url.ts`) is clean — zero new issues.
+- `npx prettier --check` on the same 3 files — clean.
+- `npm run build` — succeeds; route list unchanged.
+
+**Next actions:**
+
+- None outstanding for this fix. Lead/QA may want to independently spot-check the client's own Settings → Test Connection flow once they're back online, though the direct server-action reproduction above already covers that exact code path.
+
+---
+
 ## This session changes (2026-07-11) — PR #34 CodeRabbit fixes (baseUrl merge-safety + OpenAI-compatible endpoint UX)
 
 **Summary:** Fixed both CodeRabbit findings on PR #34 (`feat/ai-provider-profiles`). No commits made per task scope.
