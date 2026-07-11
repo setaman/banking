@@ -9,7 +9,7 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getAiConfig } from "@/config/ai";
+import { getActiveAiProfile, getAiProfiles } from "@/config/ai";
 import { resolveModel } from "@/lib/ai/provider";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import { financeTools } from "@/lib/ai/tools";
@@ -33,6 +33,12 @@ const chatMessageSchema = z.object({
 
 const chatRequestSchema = z.object({
   messages: z.array(chatMessageSchema).max(MAX_MESSAGES),
+  // Optional per-conversation override, letting the UI switch AI profiles
+  // without writing to banking.config.json (which would change every other
+  // conversation/tab too). Validated below against the actual saved
+  // profiles — an unknown id is rejected as invalid_request, not silently
+  // ignored.
+  profileId: z.string().trim().min(1).optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -191,9 +197,9 @@ async function peekThenResume<T extends { type: string; error?: unknown }>(
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const config = getAiConfig();
+  const profiles = getAiProfiles();
 
-  if (!config) {
+  if (profiles.length === 0) {
     return NextResponse.json({ error: "not_configured" }, { status: 503 });
   }
 
@@ -226,8 +232,20 @@ export async function POST(request: Request): Promise<Response> {
 
   const messages = trimToRecentPairs(parsed.data.messages, MAX_HISTORY_PAIRS);
 
+  const { profileId } = parsed.data;
+  const profile = profileId
+    ? profiles.find((p) => p.id === profileId)
+    : getActiveAiProfile();
+
+  if (!profile) {
+    return NextResponse.json(
+      { error: profileId ? "invalid_request" : "not_configured" },
+      { status: profileId ? 400 : 503 }
+    );
+  }
+
   try {
-    const model = resolveModel(config);
+    const model = resolveModel(profile);
 
     const result = streamText({
       model,
@@ -275,7 +293,7 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
-    if (config.provider === "ollama" && isConnectionRefused(effective)) {
+    if (profile.provider === "ollama" && isConnectionRefused(effective)) {
       return NextResponse.json(
         { error: "ollama_unreachable" },
         { status: 502 }

@@ -1,9 +1,176 @@
 # Project State: BanKing
 
-**Current Phase:** AI Financial Assistant — feature-complete (Phases A-F), plus post-review client fixes, awaiting PR/review
-**Current Sprint:** feat/ai-assistant
+**Current Phase:** AI Assistant v1.1 (provider profiles)
+**Current Sprint:** feat/ai-provider-profiles
 **Last Session:** 2026-07-11
-**Branch:** feat/ai-assistant (not merged; no commits made per task scope)
+**Branch:** feat/ai-provider-profiles (not merged; no commits made per task scope)
+
+---
+
+## This session changes (2026-07-11) — Live bug fix: Ollama chat wrongly reported "model not found" for a pulled, working model
+
+**Summary:** Client reported that a working, pulled Ollama model (`llama3.1:8b`) — confirmed working via Ollama's own UI and a direct `POST http://localhost:11434/api/generate` — triggered our "Model not found on your Ollama server. Pull it first..." message both from the Settings "Test Connection" button and in actual chat, while the model dropdown (catalog) correctly listed the model from the same stored base URL. Root cause found and fixed; no commits made per task scope.
+
+**Root cause:** `resolveModel` (`src/lib/ai/provider.ts`) passed the profile's stored base URL — the bare server root, e.g. `http://localhost:11434`, the same value the model catalog (`listOllamaModels`) correctly appends `/api/tags` onto — straight through as `createOllama({ baseURL })`. But the installed `ollama-ai-provider-v2` package (`node_modules/ollama-ai-provider-v2/dist/index.mjs`) concatenates its endpoint paths directly onto whatever `baseURL` it's given (`url: ({ path }) => \`${baseURL}${path}\``, paths `/chat`, `/generate`, `/embed`) — its own default `baseURL`is`http://127.0.0.1:11434/api`, i.e. it expects the `/api` root already appended, unlike OpenAI-compatible providers that resolve against a `/v1` root. With the bare host, the chat call actually hit `http://localhost:11434/chat`, confirmed live against the real local Ollama server to 404 with body `"404 page not found"` — and `describeAiError`'s substring match on `"not found"`/`"404"` (intended to catch a genuinely-missing model, whose real 404 body is `{"error":"model '<x>' not found"}`) couldn't tell a wrong-path 404 from a true model-404, so it mislabeled the wrong-path failure as "model not found," even though the model was pulled and fine.
+
+**Fix:** Added `src/lib/ai/ollama-base-url.ts` — one normalization module (`normalizeOllamaBaseUrl` / `ollamaApiBaseUrl`) that both `resolveModel` (now passes `ollamaApiBaseUrl(profile.baseUrl)`, i.e. `{root}/api`) and `listOllamaModels` (now builds `{root}/api/tags` via `normalizeOllamaBaseUrl`, replacing its own ad-hoc trailing-slash trim) derive from, so the exact same stored `baseUrl` produces a consistent, correct request on both paths. Removed the now-redundant `OLLAMA_DEFAULT_BASE_URL` export from `provider.ts` (the client-safe copy in `src/components/settings/ai-provider-constants.ts`, used only for the settings-form placeholder, is untouched/unrelated). No change was needed to the "genuinely missing model" error mapping in `describeAiError` — with the URL fixed, only a real model-404 (Ollama's own `{"error":"model '<x>' not found"}` body) can still reach that branch.
+
+**Reproduction & end-to-end verification (against the client's real local Ollama server on this machine, `llama3.1:8b` pulled):**
+
+- Backed up `banking.config.json` byte-for-byte to `%TEMP%/banking.config.json.bak` before touching anything.
+- Confirmed via direct `curl`: `POST http://localhost:11434/chat` → `404`/`"404 page not found"` (the pre-fix bug's actual request); `POST http://localhost:11434/api/generate` and `POST http://localhost:11434/api/chat` (the correct, post-fix endpoint) both succeed against `llama3.1:8b`.
+- Ran a scratch script (`tsx`, deleted after use) calling the real `saveAiProfile`/`setActiveAiProfile`/`testAiConnection`/`listAvailableModels` server actions directly (not stubbed) against an Ollama profile with `baseUrl: "http://localhost:11434"` (bare host, as instructed) and `model: "llama3.1:8b"`:
+  - `testAiConnection` → **succeeds** (916ms) — previously would have failed with the "Model not found" message.
+  - `listAvailableModels` (catalog) → unchanged, still lists `["llama3.1:8b"]`.
+  - A second profile with `model: "nonexistent:1b"` (genuinely not pulled) → `testAiConnection` still correctly returns "Model not found on your Ollama server. Pull it first with `ollama pull <model>`." — the friendly mapping is preserved for TRUE model-404s.
+- End-to-end through the real app: started the dev server (Turbopack), then `curl -N -X POST http://localhost:3000/api/chat` with a real user message and the fixed profile active — received an actual streamed reply from the local `llama3.1:8b` model (`"PONG"` in response to "Reply with exactly the single word: PONG"), full SSE stream (`start` → `text-delta` × 2 → `finish`), no `provider_error`/`ollama_unreachable`.
+- **Config restored:** `banking.config.json` restored from the pre-task backup; `diff` and `cmp` both confirmed **byte-identical** to the backup afterward. Scratch test script deleted (was never part of the repo).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` (full project) — same 28 errors / 8 warnings as the existing baseline, all pre-existing and unrelated to this fix (none in `src/lib/ai/*`); an isolated `npx eslint` run against the 3 files touched/added this session (`provider.ts`, `model-catalog.ts`, `ollama-base-url.ts`) is clean — zero new issues.
+- `npx prettier --check` on the same 3 files — clean.
+- `npm run build` — succeeds; route list unchanged.
+
+**Next actions:**
+
+- None outstanding for this fix. Lead/QA may want to independently spot-check the client's own Settings → Test Connection flow once they're back online, though the direct server-action reproduction above already covers that exact code path.
+
+---
+
+## This session changes (2026-07-11) — PR #34 CodeRabbit fixes (baseUrl merge-safety + OpenAI-compatible endpoint UX)
+
+**Summary:** Fixed both CodeRabbit findings on PR #34 (`feat/ai-provider-profiles`). No commits made per task scope.
+
+- **Finding 1 (Major, `src/actions/ai.actions.ts` + `src/components/settings/ai-profile-form.tsx`):** `saveAiProfile`'s `baseUrl` was persisted unconditionally (not merge-safe like `apiKey`), so editing any non-Ollama profile with a stored `baseUrl` (e.g. an OpenAI-compatible endpoint, or a migrated legacy profile) silently wiped it on any save, even a name-only edit. Also, the form never reset `keyPreview`/`baseUrl` state on a provider switch, so an unrelated stored key could be silently reapplied to a newly-selected provider. Fixed both layers:
+  - `saveAiProfile`'s `baseUrl` is now merge-safe with an explicit clear semantic: omit the field to keep the stored value, pass `""` to clear it, pass a non-empty URL to set/replace it (schema: `z.preprocess(trim) -> z.union([z.literal(""), z.string().url()]).optional()`). Documented on `SaveAiProfileInput`.
+  - `AiProfileForm` now has a single `handleProviderChange` handler: switching provider clears `apiKey`/`keyPreview`/`baseUrl` (and the advanced-endpoint disclosure) unless switching back to the profile's original provider, in which case the original stored key/baseUrl are restored. `handleSave` sends the current `baseUrl` for any provider whose field is visible (Ollama, OpenAI) and omits it entirely for Anthropic/Google (field not rendered — omission preserves any inert existing value instead of wiping it).
+  - **Product improvement (per task):** added an optional, collapsed "Advanced: use a custom endpoint" Base URL field for the OpenAI provider (pre-expanded when editing a profile that already has one saved), with inline examples for Groq (`https://api.groq.com/openai/v1`) and OpenRouter (`https://openrouter.ai/api/v1`). Still hidden entirely for Anthropic/Google (unsupported by `src/lib/ai/provider.ts`'s factory).
+- **Finding 2 (Minor, `src/lib/ai/model-catalog.ts`):** `listOpenAiModels` always appended a hardcoded `/v1/models`, which double-versioned (`.../openai/v1/v1/models`) for a custom `baseUrl` that already includes its own version segment (e.g. Groq). Fixed to build the URL the same way `resolveModel`'s `createOpenAI({ baseURL })` treats it: default to `https://api.openai.com/v1` (matching the SDK's own default) when no `baseUrl` is set, otherwise use the configured `baseUrl` verbatim (trailing slash trimmed) and append `/models` directly — never adding a second `/v1`.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` (full project) — 36 problems, all pre-existing (identical baseline to prior sessions); zero new issues confirmed via an isolated `npx eslint` run against every file touched this session.
+- `npx prettier --check` — clean (one `--write` pass needed on the form file after initial authoring).
+- `npm run build` — succeeds; route list unchanged.
+- **Regression scripts (scratchpad, not committed):**
+  - `regression-baseurl.mts` — ran `saveAiProfile` (via `tsx`, chdir'd into a scratch dir holding a **copy** of `banking.config.json`, never the real file) against a seeded OpenAI profile with a stored `baseUrl`: name-only edit preserved `baseUrl`+`apiKey` (the exact bug being fixed); explicit `""` cleared it; a new URL replaced it; whitespace-only was treated as clear (not a validation failure); a non-URL, non-empty value was rejected. All 12 assertions passed.
+  - `regression-model-catalog-url.mts` — stubbed `global.fetch` and asserted the constructed OpenAI models-endpoint URL for: no `baseUrl` (→ `.../v1/models`, unchanged from before), Groq `baseUrl` with/without trailing slash (→ `.../openai/v1/models`, no doubling), OpenRouter `baseUrl` with/without trailing slash (→ `.../api/v1/models`). All 5 assertions passed.
+- **Headless Playwright QA** (gitignored `qa/pr34-coderabbit-fixes-qa.mjs`; `playwright` installed transiently via `npm install --no-save playwright` + `npx playwright install chromium`, uninstalled again afterward — `git diff package.json`/`package-lock.json` confirmed no residual change). Ran against the dev server with `src/actions/ai.actions.ts` **temporarily replaced** by a self-contained in-memory stub (2 seeded profiles: an OpenAI profile with a stored Groq-style `baseUrl`+key, an Anthropic profile) — the real disk-backed implementation never ran during this pass. Backed up the edited `ai.actions.ts` before swapping, restored it **byte-for-byte** afterward (`diff` confirmed identical), and `banking.config.json`'s MD5 was captured before and reconfirmed identical afterward (`3622551a39c06018c4c28d6883309074`) — the real config was never read, logged, or modified.
+  - Add-profile dialog, OpenAI: confirmed the Base URL field is collapsed behind an "Advanced: use a custom endpoint" toggle by default, and appears (with the Groq/OpenRouter helper text) after clicking it. Screenshots: `qa/pr34-add-openai-collapsed-dark.png`, `qa/pr34-add-openai-expanded-dark.png`.
+  - Edit dialog on the seeded OpenAI profile: confirmed the Base URL field is pre-expanded (since a value is already stored) with the correct stored value, and the API-key hint mentions the saved key. Switching provider to Anthropic: confirmed the Base URL section disappears entirely and the API key becomes required (asterisk, no stale "saved key" hint) — the exact bug being fixed. Switching back to OpenAI: confirmed the stored `baseUrl`/key hint are both restored coherently. Screenshots: `qa/pr34-edit-openai-before-switch-dark.png`, `qa/pr34-edit-after-switch-anthropic-dark.png`, `qa/pr34-edit-back-to-openai-dark.png`.
+  - Zero console errors, zero page errors across the full scenario.
+- Post-restore, `tsc`/`lint`/`prettier`/`build` were all re-run clean against the real file (results above are from the restored state).
+
+**Config-file integrity check:** `banking.config.json` MD5 before this session: `3622551a39c06018c4c28d6883309074`. MD5 after (including through the QA stub swap/restore): `3622551a39c06018c4c28d6883309074` — byte-identical. Shape reconfirmed as-is: top-level keys `ai`, `dkb`; `ai` still in the pre-v1.1 legacy shape (`provider`, `model`, `apiKey`, no `baseUrl`) — untouched by this session.
+
+**Next actions:**
+
+- Lead to confirm both CodeRabbit findings resolved on PR #34 and proceed with review/merge of `feat/ai-provider-profiles`.
+
+---
+
+## This session changes (2026-07-11) — v1.1 Package 2: profile manager UI + model picker + quick switcher
+
+**Summary:** Built the client-facing half of the multi-profile AI Assistant on top of Package 1's actions/schema: a full profile-manager settings card (list + add/edit dialog + delete confirmation), a searchable model combobox backed by `listAvailableModels` with a static-suggestion fallback, and a compact quick-switcher dropdown in the `/assistant` header. Removed the now-dead Package 1 legacy wrapper actions (`getAiConfigStatus`, `saveAiConfig`) since no UI references them anymore. Branch `feat/ai-provider-profiles`; no commits made per task scope.
+
+**Files created:**
+
+- `src/components/settings/ai-provider-constants.ts` — Client-safe provider metadata (`PROVIDER_LABELS`, `PROVIDER_ICONS`, `PROVIDER_OPTIONS`, `MODEL_PLACEHOLDER`, `OLLAMA_DEFAULT_BASE_URL`, `previewProfileName`). Deliberately duplicated from (not imported from) `@/config/ai`, whose runtime exports pull in `fs`/`crypto` at module scope — importing any of _that_ module's values (not just types) into a `"use client"` file would break the client bundle. Every new client component in this package only ever does `import type { AiProvider } from "@/config/ai"`.
+- `src/components/settings/ai-model-combobox.tsx` — `AiModelCombobox`: a free-text `Input` (the value that actually gets saved, always) paired with a Popover+Command picker. On popover open (or the in-popover refresh button) calls `listAvailableModels` — with `{ profileId }` if editing a saved profile and the draft API-key field is blank (reuses the stored key server-side), otherwise `{ draft: { provider, apiKey, baseUrl } }` from the live form fields. Loading spinner while fetching; on failure, falls back to `FALLBACK_MODELS[provider]` (imported from `@/lib/ai/model-catalog`, which has no server-only imports and is therefore client-safe) plus an inline amber note ("Couldn't fetch models from provider — showing suggestions."). Selecting a `CommandItem` just writes into the same `Input` — it never becomes a separate source of truth, so a custom typed value always wins and nothing ever blocks Save on a fetch failure. Cached per-provider (re-fetches on provider change).
+- `src/components/settings/ai-profile-form.tsx` — `AiProfileForm`: add/edit form (name optional/auto-derived, provider `Select`, `AiModelCombobox`, write-only API key hidden for Ollama, base URL + zero-egress note for Ollama). **UX decision:** Save persists without closing the dialog (parent refreshes the list via `onSaved`); "Test Connection" stays disabled until the profile has been saved at least once (`savedProfileId` state, seeded from `initialProfile?.id` for edit mode) — same precedent as the pre-v1.1 single-config card, and necessary because `testAiConnection` only accepts a saved profile id, not an unsaved draft. A dedicated hint ("Save this profile to enable connection testing.") explains the disabled state instead of silently auto-saving on Test click. Leaving the API-key field blank on an existing profile keeps the stored key server-side (merge-safe `saveAiProfile` semantics from Package 1); the hint text and masked `keyPreview` echo this explicitly.
+- `src/components/assistant/profile-switcher.tsx` — `ProfileSwitcher`: renders the previous static model `Badge` unchanged whenever there are fewer than 2 profiles (single-profile setups see zero visual change). With 2+, becomes a `DropdownMenu` (badge + chevron trigger) listing every profile (name + model, checkmark on the active one); selecting another calls `setActiveAiProfile` then the parent's `onSwitched` refresh callback, so the next chat message picks up the new provider (`/api/chat` already resolves `getActiveAiProfile()` per request — no client-side change needed there). A "Manage profiles" item links to `/settings`.
+
+**Files reworked:**
+
+- `src/components/settings/ai-provider-card.tsx` — Fully replaced the single-config form with a profile list (provider icon, name, Active badge, `provider · model · keyPreview` line) plus per-row actions: Set active, Test (via `testAiConnection(profile.id)`), Edit (opens the shared `Dialog` with `AiProfileForm`), Delete (`AlertDialog` confirm, surfaces `deleteAiProfile`'s own guard message verbatim — e.g. "Cannot delete the only remaining AI profile..." — and the row's Delete button is pre-emptively disabled with a `title` tooltip when only one profile remains, so the guard is rarely even hit). Empty state (no profiles) mirrors the old single-config onboarding copy/CTA. Header gets an "Add Profile" button (hidden until at least one profile exists, since the empty state already has its own CTA). **Design-spec compliance fix:** the pre-v1.1 card used `border-primary/10` on its outer `Card`, which violates the documented hard rule (`docs/design/ai-assistant-ui.md` §1 — every surface must use `border-border`, since `Card`'s base class ships `border-white/10` which is invisible in light mode); the rework uses `border-border` throughout (card, list rows, empty state).
+- `src/app/(dashboard)/assistant/page.tsx` — Swapped `getAiConfigStatus()` (removed) for `getAiProfilesStatus()`; `pageStatus` now goes to `"not-configured"` when `profiles.length === 0` instead of a single `configured` boolean. Replaced the static header `Badge` with `<ProfileSwitcher profiles={profiles} onSwitched={refreshProfiles} />`; `refreshProfiles` re-fetches `getAiProfilesStatus()` after a switch without disturbing `pageStatus`/the conversation.
+- `src/actions/ai.actions.ts` — Removed the Package 1 `@deprecated` legacy wrappers (`getAiConfigStatus`, `saveAiConfig`, `LegacySaveAiConfigSchema`, `LegacyAiConfigInput`, `AiConfigStatus`) now that no component references them (confirmed via a repo-wide grep before deleting) — per Package 1's own hand-off note ("remove the legacy wrapper actions ... once no longer referenced"). No other changes to this file.
+
+**New shadcn components installed:** `command` (+ its `dialog` dependency, since shadcn's `CommandDialog` variant imports `Dialog`) via `npx shadcn@latest add command`. Added `cmdk@^1.1.1` to `package.json`/`package-lock.json` — confirmed via `git diff package.json` that this is the _only_ dependency change (no stray artifacts from the transient Playwright install used for QA, below).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` (full project) — 36 problems, all pre-existing (identical baseline to Package 1's own notes); zero new issues in an isolated `npx eslint` run against every file created/touched this session.
+- `npx prettier --check` — all created/touched files clean (one `--write` pass needed after initial authoring, matching prior sessions' pattern).
+- `npm run build` — succeeds; route list unchanged (`/assistant`, `/settings`, `/api/chat`, etc.).
+- **Headless Playwright visual QA** (gitignored `qa/package2-ai-profiles-qa.mjs`; `playwright` installed transiently via `npm install --no-save playwright` + `npx playwright install chromium`, uninstalled again afterward — confirmed via `git diff package.json` that only the intended `cmdk` addition remains). Ran against the dev server with `src/actions/ai.actions.ts` **temporarily replaced** by a self-contained in-memory stub (2 seeded profiles, canned model lists, a `"FORCE_ERROR"` sentinel API-key value to deterministically trigger the combobox's fetch-failure path) — the real `getAiProfilesStatus`/`saveAiProfile`/etc. implementations (which read/write `banking.config.json`) never ran during this QA pass, so the file was never touched. The stub was restored **byte-for-byte** from a pre-QA backup immediately after (`diff` against the backup confirmed identical), and `banking.config.json`'s MD5 checksum was captured before QA started and reconfirmed identical afterward (`3622551a39c06018c4c28d6883309074`, both before and after — the client's live Gemini config was never read, logged, or modified). Post-restore, `tsc`/`lint`/`prettier`/`build` were all re-run clean against the real file (results above are from the restored state).
+  - (a) Settings profile manager with 2 stubbed profiles ("Work OpenAI" active, "Home Ollama" inactive), dark + light — confirmed provider icons, Active badge, masked key preview (`sk-ab…9f2a`), and per-row action icons all render correctly in both themes, card border visible in light mode (the `border-border` fix). Screenshots: `qa/package2-profile-list-dark.png`, `qa/package2-profile-list-light.png`.
+  - (b) Add-profile dialog open, model combobox opened for the OpenAI provider — loading state observed, then the stubbed list (`gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `o4-mini`) rendered and searchable; clicking `gpt-4.1-mini` correctly populated the Model `Input` (asserted via `inputValue()`, not just visually). Screenshot: `qa/package2-add-profile-combobox-dark.png`.
+  - (c) Combobox fallback state — typing the `FORCE_ERROR` sentinel into the API key field and opening the combobox produced the amber "Couldn't fetch models from provider — showing suggestions." note plus the static `FALLBACK_MODELS` list (`gpt-5.1`, `gpt-4.1`, `gpt-4o`, `gpt-4o-mini`, `o4-mini`); confirmed free text still wins by typing a custom `my-custom-model-id` value directly into the field afterward and asserting it stuck. Screenshot: `qa/package2-combobox-fallback-dark.png`.
+  - (d) `/assistant` header quick switcher opened with the 2 stubbed profiles — dropdown shows both profiles (name + model), a checkmark on the active one ("Work OpenAI"), and a "Manage profiles" link item; header badge correctly showed the active model (`gpt-4o`) before opening. Screenshot: `qa/package2-assistant-switcher-dark.png`.
+  - Zero console errors, zero page errors, zero hydration warnings across all four scenarios (explicitly asserted via a hydration-keyword filter over all captured console/page-error output, matching the pattern established in prior AI Assistant QA sessions).
+
+**Config-file integrity check:** `banking.config.json` MD5 before this session's QA: `3622551a39c06018c4c28d6883309074`. MD5 after QA + stub restoration: `3622551a39c06018c4c28d6883309074` — **byte-identical**, confirming the file was never read, logged, or written during this session (the stub swap in `ai.actions.ts` made this structurally impossible during QA, and no other code path in this session touches the file).
+
+**Next actions:**
+
+- Lead to review Package 2 (this session) together with Package 1 for PR/review/merge of `feat/ai-provider-profiles`.
+- Optional follow-up (not required by Package 2's scope): the chat route (`src/app/api/chat/route.ts`, Package 1) already accepts an optional per-request `profileId` field for switching providers without touching the on-disk active profile; the quick switcher built this session instead switches the on-disk active profile directly (matching the task brief's explicit instruction — "choosing another calls `setActiveAiProfile`"). A future enhancement could offer true per-conversation profile switching using that existing route field, if ever desired.
+
+---
+
+## Merged: PR #33 — AI Financial Assistant (Phases A-F + client fixes)
+
+**Summary:** The `feat/ai-assistant` branch documented throughout this file's history below was reviewed and merged to `main` via PR #33 (squash commit `eaebf69`). The AI Assistant (`/assistant` chat page, `/api/chat`, finance tool layer, visualization rendering, settings card) is now live on `main`. This section is the hand-off marker between that milestone and the v1.1 work that follows.
+
+**Next actions (superseded by v1.1 below):** none — v1.1 Package 1 picks up from here.
+
+---
+
+## This session changes (2026-07-11) — v1.1 Package 1: multi-provider profiles infrastructure
+
+**Summary:** Reworked the AI Assistant's provider configuration from a single stored config into named, switchable **profiles** (multiple providers configured side by side, one marked active), added a server-side per-provider model-listing capability (each provider's own models endpoint, no third-party aggregator), and reworked the actions layer around profiles — while keeping the existing (pre-v1.1) settings card and `/assistant` page compiling unmodified via thin legacy-action wrappers. Branch `feat/ai-provider-profiles`; no commits made per task scope.
+
+**Schema & migration design (`src/config/ai.ts`):**
+
+- `AiProfileSchema`: `{ id, name, provider, model, apiKey?, baseUrl? }` — a single named provider connection.
+- `AiConfigSchema` (the `ai` key's current on-disk shape): `{ profiles: AiProfile[], activeProfileId: string }`.
+- `LegacyAiConfigSchema` (internal, not exported): the pre-v1.1 single-config shape (`{provider, model, apiKey?, baseUrl?}`), recognized only for migration.
+- **Migration:** `readAiConfig()` (internal) tries the current shape first, then the legacy shape; a legacy match is converted **in memory only** — `provider`/`model`/`apiKey`/`baseUrl` preserved exactly — into a single profile named e.g. `"Google — gemini-2.5-flash"` (`deriveAiProfileName`). Migration is **never persisted on read** — only the next mutation (`saveAiProfile`/`deleteAiProfile`/`setActiveAiProfile`) writes the full current-shape config back out, which is when the on-disk shape actually flips.
+  - **Deterministic legacy id:** the migrated profile's id is `legacy-<sha256(provider,model,apiKey,baseUrl)[:24]>`, not a random UUID. Since migration re-runs on every read until persisted, a random id would change on every call — breaking any caller that reads a profile's id and passes it to a mutation moments later (confirmed empirically during verification; fixed before merge).
+- **Sibling-key preservation kept:** the on-disk `ai` key is read/written via a loose `.catchall(z.unknown())` schema (same pattern as the pre-v1.1 module), so `dkb`/`deutscheBank` are never touched regardless of the `ai` key's shape or validity. `src/config/credentials.ts`'s `ConfigSchema.ai` field was changed from `AiConfigSchema.optional()` to `z.unknown().optional()` — otherwise, since `AiConfigSchema` now means the _new_ multi-profile shape, `loadCredentials()` (used only for bank cookies, never for `ai`) would fail to parse the whole file — and silently break `dkb` reads — for every user still on the pre-v1.1 shape until their first AI save.
+- **Delete semantics** (`deleteAiProfile`): refuses to delete the last remaining profile (there must always be ≥1); deleting the active profile reassigns `activeProfileId` to the first remaining profile automatically (no confirmation dialog at this layer — Package 2's UI is expected to confirm before calling it).
+
+**Files created:**
+
+- `src/lib/ai/model-catalog.ts` — `listModels(profile)`, calling each provider's own models endpoint server-side (never a third-party aggregator, so a user's key is only ever sent to the provider they chose): OpenAI `GET {baseUrl|api.openai.com}/v1/models` (Bearer), Anthropic `GET api.anthropic.com/v1/models` (`x-api-key` + `anthropic-version`), Google `GET generativelanguage.googleapis.com/v1beta/models?key=` (query param), Ollama `GET {baseUrl}/api/tags`. 5s timeout via `AbortSignal.timeout`. Filtering: OpenAI excludes embedding/audio/image/moderation id patterns; Anthropic passes through as-is (already chat-only); **Google filters to `supportedGenerationMethods.includes("generateContent")` AND an `/^gemini/i` name prefix** — the `generateContent` check alone isn't sufficient (confirmed against the real API: image/video/music preview models like `nano-banana-pro-preview` and `lyria-3-pro-preview` also declare it); Ollama passes through as-is. Google ids are stripped of the `models/` prefix returned by its API (bare id, matching the existing settings-card placeholder convention — `@ai-sdk/google`'s `getModelPath` auto-re-prepends `models/` to any bare id, so both forms work with the SDK, but bare matches the app's existing convention). Sorted newest-ish first (by `created`/`created_at`/`modified_at` where the API provides it; Google has no timestamp, so sorted by descending name as a heuristic). `FALLBACK_MODELS`: static per-provider suggestion lists exported separately, used by the actions layer when listing fails. Never logs API keys.
+
+**Files reworked:**
+
+- `src/config/ai.ts` — see schema/migration design above. Public API: `getAiProfiles()`, `getActiveAiProfile()` (used by the chat route — resolves `activeProfileId`, falling back to the first profile if stale), `getActiveAiProfileId()`, `getAiProfileById(id)`, `saveAiProfile(profile)`, `deleteAiProfile(id)`, `setActiveAiProfile(id)`, `deriveAiProfileName(provider, model)`, `maskApiKey` (unchanged).
+- `src/config/credentials.ts` — `ai` field loosened to `z.unknown()` (see above); no other change.
+- `src/lib/ai/provider.ts` — `resolveModel(config)` → `resolveModel(profile: AiProfile)`. Same fields, same per-provider factory wiring; only the type/param name changed.
+- `src/app/api/chat/route.ts` — Resolves the active profile via `getActiveAiProfile()` (503 `not_configured` if `getAiProfiles()` is empty, checked before body parsing, same as before). Added an **optional `profileId` field** to the request body's Zod schema, letting the client switch AI profiles per-conversation without writing to `banking.config.json` (which would otherwise switch every open tab/conversation at once) — an unknown `profileId` is rejected as `400 invalid_request`, not silently ignored or falling back to the active profile.
+- `src/actions/ai.actions.ts` — full rework, see API surface below.
+
+**Action API surface for Package 2 (`src/actions/ai.actions.ts`):**
+
+- `getAiProfilesStatus(): Promise<{ profiles: AiProfileStatus[]; activeProfileId: string | null }>` — `AiProfileStatus = { id, name, provider, model, baseUrl?, keyPreview?, isActive }`. Masked; never returns raw keys.
+- `saveAiProfile(input: { id?, name?, provider, model, apiKey?, baseUrl? }): Promise<{success:true, profile, activeProfileId} | {success:false, error}>` — create (no `id`) or update (matching `id`). **Merge-safe:** omitting `apiKey` on an update keeps the previously saved key (the client never gets the real key back from `getAiProfilesStatus`, so it can't round-trip it).
+- `deleteAiProfile(id): Promise<{success:true, activeProfileId} | {success:false, error}>` — see delete semantics above.
+- `setActiveAiProfile(id): Promise<{success, error?}>`.
+- `listAvailableModels(input: {profileId} | {draft: {provider, apiKey?, baseUrl?}}): Promise<{success:true, models} | {success:false, error, fallback}>` — accepts either a saved profile id or an unsaved draft, so the settings form can populate the model dropdown before the profile is ever saved. Falls back to `FALLBACK_MODELS[provider]` on failure. Never echoes the key.
+- `testAiConnection(profileId?): Promise<{success:true, latencyMs} | {success:false, error}>` — tests a specific profile, or the active one if `profileId` is omitted.
+- **Legacy wrappers** (kept so the pre-v1.1 settings card and `/assistant` page's `getAiConfigStatus()` call keep compiling unmodified — no UI files touched this session): `getAiConfigStatus()`, `saveAiConfig(input)` — both operate on the active profile, matching the old single-config UX exactly (`saveAiConfig` fully overwrites the active profile's fields, same as the pre-v1.1 behavior — not merge-safe, unlike the new `saveAiProfile`). Marked `@deprecated`; Package 2 should replace their call sites and delete these.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing (same baseline as prior sessions); zero new issues in an isolated `npx eslint` run against every file touched/created this session.
+- `npx prettier --check` — all touched/created files clean after one `--write` pass.
+- `npm run build` — succeeds; route list unchanged (`/api/chat`, `/assistant`, etc.).
+- **Migration test** (throwaway `tsx` script, gitignored scratchpad, run against a **temp copy** of a config fixture — `{ai: {provider:"openai", model:"gpt-4o-mini", apiKey:...}, dkb: {cookie:...}}` — never the real `banking.config.json`): confirmed (a) a plain read (`getAiProfiles`/`getActiveAiProfile`) migrates the legacy shape in memory without writing to disk (byte-identical file before/after); (b) the migrated id is stable across two independent reads (the deterministic-hash fix, above); (c) triggering a mutation (`setActiveAiProfile`) persists the new `{profiles, activeProfileId}` shape with every legacy field preserved exactly, the derived name correct (`"OpenAI — gpt-4o-mini"`), and the `dkb` sibling key untouched.
+- **Real-config check** (throwaway `tsx` script, read-only, run once against the client's actual `banking.config.json`): `getActiveAiProfile()` correctly returned `{provider: "google", model: "models/gemini-3.1-flash-lite"}` — i.e. the real Gemini config, including its existing `models/`-prefixed model id, resolves correctly through the new multi-profile code path without any write (confirmed byte-identical file before/after, both after the plain read and after the `listModels` call below).
+- **Model-catalog smoke test** (one real call, per task allowance): `listModels()` against the real active (Google) profile returned **30 models**; first 3 logged: `gemini-robotics-er-1.6-preview`, `gemini-robotics-er-1.5-preview`, `gemini-pro-latest` (no keys logged, ever). This run is what surfaced and led to fixing the `generateContent`-alone filtering gap noted above (the first attempt returned 39 results headed by non-chat `nano-banana`/`lyria` preview models).
+
+**Next actions:**
+
+- Package 2: replace `src/components/settings/ai-provider-card.tsx` with a true multi-profile settings UI (list profiles, add/edit/delete, set active, model picker backed by `listAvailableModels`) built directly on the actions above; update `/assistant` to allow per-conversation profile switching via the chat route's new optional `profileId` field; then remove the legacy wrapper actions (`getAiConfigStatus`, `saveAiConfig`) once no longer referenced.
+- Lead to review Package 1 before Package 2 begins.
 
 ---
 

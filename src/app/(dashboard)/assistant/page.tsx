@@ -29,11 +29,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { getAiConfigStatus } from "@/actions/ai.actions";
+import {
+  getAiProfilesStatus,
+  type AiProfileStatus,
+} from "@/actions/ai.actions";
 import { getTransactionCount } from "@/actions/transactions.actions";
+import { ProfileSwitcher } from "@/components/assistant/profile-switcher";
 
 import {
   ChatMessageBubble,
@@ -91,7 +94,7 @@ const THINKING_MESSAGE: ChatMessageData = {
 
 export default function AssistantPage(): React.JSX.Element {
   const [pageStatus, setPageStatus] = useState<PageStatus>("loading");
-  const [modelName, setModelName] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<AiProfileStatus[]>([]);
 
   const [input, setInput] = useState("");
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
@@ -168,17 +171,17 @@ export default function AssistantPage(): React.JSX.Element {
 
     async function load(): Promise<void> {
       try {
-        const [aiStatus, txCount] = await Promise.all([
-          getAiConfigStatus(),
+        const [profilesStatus, txCount] = await Promise.all([
+          getAiProfilesStatus(),
           getTransactionCount(undefined, { excludeInternal: true }),
         ]);
         if (cancelled) return;
 
-        if (!aiStatus.configured) {
+        if (profilesStatus.profiles.length === 0) {
           setPageStatus("not-configured");
           return;
         }
-        setModelName(aiStatus.model ?? null);
+        setProfiles(profilesStatus.profiles);
 
         if (txCount === 0) {
           setPageStatus("no-data");
@@ -195,6 +198,20 @@ export default function AssistantPage(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Re-fetches profile status after the header switcher changes the active
+  // profile, so its badge/checkmark reflect the new active profile without
+  // a full page reload. The next message sent will use the new provider —
+  // `getActiveAiProfile()` (server) always resolves the on-disk
+  // `activeProfileId` at request time.
+  const refreshProfiles = useCallback(async (): Promise<void> => {
+    try {
+      const status = await getAiProfilesStatus();
+      setProfiles(status.profiles);
+    } catch (err) {
+      console.error("Failed to refresh AI profiles:", err);
+    }
   }, []);
 
   // Focus the input once the conversation surface becomes available.
@@ -371,12 +388,7 @@ export default function AssistantPage(): React.JSX.Element {
           <h2 className="text-foreground text-lg font-semibold">
             AI Assistant
           </h2>
-          <Badge
-            variant="secondary"
-            className="hidden font-mono text-[11px] md:inline-flex"
-          >
-            {modelName ?? "Not configured"}
-          </Badge>
+          <ProfileSwitcher profiles={profiles} onSwitched={refreshProfiles} />
         </div>
 
         <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>

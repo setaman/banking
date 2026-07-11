@@ -2,8 +2,6 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "fs";
 import { join } from "path";
 import { z } from "zod";
 
-import { AiConfigSchema } from "@/config/ai";
-
 export const CONFIG_PATH = join(process.cwd(), "banking.config.json");
 
 export const BankCredentialSchema = z.object({
@@ -11,10 +9,18 @@ export const BankCredentialSchema = z.object({
   xsrfToken: z.string().trim().min(1).optional(),
 });
 
+// The `ai` key is intentionally left unvalidated/untyped here (rather than
+// importing `AiConfigSchema` from `@/config/ai`): its on-disk shape has
+// changed across versions (pre-v1.1 single-profile vs v1.1+ multi-profile),
+// and `@/config/ai`'s own `readAiConfig` is solely responsible for
+// validating/migrating it. Tying `ConfigSchema` to a specific `ai` shape
+// would make `loadCredentials()` (used only for `dkb`/`deutscheBank`) fail
+// to parse the *entire* file — and silently break bank credential reads —
+// whenever the `ai` key is in a shape this schema doesn't expect.
 export const ConfigSchema = z.object({
   dkb: BankCredentialSchema.optional(),
   deutscheBank: BankCredentialSchema.optional(),
-  ai: AiConfigSchema.optional(),
+  ai: z.unknown().optional(),
 });
 
 export type BankingConfig = z.infer<typeof ConfigSchema>;
