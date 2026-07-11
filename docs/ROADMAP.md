@@ -7,15 +7,16 @@
 
 ## Phase Overview
 
-| Phase       | Focus                               | Status      |
-| ----------- | ----------------------------------- | ----------- |
-| Phase 0     | Foundation (UI, theme, layout)      | DONE        |
-| Phase 1     | Data Layer & Banking Interface      | DONE        |
-| Phase 2     | DKB API Integration & Sync          | DONE        |
-| Phase 3     | Dashboard Charts & KPIs             | DONE        |
-| Phase 4     | Filters, Transactions Page & Polish | DONE        |
-| Phase 5     | Demo Mode & Extended Metrics        | DONE        |
-| **Phase 6** | **Sync & Test-Mode Improvements**   | **PLANNED** |
+| Phase       | Focus                               | Status   |
+| ----------- | ----------------------------------- | -------- |
+| Phase 0     | Foundation (UI, theme, layout)      | DONE     |
+| Phase 1     | Data Layer & Banking Interface      | DONE     |
+| Phase 2     | DKB API Integration & Sync          | DONE     |
+| Phase 3     | Dashboard Charts & KPIs             | DONE     |
+| Phase 4     | Filters, Transactions Page & Polish | DONE     |
+| Phase 5     | Demo Mode & Extended Metrics        | DONE     |
+| Phase 6     | Sync & Test-Mode Improvements       | PLANNED  |
+| **Phase 7** | **AI Financial Assistant**          | **DONE** |
 
 ---
 
@@ -209,10 +210,16 @@ Phase 4
 Phase 5
 (Demo + Extended KPIs)
     │
-    ▼
-Phase 6         ◄──── CURRENT
-(Sync & Test-Mode Improvements)
+    ├──────────────────────────┐
+    ▼                          ▼
+Phase 6                    Phase 7         ◄──── CURRENT
+(Sync & Test-Mode           (AI Financial Assistant)
+ Improvements)
 ```
+
+Note: Phase 7 (AI Financial Assistant) branches from Phase 5 and was developed and completed on its own branch
+(`feat/ai-assistant`) in parallel with, and independently of, Phase 6's sync/test-mode work -- it does not depend on
+Phase 6.
 
 ---
 
@@ -265,3 +272,39 @@ Phase 6         ◄──── CURRENT
 - [ ] UI refreshes immediately after sync
 - [ ] Error states are clearly communicated
 - [ ] Mobile experience is functional
+
+---
+
+## Phase 7: AI Financial Assistant
+
+**Goal:** A conversational AI analyst, built into the app, that answers natural-language questions about the user's own local financial data — with a bring-your-own-key provider setup, read-only tool access, and inline generative visualizations. Built end-to-end on `feat/ai-assistant`.
+
+**Design Spec:** `docs/design/ai-assistant-ui.md`
+
+### Tasks
+
+| ID  | Task                                                                                                                                                                                                                                                                                                                                           | Layer                     | Status |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------ |
+| 7.1 | Provider-agnostic AI config (Zod schema, local gitignored config, masked key storage) + provider factory (OpenAI/Anthropic/Google/Ollama) + Settings "AI Assistant" card (Test Connection, Save)                                                                                                                                               | Config / Provider Layer   | DONE   |
+| 7.2 | 15 read-only finance tools (accounts, balances, cash flow, category breakdown, budget split, savings rate, recurring expenses, volatility, income stability, emergency fund, balance prediction, search, period comparison, largest expenses, spending patterns) wrapping existing server actions/stats — no new calculations, no write access | Tool Layer                | DONE   |
+| 7.3 | Streaming `/api/chat` route (Vercel AI SDK `streamText` + multi-step tool calling), system prompt (locale/formatting rules, "never invent numbers" hard rule, analyst-not-advisor framing, worked example), constrained `VisualizationSpec` schema (5 types)                                                                                   | Chat API                  | DONE   |
+| 7.4 | `/assistant` chat page: header, streaming message list with auto-scroll, pinned auto-resizing input, welcome state with 6 starter questions, not-configured/no-data blocking states, provider-error banner with retry, localStorage conversation persistence, nav link                                                                         | Chat UI                   | DONE   |
+| 7.5 | Inline rendering of all 5 visualization types (bar/line/pie via ECharts, stat card, table) with the app's existing theme-aware chart palette, "View data" toggle, and a graceful fallback for invalid specs                                                                                                                                    | Visualization Rendering   | DONE   |
+| 7.6 | Hardening (local rate limiting, request body size cap), accessibility polish (focus management incl. post-stream restore, ARIA live region, elapsed-seconds "Thinking…" indicator, sr-only keyboard hint), system-prompt worked example, and documentation (PRD/ROADMAP/README/PROJECT-STATE)                                                  | Polish / Hardening / Docs | DONE   |
+
+### Deliverables
+
+- `src/config/ai.ts`, `src/lib/ai/provider.ts`, `src/components/settings/ai-provider-card.tsx`
+- `src/lib/ai/tools/*.ts` (15 tools) + `src/lib/ai/tools/index.ts` barrel
+- `src/app/api/chat/route.ts`, `src/lib/ai/system-prompt.ts`, `src/lib/ai/visualization.ts`
+- `src/app/(dashboard)/assistant/page.tsx` + `src/components/assistant/*` (chat message/input, starter chips, empty/error states, visualization renderer + chart wrappers)
+- `src/hooks/use-chat-persistence.ts`
+
+### Acceptance Criteria
+
+- [x] Assistant is unusable until a provider/model (and key, where applicable) is configured in Settings
+- [x] Every number the assistant states is traceable to a tool result (system-prompt hard rule + worked example)
+- [x] All 5 visualization types render correctly, theme-aware, with a "View data" toggle and a non-crashing fallback for invalid specs
+- [x] Provider failures map to distinct, user-actionable error states (auth, provider rate limit, local rate limit, Ollama unreachable, generic)
+- [x] Local rate limiting (30 req/min) and a 100KB request body cap protect the route independently of the upstream provider
+- [x] `npx tsc --noEmit`, `npm run lint` (zero new issues), and `npm run build` all pass

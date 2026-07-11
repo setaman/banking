@@ -12,6 +12,7 @@ export function Nav() {
     { href: "/insights", label: "Insights" },
     { href: "/transactions", label: "Transactions" },
     { href: "/sandbox", label: "Sandbox" },
+    { href: "/assistant", label: "Assistant" },
     { href: "/settings", label: "Settings" },
   ];
 
@@ -22,8 +23,8 @@ export function Nav() {
           key={link.href}
           href={link.href}
           className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            pathname === link.href ? "text-primary" : "text-muted-foreground",
+            "hover:text-primary text-sm font-medium transition-colors",
+            pathname === link.href ? "text-primary" : "text-muted-foreground"
           )}
         >
           {link.label}

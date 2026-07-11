@@ -77,24 +77,36 @@ These metrics focus on user habits, timing, and financial resilience, visualized
 - Covers all categories with natural variance
 - Allows full dashboard exploration without real credentials
 
+### 2.4 AI Financial Assistant
+
+A conversational analyst over the user's own local transaction data, available at `/assistant`. Bring-your-own-key (BYOK): the user configures a provider and model in Settings, and the assistant is unavailable until that's done.
+
+| ID  | Feature                       | Description                                                                                                                                                                                                                                                                                                                                                                                         |
+| --- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F14 | AI Chat Interface             | `/assistant` page: streaming conversational UI with 6 starter questions, message history persisted locally, Markdown-formatted answers, tool-activity indicators, and error recovery.                                                                                                                                                                                                               |
+| F15 | Provider Configuration (BYOK) | Settings card to choose a provider (OpenAI, Anthropic, Google Gemini, or Ollama, which runs fully local/offline only when its Base URL points at a local instance — a remote Ollama Base URL sends requests over the network) and model, with a "Test Connection" check. Stored only in the local, gitignored `banking.config.json` — never committed, never sent anywhere but the chosen provider. |
+| F16 | Generative Visualization      | The assistant can embed inline charts/tables in its replies, constrained to 5 validated spec types (bar, line, pie, stat, table) rendered with the app's existing ECharts theme — never arbitrary code or markup.                                                                                                                                                                                   |
+| F17 | Read-Only Tool Access         | The assistant answers only by calling 15 read-only "tool" functions (account balances, category breakdowns, cash flow, recurring expenses, savings rate, etc.) over the local database — it has no ability to modify data, and every number it states must come from a tool result.                                                                                                                 |
+
 ---
 
 ## 3. Technical Architecture
 
 ### 3.1 Stack
 
-| Layer         | Technology                            |
-| ------------- | ------------------------------------- |
-| Framework     | Next.js 16.1.4 (App Router, React 19) |
-| Language      | TypeScript 5 (strict mode)            |
-| Styling       | Tailwind CSS 4, shadcn/ui             |
-| Validation    | Zod                                   |
-| Database      | LowDB (file-based JSON)               |
-| CSV Parsing   | PapaParse (future, for Deutsche Bank) |
-| Charts        | ECharts (via echarts-for-react)       |
-| Date Handling | date-fns                              |
-| Currency      | currency.js or Intl.NumberFormat      |
-| Animations    | Framer Motion (motion)                |
+| Layer         | Technology                                                                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework     | Next.js 16.1.4 (App Router, React 19)                                                                                                                          |
+| Language      | TypeScript 5 (strict mode)                                                                                                                                     |
+| Styling       | Tailwind CSS 4, shadcn/ui                                                                                                                                      |
+| Validation    | Zod                                                                                                                                                            |
+| Database      | LowDB (file-based JSON)                                                                                                                                        |
+| CSV Parsing   | PapaParse (future, for Deutsche Bank)                                                                                                                          |
+| Charts        | ECharts (via echarts-for-react)                                                                                                                                |
+| Date Handling | date-fns                                                                                                                                                       |
+| Currency      | currency.js or Intl.NumberFormat                                                                                                                               |
+| Animations    | Framer Motion (motion)                                                                                                                                         |
+| AI Assistant  | Vercel AI SDK (`ai` v7, `@ai-sdk/react` v4) + provider adapters (`@ai-sdk/openai` v4, `@ai-sdk/anthropic` v4, `@ai-sdk/google` v4, `ollama-ai-provider-v2` v4) |
 
 ### 3.2 Data Flow
 
@@ -267,10 +279,11 @@ The following DKB API endpoints are needed (user to provide specifics):
 
 ### 5.1 Pages
 
-| Page         | Purpose                                         |
-| ------------ | ----------------------------------------------- |
-| Dashboard    | Primary view with all charts, KPIs, and summary |
-| Transactions | Full searchable/filterable transaction table    |
+| Page         | Purpose                                                                                                                      |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard    | Primary view with all charts, KPIs, and summary                                                                              |
+| Transactions | Full searchable/filterable transaction table                                                                                 |
+| Assistant    | Conversational AI financial analyst (`/assistant`) — streaming chat with inline charts/tables over the user's own local data |
 
 ### 5.2 Dashboard Layout
 
@@ -334,9 +347,15 @@ The application uses a sidebar navigation (desktop) / bottom tab bar (mobile) st
       - **K9 Discretionary Spend Ratio**
       - **B1-B5** (All Behavioral Metrics: Weekend vs Weekday, Financial Pulse, etc.)
     - _Components:_ Weekend vs Weekday analysis, Category Breakdown (3D Donut), Recurring Expenses list, Safety Net Gauge.
-5.  **Settings**
+5.  **Sandbox**
+    - _Primary Goal:_ Explore "what-if" scenarios without touching real data.
+    - _Components:_ What-If Financial Scenario Playground (adjustable income/expense assumptions, projected outcomes).
+6.  **Assistant**
+    - _Primary Goal:_ Ask natural-language questions about your own finances and get answers backed by real data, with optional inline charts/tables.
+    - _Components:_ Streaming chat, starter-question chips, provider-error recovery, generative visualizations (F14, F16).
+7.  **Settings**
     - _Primary Goal:_ Configuration.
-    - _Components:_ App Preferences, Data Management (Reset/Export), Theme Toggle.
+    - _Components:_ App Preferences, Data Management (Reset/Export), Theme Toggle, AI Assistant provider configuration (F15).
 
 ### 5.4 UI Mockups
 
