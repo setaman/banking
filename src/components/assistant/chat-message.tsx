@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useState, type ReactNode } from "react";
+import { Component, useEffect, useState, type ReactNode } from "react";
 import { format, parseISO } from "date-fns";
 import { motion } from "motion/react";
 import {
@@ -356,6 +356,48 @@ function CopyButton({ content }: { content: string }): React.JSX.Element {
   );
 }
 
+// ---------------------------------------------------------------------------
+// "Thinking…" indicator — the three pulsing dots shown while no text has
+// arrived yet, plus an elapsed-seconds counter that appears once 3s have
+// passed with no first token, so a slow model/tool call doesn't look stuck.
+// Mount-based timing: this component is only mounted while the assistant
+// bubble has no text yet, so `Date.now()` at mount is an accurate proxy for
+// "request submitted"/"still waiting for the first token".
+// ---------------------------------------------------------------------------
+
+const THINKING_ELAPSED_THRESHOLD_SECONDS = 3;
+
+function ThinkingIndicator(): React.JSX.Element {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 py-0.5" aria-live="polite">
+      <div className="flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="bg-muted-foreground/50 h-1.5 w-1.5 animate-pulse rounded-full"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
+      </div>
+      {elapsedSeconds >= THINKING_ELAPSED_THRESHOLD_SECONDS && (
+        <span className="text-muted-foreground text-xs italic tabular-nums">
+          Thinking… {elapsedSeconds}s
+        </span>
+      )}
+    </div>
+  );
+}
+
 function ToolActivityIndicator({
   activity,
 }: {
@@ -460,15 +502,7 @@ function AssistantBubble({
               )}
             </>
           ) : message.isStreaming ? (
-            <div className="flex items-center gap-1 py-0.5">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="bg-muted-foreground/50 h-1.5 w-1.5 animate-pulse rounded-full"
-                  style={{ animationDelay: `${i * 150}ms` }}
-                />
-              ))}
-            </div>
+            <ThinkingIndicator />
           ) : null}
         </div>
 

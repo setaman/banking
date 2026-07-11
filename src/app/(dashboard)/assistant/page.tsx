@@ -181,6 +181,18 @@ export default function AssistantPage(): React.JSX.Element {
     }
   }, [pageStatus]);
 
+  // Restore focus to the input once a request finishes. While busy the
+  // input is disabled, which the browser blurs automatically — without this,
+  // focus would silently drop out of the input for the rest of the session
+  // instead of returning to it, per the design spec's focus-management rule.
+  const wasBusyRef = useRef(false);
+  useEffect(() => {
+    if (wasBusyRef.current && !isBusy) {
+      inputRef.current?.focus();
+    }
+    wasBusyRef.current = isBusy;
+  }, [isBusy]);
+
   // Persist the conversation once it settles (skip mid-stream to avoid
   // writing partial tokens and excessive localStorage churn).
   useEffect(() => {
@@ -321,6 +333,7 @@ export default function AssistantPage(): React.JSX.Element {
               size="sm"
               className="text-muted-foreground hover:text-destructive"
               disabled={chatMessages.length === 0}
+              aria-label="Clear conversation"
             >
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               <span className="hidden sm:inline">Clear</span>

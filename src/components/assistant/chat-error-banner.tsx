@@ -20,6 +20,7 @@ export type ChatErrorCode =
   | "not_configured"
   | "auth"
   | "rate_limit"
+  | "rate_limit_local"
   | "ollama_unreachable"
   | "provider_error"
   | "invalid_request"
@@ -31,6 +32,8 @@ const ERROR_MESSAGES: Record<ChatErrorCode, string> = {
   auth: "Authentication failed. Check that your API key in Settings is correct and active.",
   rate_limit:
     "Rate limited by the AI provider. Please wait a moment and try again.",
+  rate_limit_local:
+    "You're sending messages too quickly. Please wait a minute and try again.",
   ollama_unreachable:
     "Could not reach your local Ollama server. Make sure it's running and the model is pulled.",
   provider_error: "The AI provider returned an error. Please try again.",

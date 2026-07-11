@@ -88,6 +88,7 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
             maxLength={MAX_LENGTH}
             disabled={disabled}
             aria-label="Message input"
+            aria-describedby="chat-input-keyboard-hint"
             style={{
               minHeight: MIN_HEIGHT_PX,
               maxHeight: MAX_HEIGHT_PX,
@@ -111,6 +112,9 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
             )}
           </Button>
         </div>
+        <span id="chat-input-keyboard-hint" className="sr-only">
+          Press Enter to send your message, or Shift+Enter to insert a new line.
+        </span>
         <div className="mt-1.5 flex items-center justify-center gap-2">
           <p className="text-muted-foreground text-center text-[11px]">
             Answers are AI-generated and may be inaccurate. Verify important

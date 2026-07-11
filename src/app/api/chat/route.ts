@@ -24,6 +24,7 @@ const MAX_MESSAGES = 50;
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_TOOL_STEPS = 8;
 const MAX_HISTORY_PAIRS = 10;
+const MAX_BODY_BYTES = 100 * 1024; // 100KB
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -33,6 +34,49 @@ const chatMessageSchema = z.object({
 const chatRequestSchema = z.object({
   messages: z.array(chatMessageSchema).max(MAX_MESSAGES),
 });
+
+// ---------------------------------------------------------------------------
+// Local rate limiting
+//
+// A simple in-memory sliding-window limiter, independent of any rate limit
+// the upstream AI provider itself may impose (see the `rate_limit` code
+// returned from the outer catch below for that case). This one exists to
+// protect the local dev/production server from being hammered with request
+// volume regardless of provider — e.g. a buggy client retry loop — before a
+// single token is ever sent upstream.
+//
+// In-memory only: resets on server restart and is per-process (fine for
+// this app's single-instance, local-first deployment model; would need a
+// shared store — Redis, etc. — behind a multi-instance deployment).
+// ---------------------------------------------------------------------------
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 30;
+
+/** Request timestamps (ms since epoch) per client key, most recent last. */
+const requestTimestamps = new Map<string, number[]>();
+
+/** Best-effort client key: the first hop of X-Forwarded-For, else a constant. */
+function getClientKey(request: Request): string {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const firstHop = forwardedFor?.split(",")[0]?.trim();
+  return firstHop || "local";
+}
+
+/**
+ * Records a request for `key` and reports whether it exceeds
+ * `RATE_LIMIT_MAX_REQUESTS` within the trailing `RATE_LIMIT_WINDOW_MS`.
+ */
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const recent = (requestTimestamps.get(key) ?? []).filter(
+    (t) => t > windowStart
+  );
+  recent.push(now);
+  requestTimestamps.set(key, recent);
+  return recent.length > RATE_LIMIT_MAX_REQUESTS;
+}
 
 /**
  * Keeps only the most recent `pairs` user/assistant turns (2 messages per
@@ -153,9 +197,24 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: "not_configured" }, { status: 503 });
   }
 
+  if (isRateLimited(getClientKey(request))) {
+    return NextResponse.json({ error: "rate_limit_local" }, { status: 429 });
+  }
+
+  let rawText: string;
+  try {
+    rawText = await request.text();
+  } catch {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  if (new TextEncoder().encode(rawText).length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
   let rawBody: unknown;
   try {
-    rawBody = await request.json();
+    rawBody = JSON.parse(rawText);
   } catch {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
