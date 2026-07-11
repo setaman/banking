@@ -1,9 +1,57 @@
 # Project State: BanKing
 
-**Current Phase:** Dashboard UX — date range defaults & session persistence ✅ COMPLETE
-**Current Sprint:** feat/dashboard-date-range-defaults
-**Last Session:** 2026-07-03
-**Branch:** feat/dashboard-date-range-defaults (not merged; awaiting lead review)
+**Current Phase:** AI Assistant — Phase A (infrastructure) ✅ COMPLETE
+**Current Sprint:** feat/ai-assistant
+**Last Session:** 2026-07-11
+**Branch:** feat/ai-assistant (not merged; no commits made per task scope)
+
+---
+
+## This session changes (2026-07-11) — AI Assistant Phase A: infrastructure
+
+**Summary:** Implemented the infrastructure layer for a new provider-agnostic AI assistant feature, built on the Vercel AI SDK. This phase covers dependencies, config storage, a server-only provider factory, server actions, and the Settings UI card — no chat UI, tools, or API route yet (that's Phase B+). Fully local-only: no chat messages or conversation history are involved in this phase, only provider configuration (provider, model, API key, base URL).
+
+**Dependency versions chosen (verified via `npm info`/type declarations before writing code, not from memory):**
+
+- `ai@^7.0.22` (Vercel AI SDK — latest stable major is v7, not v5; the task's "expect v5" assumption was outdated, confirmed via `npm info ai version`)
+- `@ai-sdk/openai@^4.0.11`, `@ai-sdk/anthropic@^4.0.12`, `@ai-sdk/google@^4.0.12` — all share `@ai-sdk/provider-utils@5.0.7`, matching `ai@7.0.22`'s own dependency, confirming compatibility.
+- `ollama-ai-provider-v2@^4.0.1` — peer dependency `ai: ^7.0.0`, matching. (`ai-sdk-ollama` was the other v7-compatible candidate; `ollama-ai-provider-v2` was chosen as it is the more established/widely-used package with a broader typed `OllamaChatModelId` union.)
+- Verified actual exported API surface from each installed package's `.d.ts` (not assumed from training knowledge): `createOpenAI`/`createAnthropic`/`createGoogleGenerativeAI` (aliased from `createGoogle` in `@ai-sdk/google`)/`createOllama` all return a callable `(modelId) => LanguageModelV4` provider; all accept `baseURL` (capital URL) rather than `baseUrl`; `generateText({ model, prompt })` returns `{ text, ... }`.
+
+**Files Created:**
+
+- `src/config/ai.ts` — `AiProviderSchema` (zod enum `openai|anthropic|google|ollama`), `AiConfigSchema` (`provider`, `model` required, `apiKey` optional, `baseUrl` optional URL), `getAiConfig()`/`saveAiConfig()` reading/writing the `ai` key in `banking.config.json` with the same atomic-write-via-temp-file-rename pattern as `src/config/credentials.ts`. Uses a permissive `.catchall(z.unknown())` top-level schema so saving `ai` never clobbers `dkb`/`deutscheBank`/other sibling keys. Defines its own local `CONFIG_PATH` constant (duplicated value, not imported) specifically to avoid a circular import with `credentials.ts` (which now imports `AiConfigSchema` from this module). `maskApiKey()` masks to first 5 + last 4 chars (fixed `•••••` placeholder for keys ≤ 9 chars).
+- `src/lib/ai/provider.ts` — `resolveModel(config: AiConfig): LanguageModel`, server-only module (not imported from any client component), switches on `config.provider` and calls the matching provider factory (`createOpenAI`/`createAnthropic`/`createGoogleGenerativeAI`/`createOllama`). OpenAI passes through `baseUrl` as `baseURL` (supports OpenAI-compatible proxies). Ollama defaults to `http://localhost:11434` when no `baseUrl` is configured (exported as `OLLAMA_DEFAULT_BASE_URL`).
+- `src/actions/ai.actions.ts` — Server actions: `getAiConfigStatus()` (returns `{ configured, provider?, model?, keyPreview? }`, never the raw key), `saveAiConfig(input)` (zod-validates then delegates to the config-layer save, aliased internally as `saveAiConfigToDisk` to avoid a naming clash), `testAiConnection()` (resolves the *currently saved* config, no client-supplied overrides — matches the specified zero-argument signature — and issues a minimal `generateText({ model, prompt: "Reply with OK" })` call, timing it). `describeAiError()` sanitizes raw provider/network errors into one of: Ollama connection-refused (suggests `ollama serve` / `ollama pull <model>`), Ollama model-not-found, auth failure (401/403/"unauthorized"/key wording), network failure, rate-limit, or a generic fallback — the raw error object/message is never returned to the client.
+- `src/components/settings/ai-provider-card.tsx` — Client component modeled on `bank-connection-card.tsx`'s status-machine/motion pattern (`not-configured`/`configured`/`testing`/`test-success`/`test-failure`/`saving`/`saved`/`error`). Provider `Select` (OpenAI/Anthropic/Google/Ollama), model `Input` with per-provider placeholder (`gpt-4o`/`claude-sonnet-4-5`/`gemini-2.5-flash`/`llama3.1`), write-only API key field (masked `keyPreview` shown in the status strip only, never re-populated into the input — mirrors the existing DKB cookie field's write-only UX exactly, including requiring re-entry on every Save), Base URL input shown only for Ollama (placeholder `http://localhost:11434`), API key field hidden entirely for Ollama, an "all processing stays on your machine" privacy note for Ollama, Sonner toasts, and a Test Connection button (disabled until a config is actually persisted, since `testAiConnection()` takes no arguments and always tests the saved config, not unsaved form state). **Uses `border-border` theme tokens throughout (never `border-white/10`)** per the hard project rule for light-mode legibility — verified visually (screenshots below).
+- `qa/ai-provider-card-qa.mjs` — gitignored Playwright screenshot script (dark/light full-page + card crop + Ollama-provider crop, console-error capture).
+
+**Files Modified:**
+
+- `src/config/credentials.ts` — `ConfigSchema` extended with `ai: AiConfigSchema.optional()` (imported from `@/config/ai`); `CONFIG_PATH` unchanged.
+- `src/actions/sync.actions.ts` — Knock-on fix: `institutionId as keyof typeof config` widened to include `"ai"` once `ConfigSchema` grew that key, breaking the `syncBank()` call (its return type union now included `AiConfig`, which lacks `cookie`). Narrowed the cast to the literal `"dkb" | "deutscheBank"` union, restoring the original behavior with no functional change.
+- `src/app/settings/page.tsx` — Mounted `<AiProviderCard />` in a new "AI Assistant" `motion.section` below Account Management, following the existing staggered entrance-animation pattern (`delay: 0.3`).
+- `package.json` / `package-lock.json` — Added `ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `ollama-ai-provider-v2` as dependencies.
+
+**Design decisions worth flagging for the lead/customer:**
+
+- The API key field is write-only and must be re-entered on every Save (even just to change the model), mirroring the existing bank-cookie UX exactly. This was chosen over a partial-merge ("leave blank to keep existing key") approach for simplicity and consistency with an established project pattern, at the cost of slightly more friction when only the model needs updating.
+- `testAiConnection()` always tests the persisted config (per the specified zero-argument signature), so the UI disables "Test Connection" until a Save has succeeded at least once — you can't test unsaved draft changes.
+- `getAiConfigStatus()` intentionally does not return `baseUrl` (per the exact specified return shape), so a previously-saved custom Ollama base URL is not pre-filled into the form on reload; the input shows the default placeholder instead. Not a secret, just a spec-shape choice — flagging in case Phase B wants it added.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing baseline; zero new issues in created/modified files.
+- `npm run build` — succeeds, all routes emitted (including `/settings`).
+- `npx prettier --write` — run on all created/modified files.
+- Visual QA (headless Playwright, `qa/ai-provider-card-qa.mjs`, gitignored; playwright itself installed transiently via `npm install --no-save` for the QA run only, then uninstalled afterward — not a persisted project dependency): confirmed both dark and light mode render correctly, `border-border` tokens give legible card borders in light mode, the OpenAI-default view (Provider/Model/API Key fields + validation asterisks) and the Ollama view (Base URL field, API key hidden, privacy note) both look correct, zero console errors. Screenshots: `qa/ai-provider-card-{dark,light}-{full,card,ollama}.png`.
+- Confirmed no secrets were written: `banking.config.json` still contains only the pre-existing `dkb` key after the QA run (no Save button was ever clicked during screenshotting).
+
+**Next actions:**
+
+- Phase B: chat UI, tool-calling against transaction/account data, and an API route (or server action + streaming) to wire the assistant into the dashboard.
+- Lead to review `feat/ai-assistant` Phase A before Phase B begins.
 
 ---
 

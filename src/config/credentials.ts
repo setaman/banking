@@ -2,6 +2,8 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "fs";
 import { join } from "path";
 import { z } from "zod";
 
+import { AiConfigSchema } from "@/config/ai";
+
 export const CONFIG_PATH = join(process.cwd(), "banking.config.json");
 
 export const BankCredentialSchema = z.object({
@@ -12,6 +14,7 @@ export const BankCredentialSchema = z.object({
 export const ConfigSchema = z.object({
   dkb: BankCredentialSchema.optional(),
   deutscheBank: BankCredentialSchema.optional(),
+  ai: AiConfigSchema.optional(),
 });
 
 export type BankingConfig = z.infer<typeof ConfigSchema>;

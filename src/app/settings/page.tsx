@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 
 import { BankConnectionCard } from "@/components/settings/bank-connection-card";
 import { AccountManagementCard } from "@/components/settings/account-management-card";
+import { AiProviderCard } from "@/components/settings/ai-provider-card";
 import { getAccounts, getActiveAccountIds } from "@/actions/accounts.actions";
 import type { UnifiedAccount } from "@/lib/banking/types";
 
@@ -83,6 +84,17 @@ export default function SettingsPage() {
           activeAccountIds={activeAccountIds}
           onChanged={() => setRefreshKey((k) => k + 1)}
         />
+      </motion.section>
+
+      {/* AI Assistant section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.3 }}
+        className="flex flex-col gap-4"
+      >
+        <h2 className="text-foreground text-lg font-semibold">AI Assistant</h2>
+        <AiProviderCard />
       </motion.section>
     </div>
   );

@@ -58,7 +58,7 @@ export async function triggerSync(
     };
   }
 
-  const credentialKey = institutionId as keyof typeof config;
+  const credentialKey = institutionId as "dkb" | "deutscheBank";
   const credentials = config[credentialKey];
   if (!credentials) {
     return {
