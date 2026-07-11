@@ -150,6 +150,11 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
+### Production Deployment
+
+For running BanKing as a persistent service (background process, Docker, etc.), see the full
+[Deployment Guide](docs/DEPLOYMENT.md).
+
 ## Project Structure
 
 ```
