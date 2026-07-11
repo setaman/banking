@@ -1,9 +1,55 @@
 # Project State: BanKing
 
-**Current Phase:** AI Assistant — Phase B (finance tool layer) ✅ COMPLETE
+**Current Phase:** AI Assistant — Phase C (chat API + system prompt + visualization schema) ✅ COMPLETE
 **Current Sprint:** feat/ai-assistant
 **Last Session:** 2026-07-11
 **Branch:** feat/ai-assistant (not merged; no commits made per task scope)
+
+---
+
+## This session changes (2026-07-11) — AI Assistant Phase C: chat API + system prompt + visualization schema
+
+**Summary:** Implemented the streaming chat API route that wires Phase A's provider resolver and Phase B's `financeTools` into `ai@7`'s `streamText`, plus the constrained visualization-spec schema and the assistant's system prompt. No UI in this phase — `/assistant` (the chat page itself) is Phase D. Three new files, zero files modified.
+
+**`ai@7.0.22` APIs confirmed from installed type declarations (not memory):**
+
+- Multi-step tool calling: `stopWhen: stepCountIs(8)` — `stepCountIs` is exported directly from `"ai"` (an alias for the internal `isStepCount`).
+- Message conversion: **not needed.** The wire format chosen for this route is a simple `{ role: "user" | "assistant", content: string }[]` (matching `docs/design/ai-assistant-ui.md`'s `ChatMessage` model, which stores plain `content: string`, not the AI SDK's `UIMessage` `parts[]` shape). Since `UserModelMessage`/`AssistantModelMessage` both accept a plain `string` for `content`, these map directly to `ModelMessage[]` with no conversion step — `convertToModelMessages` would only be needed if the client sent full `UIMessage` objects (parts arrays), which it doesn't. Flagging for Phase D: the chat page can either keep this simple `{role, content}` shape end-to-end, or adapt if a future decision adopts `useChat`/`UIMessage` on the client — the route would need `convertToModelMessages` added at that point.
+- Streaming response: `createUIMessageStreamResponse({ stream: toUIMessageStream({ stream, tools, onError }) })` — **not** the simpler (but deprecated-for-removal) `result.toUIMessageStreamResponse()` shortcut. The switch to the two-function form was required to solve a real bug found during smoke testing (see below), not a style preference.
+
+**Files Created:**
+
+- `src/lib/ai/visualization.ts` — `visualizationSpecSchema` (Zod discriminated union on `type`, 5 members: `bar`, `line`, `pie`, `stat`, `table`, exact shapes as specified — `bar`/`line` share a `{label, value, value2?}` point shape with `.max(60)`/`.max(120)` respectively, `pie` is `{label, value}` `.max(20)`, `stat` is `{title, value, change?, trend?}`, `table` is `{columns: string[].max(8), rows: string[][].max(50)}`). Exported inferred type `VisualizationSpec` and `parseVisualizationSpec(raw: string): VisualizationSpec | null` (JSON.parse + safeParse in try/catch, `null` on any failure — no throws). **Note:** this schema's field names (`title`/`change`/`trend` for stat; no `donut`/`color`/`label` fields) were specified explicitly in the Phase C task brief and differ slightly from the earlier `docs/design/ai-assistant-ui.md` §5 spec (which used `label`/`trendValue`/`description` for stat, and had a `donut`/`color` field on pie/bar). Followed the Phase C brief as authoritative since it's the most recent, most specific instruction; flagging so Phase D's `InlineVisualization` renderer is built against `src/lib/ai/visualization.ts`'s actual schema, not the older design-doc interface.
+- `src/lib/ai/system-prompt.ts` — `buildSystemPrompt(): string`, computes `new Date()` internally on every call (not cached/memoized) so "today" is always accurate for resolving relative date phrases. Covers: de-DE/EUR formatting rules (German number format to the user, ISO `YYYY-MM-DD` to tools), the "never invent numbers" hard rule (stated twice, verbatim per the brief), analyst-not-advisor framing (no buy/sell advice, no external market data access), tool-usage guidance (prefer aggregates, `search_transactions` only for specific merchants), a security instruction never to follow instructions embedded in transaction/counterparty text, and the full visualization-block instructions (fenced ` ```visualization ` blocks, all 5 shapes documented inline with one concrete example each, matching `visualization.ts`'s actual schema).
+- `src/app/api/chat/route.ts` — `POST` handler. `getAiConfig()` null → 503 `{error:"not_configured"}` (checked before body parsing/validation). Zod-validates `{messages: {role, content}[]}` — `.max(50)` messages, `.max(4000)` chars per `content` — malformed JSON or failed validation → 400 `{error:"invalid_request"}`. Trims to the last 10 user/assistant pairs (`messages.slice(-20)`) before calling the model. Calls `streamText({model, system: buildSystemPrompt(), messages, tools: financeTools, stopWhen: stepCountIs(8), temperature: 0.3, onError: () => {}})` (the SDK's own default `onError` dumps full stack traces + request bodies to the server console; suppressed in favor of the route's own concise logging).
+
+**Bug found and fixed during smoke testing — provider errors were always returning HTTP 200:** The obvious implementation (`return result.toUIMessageStreamResponse()`) always returns HTTP 200, even when the provider call fails outright (bad key, rate limit, Ollama unreachable), because the HTTP status/headers are committed the instant the `Response` object is constructed, before any bytes of the (async) body are known — and with `tools`/`stopWhen` in play, `ai@7` does not throw from the stream reader on a failed provider call; it emits a normal, non-throwing `{type: "error", error}` chunk instead (confirmed empirically with a throwaway script against an unreachable Ollama port: the SDK retries 3× with backoff, then delivers the failure as an in-band stream chunk, not a thrown exception). Left as-is, every provider failure would have silently produced a 200 response with the error hidden inside the SSE body — contradicting the required 401/429/502/500 status-code mapping.
+**Fix:** added `peekThenResume()`, which reads from `result.stream` past the benign leading lifecycle markers (`"start"`, `"start-step"` — both emitted before the provider call is known to have succeeded) and explicitly re-throws if it encounters an in-band `{type: "error"}` chunk. If the first genuine chunk is healthy content, the peeked chunks are replayed into a fresh `ReadableStream` (no data lost) and streaming proceeds normally. This means a failed request now throws into the route's own `try/catch` *before* the HTTP response is constructed, so the real status code can still be chosen. Errors that occur *after* this point (mid-stream, once 200 is already committed) remain necessarily in-band, handled via `toUIMessageStream`'s `onError` (logs concisely server-side, embeds a generic "An error occurred..." string for the client — never the raw error).
+**Error mapping in the outer catch:** `RetryError` (thrown when all internal retries are exhausted) is unwrapped via `.lastError` to reach the underlying `APICallError`. `APICallError.isInstance(effective)` + `statusCode` 401/403 → 401 `{error:"auth"}`; 429 → 429 `{error:"rate_limit"}`; `config.provider === "ollama"` + connection-refused (checked via `cause.code === "ECONNREFUSED"` or a message regex fallback) → 502 `{error:"ollama_unreachable"}`; anything else → 500 `{error:"provider_error"}`. All server-side logs are concise one-liners (error class + message only — no stack traces, no request bodies, no API keys).
+
+**Files NOT modified:** none — Phase C is purely additive.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — zero new issues (`npx eslint` run in isolation against all 3 new files — zero output). Baseline pre-existing problems in unrelated files unchanged.
+- `npm run build` — succeeds; `/api/chat` emitted as a dynamic (`ƒ`) route alongside the existing `/api/sync`.
+- `npx prettier --write` — run on all 3 new files.
+- **Functional smoke test** (dev server, `banking.config.json` confirmed to have **no** `ai` key going in):
+  - No AI config → `curl -X POST /api/chat` (any body) → `503 {"error":"not_configured"}`, checked before body parsing.
+  - Malformed JSON body → `400 {"error":"invalid_request"}`.
+  - Missing `messages` field → `400`.
+  - Invalid `role` value (e.g. `"system"`) → `400`.
+  - 51 messages → `400` (`.max(50)` rejects).
+  - A single message with 4001-char `content` → `400` (`.max(4000)` rejects).
+  - To exercise the 400/502 paths end-to-end (not just the 503 short-circuit), a **temporary** `ai` config block was added to `banking.config.json` (provider `"ollama"`, model `"llama3.1:8b"`, `baseUrl: "http://localhost:11434"` — **no API key**, since Ollama doesn't use one, per the "do not add a real API key" constraint) after backing up the original file; a valid minimal chat request against this config (Ollama not actually running) correctly returned `502 {"error":"ollama_unreachable"}` after the fix described above (initially returned `200` with an in-band error — this is what led to discovering and fixing the bug). `banking.config.json` was then restored byte-for-byte from the backup (verified via `diff`) and the 503 path re-confirmed working.
+  - Server logs during the failure case were concise (`Chat API error: Cannot connect to API:`) — no stack trace, no request body, no key fragments.
+  - Streaming happy-path (real provider key, real tokens) is explicitly deferred to QA with the user's own key, per task scope.
+
+**Next actions:**
+
+- Phase D: the `/assistant` chat page UI (per `docs/design/ai-assistant-ui.md`) — message list, pinned input bar, inline visualization rendering (`InlineVisualization` component consuming `parseVisualizationSpec`), welcome/empty/error states, nav link. Needs a decision on whether the client sends the simple `{role, content}` shape used by this route as-is, or whether to adopt `useChat`/`UIMessage` (in which case the route would need `convertToModelMessages` added).
+- Lead to review `feat/ai-assistant` Phase C before Phase D begins.
 
 ---
 
