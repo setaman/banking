@@ -181,12 +181,12 @@ and tables rendered directly in the chat.
 
 ### Supported Providers
 
-| Provider        | Recommended Model(s)                                                   | Notes                                                                                                                                  |
-| --------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| OpenAI          | `gpt-4o`, `gpt-4o-mini`                                                | Requires an API key.                                                                                                                   |
-| Anthropic       | `claude-sonnet-4-5`                                                    | Requires an API key.                                                                                                                   |
-| Google (Gemini) | `gemini-2.5-flash`, `gemini-2.5-pro`                                   | Requires an API key.                                                                                                                   |
-| Ollama (local)  | Any locally pulled function-calling-capable model (e.g. `llama3.1:8b`) | Zero-egress: runs entirely on your machine, no API key needed. The model must support tool/function calling for the assistant to work. |
+| Provider        | Recommended Model(s)                                                   | Notes                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI          | `gpt-4o`, `gpt-4o-mini`                                                | Requires an API key.                                                                                                                                                                                                                                                                                                                                                            |
+| Anthropic       | `claude-sonnet-4-5`                                                    | Requires an API key.                                                                                                                                                                                                                                                                                                                                                            |
+| Google (Gemini) | `gemini-2.5-flash`, `gemini-2.5-pro`                                   | Requires an API key.                                                                                                                                                                                                                                                                                                                                                            |
+| Ollama (local)  | Any locally pulled function-calling-capable model (e.g. `llama3.1:8b`) | Zero-egress **only when the Base URL points to a local Ollama instance** (e.g. `http://localhost:11434`) — everything then runs entirely on your machine, no API key needed. If the Base URL is a remote Ollama server, requests (including transaction data) are sent to that server over the network. The model must support tool/function calling for the assistant to work. |
 
 ### Example Questions
 
@@ -198,11 +198,15 @@ and tables rendered directly in the chat.
 
 ### Privacy
 
-Only aggregated, on-demand summaries — the specific figures needed to answer your question (e.g. "Groceries: 412.50
-EUR across 18 transactions") — are ever sent to your chosen AI provider. Raw transaction line items, bank
-credentials, cookies, and IBANs never leave your machine and are never included in any request to the AI. The
-assistant only has **read-only** access to your data; it cannot modify, delete, or export anything. Choosing Ollama
-keeps everything — including those summaries — entirely local, with zero data leaving your machine.
+Most tools return only aggregated, on-demand summaries — the specific figures needed to answer your question (e.g.
+"Groceries: 412.50 EUR across 18 transactions"). The one exception is transaction search: when you ask about specific
+transactions, the assistant may send up to 50 matching individual transaction rows (date, amount, description,
+counterparty, category) to your chosen AI provider. These rows are capped at 50 and PII-stripped — no IBANs, account
+or transaction IDs, cookies, or bank credentials are ever included, and descriptions are truncated to 200 characters.
+The assistant only has **read-only** access to your data; it cannot modify, delete, or export anything. Choosing
+Ollama with a local Base URL keeps everything — including individual transaction rows — entirely on your machine,
+with zero data leaving it; a remote Ollama Base URL sends requests to that server instead (see Supported Providers
+above).
 
 ## Project Structure
 
@@ -215,7 +219,7 @@ banking/
 │   │   ├── globals.css         # Theme variables + Tailwind
 │   │   ├── transactions/       # Transactions table with filters
 │   │   ├── insights/           # Financial insights and analytics
-│   │   ├── assistant/          # AI Assistant chat page
+│   │   ├── (dashboard)/assistant/ # AI Assistant chat page
 │   │   ├── api/sync/           # DKB sync API endpoint
 │   │   └── api/chat/           # AI Assistant streaming chat API
 │   ├── components/

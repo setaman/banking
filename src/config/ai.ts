@@ -42,6 +42,21 @@ const RawConfigFileSchema = z
   })
   .catchall(z.unknown());
 
+/**
+ * Loose variant of `RawConfigFileSchema` used only when reading the existing
+ * file before a save. The `ai` key is intentionally left unvalidated here:
+ * if it's corrupted/invalid (e.g. hand-edited), `RawConfigFileSchema` would
+ * fail to parse the *entire* object, causing `saveAiConfig` to silently drop
+ * sibling keys (`dkb`, `deutscheBank`) on write. This schema always succeeds
+ * as long as the file is a JSON object, so sibling keys are preserved
+ * regardless of the `ai` key's validity.
+ */
+const LooseConfigFileSchema = z
+  .object({
+    ai: z.unknown().optional(),
+  })
+  .catchall(z.unknown());
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -94,7 +109,7 @@ export function saveAiConfig(config: AiConfig): {
     let existing: Record<string, unknown> = {};
     if (existsSync(CONFIG_PATH)) {
       const raw = readFileSync(CONFIG_PATH, "utf-8");
-      const parsed = RawConfigFileSchema.safeParse(JSON.parse(raw));
+      const parsed = LooseConfigFileSchema.safeParse(JSON.parse(raw));
       if (parsed.success) {
         existing = parsed.data;
       }

@@ -43,9 +43,13 @@ export const getSpendingPatternsTool = tool({
       { excludeInternal: true }
     );
 
-    const dateRange =
-      startDate && endDate
-        ? { start: parseISO(startDate), end: parseISO(endDate) }
+    const dateRange = startDate
+      ? {
+          start: parseISO(startDate),
+          end: endDate ? parseISO(endDate) : new Date(),
+        }
+      : endDate
+        ? { start: new Date(0), end: parseISO(endDate) }
         : undefined;
     const dailyAverage = calculateDailyAverage(transactions, dateRange);
 

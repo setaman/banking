@@ -45,7 +45,7 @@ Every surface in this spec uses **`border-border`** (the theme token) rather tha
 
 Insert `"Assistant"` between `"Sandbox"` and `"Settings"` in `src/components/layout/nav.tsx`:
 
-```
+```text
 Dashboard | Insights | Transactions | Sandbox | Assistant | Settings
 ```
 
@@ -67,7 +67,7 @@ The assistant page is a **full-available-height chat column** that lives inside 
 
 ### Desktop Layout (md and above)
 
-```
+```text
 +----------------------------------------------------------+
 |  HEADER ROW  (sticky within column, not viewport)        |
 |  [Bot icon] AI Assistant    [model badge]   [Clear btn]  |
@@ -95,7 +95,7 @@ Identical single-column structure. The input bar sticks to the bottom of the vie
 
 ### Outer Container
 
-```
+```tsx
 className="flex flex-col"
 style={{ height: "calc(100vh - 8rem - 3.5rem)" }}
 ```
@@ -904,7 +904,7 @@ Stagger delay `0.3` follows the existing pattern (Bank Connection at `0.1`, Acco
 Follow the exact same card pattern as `BankConnectionCard`: gradient overlay, icon + title header, status strip, form fields, footer with privacy note + action buttons.
 
 ```tsx
-<Card className="border-primary/10 relative overflow-hidden">
+<Card className="border-border relative overflow-hidden">
   {/* Gradient overlay -- use a warmer purple-to-cyan for AI personality */}
   <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5
                   via-transparent to-cyan-500/5 opacity-50" />
@@ -1105,10 +1105,12 @@ The privacy note adapts based on the selected provider:
   {provider === "ollama" ? (
     <>Fully private -- all processing stays on your machine.</>
   ) : (
-    <>Your data is sent to {providerDisplayName} for processing. No data is stored by them.</>
+    <>Your data is sent to {providerDisplayName} for processing, subject to their privacy/retention policy.</>
   )}
 </p>
 ```
+
+Do not claim "no data is stored by them" -- the app has no way to guarantee a third-party provider's retention behavior. State what the app sends and defer storage/retention behavior to the provider's own policy.
 
 For Ollama, the privacy note gets a subtle emerald accent to draw attention:
 
@@ -1160,24 +1162,26 @@ Same layout as BankConnectionCard:
 
 ### Test Connection Behavior
 
-- **OpenAI / Anthropic / Google**: Sends a minimal "ping" message (e.g., `"Reply with OK"`) using the configured key/model. On success: shows model name and response latency in toast. On failure: shows error in status strip + toast.
-- **Ollama**: Calls the Ollama `/api/tags` endpoint at the configured base URL to verify the server is running and the specified model is available. On success: confirms model exists. On failure: "Could not reach Ollama at {baseUrl}" or "Model {model} not found".
+All providers, including Ollama, are tested the same way: a server action resolves the saved provider/model and issues a single minimal `generateText({ prompt: "Reply with OK" })` call (no separate `/api/tags` probe for Ollama). On success: shows response latency in a toast. On failure: a sanitized, provider-aware error message (auth failure, unreachable host, rate limit, or a generic fallback) is shown in the status strip + toast -- for Ollama specifically, connection/network failures are reported as "Could not reach Ollama. Make sure it's running (`ollama serve`) and the model is pulled (`ollama pull <model>`)."
 
 ### Data Persistence
 
-AI configuration is stored in `localStorage` under key `banking:ai-config:v1`:
+AI configuration is stored **server-side** in the local, gitignored `banking.config.json` file under the `ai` key --
+not in `localStorage`. The API key never touches the browser's storage; the settings card only ever receives a
+masked preview (`keyPreview`) from the server, never the raw key.
 
 ```typescript
 interface AiConfig {
   provider: "openai" | "anthropic" | "google" | "ollama";
   model: string;
-  apiKey?: string;        // Encrypted or stored as-is (local only)
-  baseUrl?: string;       // Ollama only
-  configuredAt: string;   // ISO timestamp
+  apiKey?: string;  // Server-side only; never sent back to the client in full
+  baseUrl?: string; // Ollama only
 }
 ```
 
-The settings card reads/writes this key. The assistant page reads it to initialize the AI client.
+The settings card calls server actions (`getAiConfigStatus`, `saveAiConfig`, `testAiConnection`) to read/write this
+configuration; it never accesses the file directly. The `/api/chat` assistant route reads the same server-side
+configuration to resolve the model at request time.
 
 ---
 
@@ -1216,7 +1220,7 @@ The assistant page loads with a staggered entrance matching other pages:
 
 Stagger the welcome elements:
 
-```
+```text
 Icon:             delay 0.1, duration 0.4, scale 0.8 -> 1
 Title:            delay 0.15, duration 0.35
 Subtitle:         delay 0.2, duration 0.35
@@ -1322,7 +1326,7 @@ Individual assistant messages that are actively streaming should have `aria-busy
 
 ### File Structure
 
-```
+```text
 src/
   app/
     (dashboard)/
@@ -1453,17 +1457,20 @@ interface PersistedConversation {
 }
 ```
 
-- Load on mount (SSR-safe: read in lazy `useState` initializer, same pattern as `useScenarios`).
+- Load on mount (server-access-safe: read in a lazy `useState` initializer, same pattern as `useScenarios`, so it
+  never touches `window` during SSR -- but still hydration-sensitive, since the initializer's first-render output on
+  the client differs from the server-rendered markup; gate any server-rendered fallback UI or require post-mount
+  loading if a mismatch is observed).
 - Persist on every new message or stream completion via `useEffect`.
 - "Clear conversation" removes the key entirely.
 - No pagination or archiving. If the conversation gets very long (>200 messages), show a subtle hint: "Long conversation -- consider clearing for better performance."
 
-### localStorage Key Summary
+### Persistence Summary
 
-| Key                                  | Owner            | Content                  |
-| ------------------------------------ | ---------------- | ------------------------ |
-| `banking:ai-config:v1`              | Settings card    | Provider, model, key     |
-| `banking:assistant:conversation:v1` | Assistant page   | Message history          |
+| Key / Location                       | Owner                              | Storage          | Content                  |
+| ------------------------------------ | ----------------------------------- | ---------------- | ------------------------ |
+| `banking.config.json` (`ai` key)     | Settings card + `/api/chat` route   | Server-side file | Provider, model, API key |
+| `banking:assistant:conversation:v1` | Assistant page                      | `localStorage`   | Message history          |
 
 ---
 
@@ -1486,5 +1493,6 @@ interface PersistedConversation {
 - Do not add `<h1>` tags -- the page title is in the header row, not a semantic heading.
 - Do not render headings (h1-h6) inside message bubbles.
 - Do not auto-play sounds or add notification badges.
-- Do not persist the API key in `sessionStorage` (only `localStorage`).
+- Do not persist the API key in the browser at all (not `localStorage`, not `sessionStorage`) -- it is stored only
+  server-side in `banking.config.json` and reaches the client solely as a masked preview.
 - Do not send the full conversation history to the AI on every turn -- use a sliding window or summarization strategy (implementation detail, not UI concern).

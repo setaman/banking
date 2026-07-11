@@ -210,16 +210,16 @@ Phase 4
 Phase 5
 (Demo + Extended KPIs)
     │
-    ▼
-Phase 6
-(Sync & Test-Mode Improvements)
-    │
-    ▼
-Phase 7         ◄──── CURRENT
-(AI Financial Assistant)
+    ├──────────────────────────┐
+    ▼                          ▼
+Phase 6                    Phase 7         ◄──── CURRENT
+(Sync & Test-Mode           (AI Financial Assistant)
+ Improvements)
 ```
 
-Note: Phase 7 (AI Financial Assistant) was developed and completed on its own branch (`feat/ai-assistant`) independently of Phase 6's status; it does not depend on Phase 6's sync/test-mode work.
+Note: Phase 7 (AI Financial Assistant) branches from Phase 5 and was developed and completed on its own branch
+(`feat/ai-assistant`) in parallel with, and independently of, Phase 6's sync/test-mode work -- it does not depend on
+Phase 6.
 
 ---
 

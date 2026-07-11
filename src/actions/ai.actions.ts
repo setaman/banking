@@ -28,6 +28,9 @@ export type TestAiConnectionResult =
   | { success: true; latencyMs: number }
   | { success: false; error: string };
 
+/** Max time to wait for a provider response before treating it as failed. */
+const TEST_CONNECTION_TIMEOUT_MS = 15_000;
+
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
@@ -92,6 +95,7 @@ export async function testAiConnection(): Promise<TestAiConnectionResult> {
     await generateText({
       model,
       prompt: "Reply with OK",
+      abortSignal: AbortSignal.timeout(TEST_CONNECTION_TIMEOUT_MS),
     });
 
     return { success: true, latencyMs: Date.now() - startedAt };

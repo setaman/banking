@@ -199,7 +199,7 @@ function VisualizationContent({
           )}
           <div
             className={CHART_CONTAINER_CLASS}
-            aria-label={`Bar chart: ${spec.data.map((d) => `${d.label} ${d.value}`).join(", ")}`}
+            aria-label={`Bar chart${spec.title ? `: ${spec.title}` : ""} (${spec.data.length} data points)`}
           >
             <BarChartView spec={spec} />
           </div>
@@ -217,7 +217,7 @@ function VisualizationContent({
           )}
           <div
             className={CHART_CONTAINER_CLASS}
-            aria-label={`Line chart: ${spec.data.map((d) => `${d.label} ${d.value}`).join(", ")}`}
+            aria-label={`Line chart${spec.title ? `: ${spec.title}` : ""} (${spec.data.length} data points)`}
           >
             <LineChartView spec={spec} />
           </div>
@@ -235,7 +235,7 @@ function VisualizationContent({
           )}
           <div
             className={CHART_CONTAINER_CLASS}
-            aria-label={`Pie chart: ${spec.data.map((d) => `${d.label} ${d.value}`).join(", ")}`}
+            aria-label={`Pie chart${spec.title ? `: ${spec.title}` : ""} (${spec.data.length} data points)`}
           >
             <PieChartView spec={spec} />
           </div>

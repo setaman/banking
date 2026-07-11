@@ -302,7 +302,7 @@ export default function AssistantPage(): React.JSX.Element {
   return (
     <div
       className="flex min-h-[calc(100dvh-8rem)] flex-col"
-      style={{ height: "calc(100vh - 8rem - 3.5rem)" }}
+      style={{ height: "calc(100dvh - 8rem - 3.5rem)" }}
     >
       {/* Header row */}
       <motion.div
