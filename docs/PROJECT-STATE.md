@@ -1,9 +1,60 @@
 # Project State: BanKing
 
-**Current Phase:** AI Assistant — Phase A (infrastructure) ✅ COMPLETE
+**Current Phase:** AI Assistant — Phase B (finance tool layer) ✅ COMPLETE
 **Current Sprint:** feat/ai-assistant
 **Last Session:** 2026-07-11
 **Branch:** feat/ai-assistant (not merged; no commits made per task scope)
+
+---
+
+## This session changes (2026-07-11) — AI Assistant Phase B: finance tool layer
+
+**Summary:** Implemented the read-only, LLM-callable finance tool layer that Phase C (chat UI + API route) will hand to `generateText`/`streamText` as the `tools` option. Each tool wraps existing server actions / pure stats functions from `src/actions/*` and `src/lib/stats/*` — no new calculations, no direct DB access, no modification to any existing file. 15 tool files + 1 barrel (`src/lib/ai/tools/index.ts`) + 1 internal shared-helpers module (`src/lib/ai/tools/shared.ts`, not part of the public barrel, added for DRY date-param/rounding/percent-change logic reused by ~10 files).
+
+**`ai@7` `tool()` API confirmed from installed type declarations (not from memory/older docs):** `tool()` is re-exported from `@ai-sdk/provider-utils` via the `ai` package. Signature: `tool({ description, inputSchema, execute })` — **`inputSchema` (not `parameters`)**, accepting a `FlexibleSchema<T>` which includes Zod schemas directly (no `zodSchema()` wrapper needed; confirmed Zod v4.3.6 works natively as `FlexibleSchema` includes `ZodSchema<T>`). `execute: (input, options: ToolExecutionOptions) => Promise<OUTPUT> | OUTPUT`, where `options` (unused by any tool here) carries `toolCallId`/`messages`/etc.
+
+**Files Created (`src/lib/ai/tools/`):**
+
+| File | Wraps | Notes |
+| --- | --- | --- |
+| `shared.ts` | — | Internal only (not exported via barrel). `round2()`, `isoDateParam(description)` (Zod `YYYY-MM-DD` regex + `.describe()`), `percentChange(from, to)` (returns `null` on zero-base/non-zero-compare — honest, no `Infinity`). |
+| `get-accounts.ts` | `getAccounts`, `getActiveAccountIds`, `getLatestBalances` | `{activeOnly?}` → `{name, type, currency, balance, status}`. Strips IBAN/holder name/internal IDs. **Edge case found & fixed via smoke test:** one legacy account in the live DB predates the `status` field (raw JSON has no `status` key even though the Zod schema declares a default), so `account.status` is `undefined` at runtime; applied `?? "active"` defensively to match the schema's own declared default. |
+| `get-total-balance.ts` | `getTotalBalance` | No params. |
+| `get-monthly-cash-flow.ts` | `getTransactions` + `calculateMonthlyFlow` | `{startDate?, endDate?, accountId?}`, `excludeInternal: true`. |
+| `get-category-breakdown.ts` | `getTransactions` + `calculateTopCategories` | `{startDate?, endDate?, limit?}` (max 15, default 10). |
+| `get-budget-split.ts` | `getTransactions` + `calculateBudgetSplit` | `{startDate?, endDate?}` → Needs/Wants/Saved (50/30/20). |
+| `get-savings-rate.ts` | `getTransactions` + `calculateSavingsRate` | `{startDate?, endDate?}`. |
+| `get-recurring-expenses.ts` | `getTransactions` + `detectRecurring` | `{startDate?, endDate?}`, capped at 20 groups, `{counterparty, averageAmount, category, occurrences, averageIntervalDays}` — no individual transactions. |
+| `get-expense-volatility.ts` | `getTransactions` + `calculateExpenseVolatility` | `{startDate?, endDate?}`. |
+| `get-income-stability.ts` | `getTransactions` + `calculateIncomeStability` | `{startDate?, endDate?}`. |
+| `get-emergency-fund.ts` | `getTotalBalance` + `getTransactions` + `calculateEmergencyFund` | No params; always full history + current balance. |
+| `get-balance-prediction.ts` | `getTotalBalance` + `getTransactions` + `calculateMonthlyFlow` + `calculateBalancePrediction` | `{years?}` (default 5, max 10). Passes through `{available: false, reason}` honestly on insufficient history. |
+| `search-transactions.ts` | `getTransactions` | `{search?, category?, startDate?, endDate?, direction?, minAmount?, maxAmount?, limit?}` (default 20, max 50). **Only tool returning individual transactions.** Deliberately does **not** `excludeInternal` (mirrors `src/app/transactions/page.tsx`, the one existing call site that also omits it — all KPI/stats call sites use `excludeInternal: true`). Description truncated to 200 chars; `{totalMatches}` included. |
+| `compare-periods.ts` | `getTransactions` + `calculateSavingsRate` + `calculateTopCategories` (composite) | `{period1Start, period1End, period2Start, period2End}` (all required). Composes existing per-period functions for both ranges (top 5 categories each) + `{incomeChange, expenseChange, netChange}` (`percentChange`, `null`-guarded on zero base) + `savingsRateChange` (simple percentage-point delta, not a percent-of-a-percent). |
+| `get-largest-expenses.ts` | `getTransactions` (direction: "debit") | `{startDate?, endDate?, limit?}` (default 10, max 20), sorted by `Math.abs(amount)` desc. Uses `excludeInternal: true` (an internal transfer to your own savings account isn't a "largest expense"). Same field stripping as `search-transactions`. |
+| `get-spending-patterns.ts` | `getTransactions` + `calculateDailyAverage` (existing) + small inline weekday/weekend glue | `{startDate?, endDate?}` → `dailyAverageSpend` + weekday vs weekend `{totalSpend, dayCount, averagePerDay}`. No dedicated weekend/weekday function exists in `calculations.ts` (the logic lives inline in `insights/page.tsx`, not exported) — reused `calculateDailyAverage` and wrote minimal glue mirroring the Insights page's inline computation, per instructions. |
+| `index.ts` | — | Barrel: `financeTools` record keyed by snake_case names (`get_accounts` … `get_spending_patterns`, 15 entries) + `FinanceToolName` type. |
+
+**Design decisions worth flagging:**
+
+- `excludeInternal` was applied everywhere except `search-transactions` (general-purpose browsing tool, matches the one raw-listing page that also omits it) — every aggregate/stats tool uses `excludeInternal: true` to match how the dashboard computes KPIs.
+- All numeric outputs rounded to 2 decimals via `round2()`; all interfaces `readonly`; no `any` anywhere in the 16 files.
+- `compare-periods.ts` is explicitly a composite tool — no new math, just runs the two existing single-period functions twice and computes deltas.
+
+**Files NOT modified:** none — Phase B is purely additive (`src/lib/ai/tools/*` is new).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — baseline 36 pre-existing problems unchanged (verified `npx eslint "src/lib/ai/tools/**/*.ts"` in isolation — zero output, zero issues in the new files).
+- `npm run build` — succeeds, all routes emitted (Phase B added no routes).
+- `npx prettier --write` — run on all new files (4 files reformatted, rest already compliant).
+- **Smoke test** (`qa/ai-tools-smoke.mjs`, gitignored, run via `npx tsx qa/ai-tools-smoke.mjs` — `tsx` not installed as a dependency, fetched transiently via `npx`): imports `financeTools` from the real barrel and calls every tool's `execute()` directly against the live local `data/db.json` (3 accounts, 1750 transactions, 25 balances). Logs SHAPE ONLY (keys, JS types, array lengths) — never real amounts, descriptions, counterparties, or balances. **Result: 15/15 tools passed**, including `get_balance_prediction` returning `available: true` with 3 points (enough history locally) and `compare_periods` computing both period summaries + all four change fields without error. The run surfaced the `get-accounts` legacy `status` field edge case described above, which was fixed and re-verified (re-run confirmed `status` now always a string).
+
+**Next actions:**
+
+- Phase C: chat UI (likely a slide-over/panel component) + API route or server action wiring `financeTools` into `streamText`/`generateText` with the resolved model from `src/lib/ai/provider.ts`.
+- Lead to review `feat/ai-assistant` Phase B before Phase C begins.
 
 ---
 
