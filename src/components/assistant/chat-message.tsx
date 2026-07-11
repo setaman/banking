@@ -5,7 +5,6 @@ import { format, parseISO } from "date-fns";
 import { motion } from "motion/react";
 import {
   AlertTriangle,
-  BarChart3,
   Check,
   CheckCircle2,
   Copy,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { parseVisualizationSpec } from "@/lib/ai/visualization";
+import { VisualizationRenderer } from "@/components/assistant/visualization-renderer";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -77,8 +77,8 @@ export function getToolDisplayLabel(toolName: string): string {
 // ---------------------------------------------------------------------------
 // Content segmentation — split assistant Markdown on fenced ```visualization
 // blocks. Text segments render via the markdown-lite renderer; visualization
-// segments render a neutral placeholder in this phase (full chart rendering
-// is Phase E — swap `VisualizationPlaceholder` there).
+// segments render the themed chart/stat/table via `VisualizationPlaceholder`
+// below (Phase E).
 // ---------------------------------------------------------------------------
 
 interface TextSegment {
@@ -255,10 +255,15 @@ function MarkdownLite({ text }: { text: string }): React.JSX.Element {
 }
 
 // ---------------------------------------------------------------------------
-// Inline visualization — Phase D renders a neutral placeholder only; Phase E
-// swaps `VisualizationPlaceholderContent`'s body for the real ECharts/table
-// renderer. Wrapped in an error boundary per the design spec's "never crash
-// the message list because of a malformed chart spec" rule.
+// Inline visualization — parses the fenced ```visualization block's raw JSON
+// and hands a valid spec to `VisualizationRenderer` (Phase E: themed
+// ECharts/table rendering). A spec that fails validation (malformed JSON,
+// unknown type, missing fields) renders a graceful, muted fallback instead —
+// this component-level boundary is a second line of defense in front of
+// `VisualizationRenderer`'s own internal error boundary (which only guards
+// against *render-time* crashes of an otherwise-valid spec), matching the
+// design spec's "never crash the message list because of a malformed chart
+// spec" rule.
 // ---------------------------------------------------------------------------
 
 function VisualizationFallback(): React.JSX.Element {
@@ -279,18 +284,7 @@ function VisualizationPlaceholderContent({
   if (!spec) {
     return <VisualizationFallback />;
   }
-  return (
-    <div className="border-border bg-muted/30 dark:bg-card/40 mt-3 flex flex-col items-center justify-center gap-1.5 rounded-xl border px-4 py-6 text-center">
-      <BarChart3 className="text-muted-foreground h-5 w-5" />
-      <p className="text-muted-foreground text-xs font-medium">
-        Chart will render here
-      </p>
-      <p className="text-muted-foreground/70 font-mono text-[11px] uppercase">
-        {spec.type}
-        {spec.title ? ` · ${spec.title}` : ""}
-      </p>
-    </div>
-  );
+  return <VisualizationRenderer spec={spec} />;
 }
 
 interface VisualizationErrorBoundaryState {
