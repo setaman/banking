@@ -1,9 +1,70 @@
 # Project State: BanKing
 
-**Current Phase:** AI Financial Assistant — feature-complete (Phases A-F), plus post-review client fixes, awaiting PR/review
-**Current Sprint:** feat/ai-assistant
+**Current Phase:** AI Assistant v1.1 (provider profiles)
+**Current Sprint:** feat/ai-provider-profiles
 **Last Session:** 2026-07-11
-**Branch:** feat/ai-assistant (not merged; no commits made per task scope)
+**Branch:** feat/ai-provider-profiles (not merged; no commits made per task scope)
+
+---
+
+## Merged: PR #33 — AI Financial Assistant (Phases A-F + client fixes)
+
+**Summary:** The `feat/ai-assistant` branch documented throughout this file's history below was reviewed and merged to `main` via PR #33 (squash commit `eaebf69`). The AI Assistant (`/assistant` chat page, `/api/chat`, finance tool layer, visualization rendering, settings card) is now live on `main`. This section is the hand-off marker between that milestone and the v1.1 work that follows.
+
+**Next actions (superseded by v1.1 below):** none — v1.1 Package 1 picks up from here.
+
+---
+
+## This session changes (2026-07-11) — v1.1 Package 1: multi-provider profiles infrastructure
+
+**Summary:** Reworked the AI Assistant's provider configuration from a single stored config into named, switchable **profiles** (multiple providers configured side by side, one marked active), added a server-side per-provider model-listing capability (each provider's own models endpoint, no third-party aggregator), and reworked the actions layer around profiles — while keeping the existing (pre-v1.1) settings card and `/assistant` page compiling unmodified via thin legacy-action wrappers. Branch `feat/ai-provider-profiles`; no commits made per task scope.
+
+**Schema & migration design (`src/config/ai.ts`):**
+
+- `AiProfileSchema`: `{ id, name, provider, model, apiKey?, baseUrl? }` — a single named provider connection.
+- `AiConfigSchema` (the `ai` key's current on-disk shape): `{ profiles: AiProfile[], activeProfileId: string }`.
+- `LegacyAiConfigSchema` (internal, not exported): the pre-v1.1 single-config shape (`{provider, model, apiKey?, baseUrl?}`), recognized only for migration.
+- **Migration:** `readAiConfig()` (internal) tries the current shape first, then the legacy shape; a legacy match is converted **in memory only** — `provider`/`model`/`apiKey`/`baseUrl` preserved exactly — into a single profile named e.g. `"Google — gemini-2.5-flash"` (`deriveAiProfileName`). Migration is **never persisted on read** — only the next mutation (`saveAiProfile`/`deleteAiProfile`/`setActiveAiProfile`) writes the full current-shape config back out, which is when the on-disk shape actually flips.
+  - **Deterministic legacy id:** the migrated profile's id is `legacy-<sha256(provider,model,apiKey,baseUrl)[:24]>`, not a random UUID. Since migration re-runs on every read until persisted, a random id would change on every call — breaking any caller that reads a profile's id and passes it to a mutation moments later (confirmed empirically during verification; fixed before merge).
+- **Sibling-key preservation kept:** the on-disk `ai` key is read/written via a loose `.catchall(z.unknown())` schema (same pattern as the pre-v1.1 module), so `dkb`/`deutscheBank` are never touched regardless of the `ai` key's shape or validity. `src/config/credentials.ts`'s `ConfigSchema.ai` field was changed from `AiConfigSchema.optional()` to `z.unknown().optional()` — otherwise, since `AiConfigSchema` now means the _new_ multi-profile shape, `loadCredentials()` (used only for bank cookies, never for `ai`) would fail to parse the whole file — and silently break `dkb` reads — for every user still on the pre-v1.1 shape until their first AI save.
+- **Delete semantics** (`deleteAiProfile`): refuses to delete the last remaining profile (there must always be ≥1); deleting the active profile reassigns `activeProfileId` to the first remaining profile automatically (no confirmation dialog at this layer — Package 2's UI is expected to confirm before calling it).
+
+**Files created:**
+
+- `src/lib/ai/model-catalog.ts` — `listModels(profile)`, calling each provider's own models endpoint server-side (never a third-party aggregator, so a user's key is only ever sent to the provider they chose): OpenAI `GET {baseUrl|api.openai.com}/v1/models` (Bearer), Anthropic `GET api.anthropic.com/v1/models` (`x-api-key` + `anthropic-version`), Google `GET generativelanguage.googleapis.com/v1beta/models?key=` (query param), Ollama `GET {baseUrl}/api/tags`. 5s timeout via `AbortSignal.timeout`. Filtering: OpenAI excludes embedding/audio/image/moderation id patterns; Anthropic passes through as-is (already chat-only); **Google filters to `supportedGenerationMethods.includes("generateContent")` AND an `/^gemini/i` name prefix** — the `generateContent` check alone isn't sufficient (confirmed against the real API: image/video/music preview models like `nano-banana-pro-preview` and `lyria-3-pro-preview` also declare it); Ollama passes through as-is. Google ids are stripped of the `models/` prefix returned by its API (bare id, matching the existing settings-card placeholder convention — `@ai-sdk/google`'s `getModelPath` auto-re-prepends `models/` to any bare id, so both forms work with the SDK, but bare matches the app's existing convention). Sorted newest-ish first (by `created`/`created_at`/`modified_at` where the API provides it; Google has no timestamp, so sorted by descending name as a heuristic). `FALLBACK_MODELS`: static per-provider suggestion lists exported separately, used by the actions layer when listing fails. Never logs API keys.
+
+**Files reworked:**
+
+- `src/config/ai.ts` — see schema/migration design above. Public API: `getAiProfiles()`, `getActiveAiProfile()` (used by the chat route — resolves `activeProfileId`, falling back to the first profile if stale), `getActiveAiProfileId()`, `getAiProfileById(id)`, `saveAiProfile(profile)`, `deleteAiProfile(id)`, `setActiveAiProfile(id)`, `deriveAiProfileName(provider, model)`, `maskApiKey` (unchanged).
+- `src/config/credentials.ts` — `ai` field loosened to `z.unknown()` (see above); no other change.
+- `src/lib/ai/provider.ts` — `resolveModel(config)` → `resolveModel(profile: AiProfile)`. Same fields, same per-provider factory wiring; only the type/param name changed.
+- `src/app/api/chat/route.ts` — Resolves the active profile via `getActiveAiProfile()` (503 `not_configured` if `getAiProfiles()` is empty, checked before body parsing, same as before). Added an **optional `profileId` field** to the request body's Zod schema, letting the client switch AI profiles per-conversation without writing to `banking.config.json` (which would otherwise switch every open tab/conversation at once) — an unknown `profileId` is rejected as `400 invalid_request`, not silently ignored or falling back to the active profile.
+- `src/actions/ai.actions.ts` — full rework, see API surface below.
+
+**Action API surface for Package 2 (`src/actions/ai.actions.ts`):**
+
+- `getAiProfilesStatus(): Promise<{ profiles: AiProfileStatus[]; activeProfileId: string | null }>` — `AiProfileStatus = { id, name, provider, model, baseUrl?, keyPreview?, isActive }`. Masked; never returns raw keys.
+- `saveAiProfile(input: { id?, name?, provider, model, apiKey?, baseUrl? }): Promise<{success:true, profile, activeProfileId} | {success:false, error}>` — create (no `id`) or update (matching `id`). **Merge-safe:** omitting `apiKey` on an update keeps the previously saved key (the client never gets the real key back from `getAiProfilesStatus`, so it can't round-trip it).
+- `deleteAiProfile(id): Promise<{success:true, activeProfileId} | {success:false, error}>` — see delete semantics above.
+- `setActiveAiProfile(id): Promise<{success, error?}>`.
+- `listAvailableModels(input: {profileId} | {draft: {provider, apiKey?, baseUrl?}}): Promise<{success:true, models} | {success:false, error, fallback}>` — accepts either a saved profile id or an unsaved draft, so the settings form can populate the model dropdown before the profile is ever saved. Falls back to `FALLBACK_MODELS[provider]` on failure. Never echoes the key.
+- `testAiConnection(profileId?): Promise<{success:true, latencyMs} | {success:false, error}>` — tests a specific profile, or the active one if `profileId` is omitted.
+- **Legacy wrappers** (kept so the pre-v1.1 settings card and `/assistant` page's `getAiConfigStatus()` call keep compiling unmodified — no UI files touched this session): `getAiConfigStatus()`, `saveAiConfig(input)` — both operate on the active profile, matching the old single-config UX exactly (`saveAiConfig` fully overwrites the active profile's fields, same as the pre-v1.1 behavior — not merge-safe, unlike the new `saveAiProfile`). Marked `@deprecated`; Package 2 should replace their call sites and delete these.
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — 36 problems, all pre-existing (same baseline as prior sessions); zero new issues in an isolated `npx eslint` run against every file touched/created this session.
+- `npx prettier --check` — all touched/created files clean after one `--write` pass.
+- `npm run build` — succeeds; route list unchanged (`/api/chat`, `/assistant`, etc.).
+- **Migration test** (throwaway `tsx` script, gitignored scratchpad, run against a **temp copy** of a config fixture — `{ai: {provider:"openai", model:"gpt-4o-mini", apiKey:...}, dkb: {cookie:...}}` — never the real `banking.config.json`): confirmed (a) a plain read (`getAiProfiles`/`getActiveAiProfile`) migrates the legacy shape in memory without writing to disk (byte-identical file before/after); (b) the migrated id is stable across two independent reads (the deterministic-hash fix, above); (c) triggering a mutation (`setActiveAiProfile`) persists the new `{profiles, activeProfileId}` shape with every legacy field preserved exactly, the derived name correct (`"OpenAI — gpt-4o-mini"`), and the `dkb` sibling key untouched.
+- **Real-config check** (throwaway `tsx` script, read-only, run once against the client's actual `banking.config.json`): `getActiveAiProfile()` correctly returned `{provider: "google", model: "models/gemini-3.1-flash-lite"}` — i.e. the real Gemini config, including its existing `models/`-prefixed model id, resolves correctly through the new multi-profile code path without any write (confirmed byte-identical file before/after, both after the plain read and after the `listModels` call below).
+- **Model-catalog smoke test** (one real call, per task allowance): `listModels()` against the real active (Google) profile returned **30 models**; first 3 logged: `gemini-robotics-er-1.6-preview`, `gemini-robotics-er-1.5-preview`, `gemini-pro-latest` (no keys logged, ever). This run is what surfaced and led to fixing the `generateContent`-alone filtering gap noted above (the first attempt returned 39 results headed by non-chat `nano-banana`/`lyria` preview models).
+
+**Next actions:**
+
+- Package 2: replace `src/components/settings/ai-provider-card.tsx` with a true multi-profile settings UI (list profiles, add/edit/delete, set active, model picker backed by `listAvailableModels`) built directly on the actions above; update `/assistant` to allow per-conversation profile switching via the chat route's new optional `profileId` field; then remove the legacy wrapper actions (`getAiConfigStatus`, `saveAiConfig`) once no longer referenced.
+- Lead to review Package 1 before Package 2 begins.
 
 ---
 
