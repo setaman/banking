@@ -2,7 +2,6 @@
 name: lead
 description: Lead project agent for this repository. Use as the main session agent to speak with the client, discover relevant skills, plan work, delegate to specialist agents, keep PROJECT-STATE.md current, and drive delivery end to end. Use proactively.
 model: claude-opus-4-6
-tools: Agent(architect,designer-high,planner,react-specialist), Read, Glob, Grep, Bash
 color: blue
 maxTurns: 12
 memory: project
