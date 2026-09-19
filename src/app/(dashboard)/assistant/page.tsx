@@ -72,6 +72,59 @@ function isUserOrAssistant(
   return message.role === "user" || message.role === "assistant";
 }
 
+/**
+ * How many of the most recent assistant messages keep ALL their parts —
+ * text AND tool parts, `input`/`output`/`state`/`toolCallId` and (critically
+ * for Gemini 3 tool-call replay) `callProviderMetadata` — verbatim when
+ * building the outgoing request. Every older assistant message is stripped
+ * to text only (see `stripToTextParts` below).
+ *
+ * This is a payload-size-vs-fidelity tradeoff, not a correctness knob: tool
+ * parts can carry dozens of transaction rows each, so replaying every past
+ * tool call on every turn would make the request body grow without bound
+ * over a long conversation. Two turns is enough for the common "and how
+ * much of that was X?" follow-up (the model still has the exact rows/
+ * aggregate it just fetched) while keeping the body bounded. Older evidence
+ * is dropped outright rather than replaced with a summary string —
+ * describing data in a slot where the model expects actual data is exactly
+ * the kind of gap that produces fabricated numbers (see the grounding rules
+ * in `system-prompt.ts`). Dropping is honest: it just forces a re-query.
+ */
+export const RECENT_ASSISTANT_MESSAGES_WITH_TOOLS = 2;
+
+/** Returns a copy of `message` containing only its `text` parts. */
+function stripToTextParts(message: UIMessage): UIMessage {
+  return {
+    ...message,
+    parts: message.parts.filter((part) => part.type === "text"),
+  };
+}
+
+/**
+ * Builds the outgoing message list for the chat request: user/assistant
+ * messages only, with tool parts preserved solely on the most recent
+ * `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS` assistant turns (see that
+ * constant's doc comment). User messages never carry tool parts, so
+ * stripping them to text is a no-op beyond dropping any stray reasoning/
+ * step parts.
+ */
+function buildOutgoingMessages(messages: UIMessage[]): UIMessage[] {
+  const relevant = messages.filter(isUserOrAssistant);
+  const assistantIds = relevant
+    .filter((m) => m.role === "assistant")
+    .map((m) => m.id);
+  const recentAssistantIds = new Set(
+    assistantIds.slice(-RECENT_ASSISTANT_MESSAGES_WITH_TOOLS)
+  );
+
+  return relevant.map((m) => {
+    if (m.role === "assistant" && recentAssistantIds.has(m.id)) {
+      return m;
+    }
+    return stripToTextParts(m);
+  });
+}
+
 function deriveToolStatus(state: string): ToolActivity["status"] {
   if (state === "output-available") return "complete";
   if (state === "output-error") return "error";
@@ -125,10 +178,7 @@ export default function AssistantPage(): React.JSX.Element {
         api: "/api/chat",
         prepareSendMessagesRequest: ({ messages }) => ({
           body: {
-            messages: messages.filter(isUserOrAssistant).map((m) => ({
-              role: m.role,
-              content: extractText(m),
-            })),
+            messages: buildOutgoingMessages(messages),
           },
         }),
       }),

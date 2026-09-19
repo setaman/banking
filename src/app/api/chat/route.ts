@@ -1,10 +1,16 @@
 import {
   APICallError,
+  MessageConversionError,
   RetryError,
+  convertToModelMessages,
   createUIMessageStreamResponse,
+  isTextUIPart,
+  safeValidateUIMessages,
   stepCountIs,
   streamText,
   toUIMessageStream,
+  type InferUITools,
+  type UIMessage,
 } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -16,6 +22,22 @@ import { buildSystemPrompt, type DataCoverage } from "@/lib/ai/system-prompt";
 import { financeTools } from "@/lib/ai/tools";
 
 export const maxDuration = 60;
+
+/**
+ * The app's concrete `UIMessage` type, parameterized with `financeTools`'
+ * real input/output types via `InferUITools`. Needed so `safeValidateUIMessages`
+ * and `convertToModelMessages` — both generic over `UI_MESSAGE extends
+ * UIMessage` — validate/convert tool parts against the tools' actual typed
+ * schemas rather than the library's default `UITools` (`Record<string,
+ * unknown>`), which is too loose to satisfy the `tools` option's type and
+ * would fail to catch a tool part whose `input`/`output` shape doesn't match
+ * what `financeTools` actually declares.
+ */
+type ChatUIMessage = UIMessage<
+  unknown,
+  never,
+  InferUITools<typeof financeTools>
+>;
 
 // ---------------------------------------------------------------------------
 // Request validation
@@ -35,20 +57,35 @@ const MAX_MESSAGE_LENGTH = 4000;
 // rather than papered over with estimates.
 const MAX_TOOL_STEPS = 12;
 const MAX_HISTORY_PAIRS = 10;
-const MAX_BODY_BYTES = 100 * 1024; // 100KB
+// Raised from 100KB: the client now sends full UIMessages, and the most
+// recent `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS` (see assistant/page.tsx)
+// assistant turns carry their tool parts verbatim — `input`, `output`
+// (which for `search_transactions`/`get_largest_expenses` can be dozens of
+// transaction rows), and `callProviderMetadata`. That's real payload that
+// didn't exist when the body was just flattened `{role, content}` text, so
+// the old 100KB ceiling would reject ordinary multi-turn conversations, not
+// just abuse. 150KB keeps this a defense against pathological/abusive
+// bodies rather than a limit that a normal follow-up question can trip.
+const MAX_BODY_BYTES = 150 * 1024; // 150KB
 
-const chatMessageSchema = z.object({
-  role: z.enum(["user", "assistant"]),
-  content: z.string().max(MAX_MESSAGE_LENGTH),
-});
-
-const chatRequestSchema = z.object({
-  messages: z.array(chatMessageSchema).max(MAX_MESSAGES),
+/**
+ * Message-shape validation now delegates to the AI SDK's own
+ * `safeValidateUIMessages` (see below, in `POST`) rather than a hand-rolled
+ * zod schema — the client sends full `UIMessage[]` (parts, tool calls,
+ * `callProviderMetadata`, etc.) so we want the SDK's actual `uiMessagesSchema`,
+ * not a shape we'd have to keep re-deriving by hand. `profileId` isn't part
+ * of the UIMessage wire shape at all (see `route.ts`'s block comment further
+ * down), so it keeps its own small, standalone schema.
+ */
+const profileIdSchema = z.object({
   // Optional per-conversation override, letting the UI switch AI profiles
   // without writing to banking.config.json (which would change every other
   // conversation/tab too). Validated below against the actual saved
   // profiles — an unknown id is rejected as invalid_request, not silently
-  // ignored.
+  // ignored. `z.object` silently strips unrecognized keys (like the
+  // sibling `messages` field) rather than erroring on them, so this schema
+  // can safely run against the same raw body `safeValidateUIMessages` also
+  // reads from.
   profileId: z.string().trim().min(1).optional(),
 });
 
@@ -96,13 +133,34 @@ function isRateLimited(key: string): boolean {
 }
 
 /**
- * Keeps only the most recent `pairs` user/assistant turns (2 messages per
- * turn) so the model isn't sent an unbounded conversation history.
+ * Concatenates every `text` part of a UI message into a single string — the
+ * equivalent of the old flat `{role, content}` shape's `content` field, now
+ * that message text lives in `parts` alongside tool parts.
+ */
+function extractMessageText(message: ChatUIMessage): string {
+  return message.parts
+    .filter(isTextUIPart)
+    .map((part) => part.text)
+    .join("");
+}
+
+/**
+ * Keeps only the most recent `pairs` user/assistant turns so the model isn't
+ * sent an unbounded conversation history.
+ *
+ * This counts *input* UIMessages, not the ModelMessages `convertToModelMessages`
+ * later expands them into — one assistant UIMessage with several tool parts
+ * becomes one `assistant` ModelMessage plus one `tool` ModelMessage per tool
+ * call once converted. But on the wire, before conversion, the client still
+ * sends exactly one UIMessage per user turn and one per assistant turn (see
+ * `assistant/page.tsx`'s `buildOutgoingMessages`), so the 1-user : 1-assistant
+ * pairing — and therefore `slice(-pairs * 2)` — is still the right trim,
+ * it's just trimming UIMessages rather than flat `{role, content}` records.
  */
 function trimToRecentPairs(
-  messages: readonly { role: "user" | "assistant"; content: string }[],
+  messages: readonly ChatUIMessage[],
   pairs: number
-): { role: "user" | "assistant"; content: string }[] {
+): ChatUIMessage[] {
   return messages.slice(-pairs * 2);
 }
 
@@ -355,14 +413,53 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const parsed = chatRequestSchema.safeParse(rawBody);
-  if (!parsed.success) {
+  // `profileId` is validated independently of `messages` (see
+  // `profileIdSchema`'s doc comment) — it isn't part of the UIMessage wire
+  // shape, and z.object silently drops the sibling `messages` key rather
+  // than erroring on it.
+  const profileParsed = profileIdSchema.safeParse(rawBody);
+  if (!profileParsed.success) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const messages = trimToRecentPairs(parsed.data.messages, MAX_HISTORY_PAIRS);
+  // `safeValidateUIMessages` is the AI SDK's own, complete validator for the
+  // `UIMessage[]` shape — tool parts, `callProviderMetadata`, states, etc.
+  // included. It's strictly more thorough than a hand-rolled zod schema
+  // could stay in sync with across SDK versions. `messages == null` (missing
+  // field, non-object body, etc.) is itself a validation failure inside the
+  // function, so no separate existence check is needed here. A rejected,
+  // old-style flat `{role, content}` body — or any other malformed shape —
+  // falls into this same `success: false` branch.
+  const rawMessages =
+    typeof rawBody === "object" && rawBody !== null
+      ? (rawBody as { messages?: unknown }).messages
+      : undefined;
+  const validated = await safeValidateUIMessages<ChatUIMessage>({
+    messages: rawMessages,
+    tools: financeTools,
+  });
+  if (!validated.success) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
 
-  const { profileId } = parsed.data;
+  if (validated.data.length > MAX_MESSAGES) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  // Equivalent of the old `chatMessageSchema`'s `.max(MAX_MESSAGE_LENGTH)` on
+  // flat `content`, now applied to each message's concatenated text parts —
+  // tool parts (input/output) are deliberately NOT counted here, they have
+  // their own, much larger, expected size (see `MAX_BODY_BYTES`'s comment).
+  const hasOversizedMessage = validated.data.some(
+    (m) => extractMessageText(m).length > MAX_MESSAGE_LENGTH
+  );
+  if (hasOversizedMessage) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  const messages = trimToRecentPairs(validated.data, MAX_HISTORY_PAIRS);
+
+  const { profileId } = profileParsed.data;
   const profile = profileId
     ? profiles.find((p) => p.id === profileId)
     : getActiveAiProfile();
@@ -378,17 +475,38 @@ export async function POST(request: Request): Promise<Response> {
     .reverse()
     .find((m) => m.role === "user");
   const requireToolOnFirstStep = latestUserMessage
-    ? isLikelyDataQuestion(latestUserMessage.content)
+    ? isLikelyDataQuestion(extractMessageText(latestUserMessage))
     : false;
 
   try {
     const model = resolveModel(profile);
     const coverage = await getDataCoverage();
 
+    // `convertToModelMessages` is the SDK's bridge from `UIMessage[]` (what
+    // the client sends and what `streamText` no longer accepts directly) to
+    // `ModelMessage[]` (what it does accept). It throws `MessageConversionError`
+    // for a shape it can't convert (e.g. an incomplete tool call left in a
+    // state it doesn't know how to translate) — that reflects a malformed
+    // *request*, not a provider/server failure, so it's caught here and
+    // reported as 400 rather than falling through to the provider-error
+    // catch below, which would misreport it as a 500.
+    let modelMessages: Awaited<ReturnType<typeof convertToModelMessages>>;
+    try {
+      modelMessages = await convertToModelMessages(messages, {
+        tools: financeTools,
+        ignoreIncompleteToolCalls: true,
+      });
+    } catch (conversionError) {
+      if (MessageConversionError.isInstance(conversionError)) {
+        return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      }
+      throw conversionError;
+    }
+
     const result = streamText({
       model,
       system: buildSystemPrompt(coverage),
-      messages,
+      messages: modelMessages,
       tools: financeTools,
       stopWhen: stepCountIs(MAX_TOOL_STEPS),
       // Lowered from 0.3: this is a factual assistant that reports numbers
