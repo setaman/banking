@@ -390,7 +390,7 @@ export function calculateRecurringRatio(
 
 /**
  * Calculates discretionary spending ratio.
- * Discretionary = Entertainment + Dining + Shopping categories.
+ * Discretionary = Entertainment + Dining + Shopping + Travel categories.
  */
 export function calculateDiscretionaryRatio(
   transactions: UnifiedTransaction[]
@@ -399,6 +399,7 @@ export function calculateDiscretionaryRatio(
     "Entertainment",
     "Dining",
     "Shopping",
+    "Travel",
   ];
 
   const discretionaryAmount = Math.abs(
@@ -670,6 +671,7 @@ const WANTS_CATEGORIES = new Set<string>([
   "Entertainment",
   "Shopping",
   "Subscriptions",
+  "Travel",
   "Other",
 ]);
 

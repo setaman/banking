@@ -12,6 +12,7 @@ export const CATEGORIES = [
   "Bills",
   "Rent",
   "Transport",
+  "Travel",
   "Entertainment",
   "Healthcare",
   "Shopping",
@@ -126,6 +127,97 @@ const CATEGORY_RULES: CategoryRule[] = [
       "taxi",
       "ticket",
       "fahrkarte",
+    ],
+  },
+  {
+    // Travel is intentionally placed AFTER Transport (and after Groceries /
+    // Rent / Bills) in this list. `classifyTransaction` returns the FIRST
+    // matching rule, so keeping Travel here guarantees none of the
+    // above categories can regress — they always get first refusal.
+    //
+    // Known keyword collisions with EARLIER rules, and how they were
+    // resolved (kept out of this list rather than duplicated, since a
+    // duplicate here would just be unreachable dead code):
+    //   - "sixt"    -> already a Transport keyword (Sixt car-sharing /
+    //                  "Share Now" style short urban rides). Transport is
+    //                  checked first, so genuine long-distance Sixt rental
+    //                  car bookings will still land in Transport, not
+    //                  Travel. Accepted trade-off to avoid reclassifying
+    //                  everyday car-sharing trips as "Travel".
+    //   - "flixbus" -> already a Transport keyword for the same reason
+    //                  (intercity coach used for commuting too).
+    //   - "db fernverkehr" -> Transport's generic "db " keyword already
+    //                  matches this substring, so it would never reach
+    //                  this rule. Not added here to avoid dead/misleading
+    //                  config; Deutsche Bahn traffic (commuter or long
+    //                  distance) intentionally stays under Transport.
+    //   - "ferienwohnung" -> the Rent rule's generic "wohnung" keyword
+    //                  fully shadows this compound word (Rent is checked
+    //                  before Travel), so a real "Ferienwohnung" booking
+    //                  will classify as Rent, not Travel. This is a known
+    //                  limitation of the keyword-list approach; fixing it
+    //                  would require scoping Rent's "wohnung" keyword
+    //                  (e.g. word-boundary or negative lookahead), which
+    //                  is out of scope here to avoid regressing Rent.
+    //
+    // Also note: "hrs" (the German hotel booking platform) was deliberately
+    // narrowed to "hrs.de" — the bare 3-letter token is a substring of
+    // unrelated German words (e.g. "Fahrschule" contains "...fa-HRS-chule"),
+    // which would have created a new false-positive classification.
+    category: "Travel",
+    keywords: [
+      // Airlines
+      "lufthansa",
+      "eurowings",
+      "ryanair",
+      "easyjet",
+      "condor",
+      "swiss",
+      "klm",
+      "air france",
+      "british airways",
+      "turkish airlines",
+      "wizz",
+      // Booking platforms
+      "booking.com",
+      "airbnb",
+      "expedia",
+      "hotels.com",
+      "trivago",
+      "opodo",
+      "check24 reise",
+      "hrs.de",
+      // Hotels / accommodation
+      "hotel",
+      "hostel",
+      "pension",
+      "resort",
+      "motel",
+      // Rail / coach / ferry beyond commuting (kept clear of Transport's
+      // "db ", "bahn" and "flixbus" keywords — see note above)
+      "eurostar",
+      "sncf",
+      "trenitalia",
+      "oebb",
+      "sbb",
+      // Car rental (kept clear of Transport's "sixt" — see note above)
+      "europcar",
+      "hertz",
+      "avis",
+      "enterprise",
+      "buchbinder",
+      // Travel-adjacent
+      "reisebüro",
+      "urlaub",
+      "ferien",
+      "tui",
+      "dertour",
+      "lastminute",
+      "flughafen",
+      "airport",
+      "duty free",
+      "mautgebühr",
+      "vignette",
     ],
   },
   {
@@ -276,7 +368,7 @@ const CATEGORY_RULES: CategoryRule[] = [
  */
 export function classifyTransaction(
   description: string,
-  counterparty: string,
+  counterparty: string
 ): Category {
   const searchText = `${description} ${counterparty}`.toLowerCase();
 
@@ -294,7 +386,7 @@ export function classifyTransaction(
  * Alias for classifyTransaction to match UnifiedTransaction interface.
  */
 export function categorizeTransaction(
-  transaction: UnifiedTransaction,
+  transaction: UnifiedTransaction
 ): Category {
   // Prioritize Income for credit transactions
   if (transaction.direction === "credit" && transaction.amount > 0) {
@@ -318,10 +410,10 @@ export function categorizeTransaction(
  * Batch-classify an array of transactions.
  */
 export function classifyTransactions(
-  transactions: { description: string; counterparty: string }[],
+  transactions: { description: string; counterparty: string }[]
 ): Category[] {
   return transactions.map((tx) =>
-    classifyTransaction(tx.description, tx.counterparty),
+    classifyTransaction(tx.description, tx.counterparty)
   );
 }
 
@@ -344,7 +436,7 @@ export interface RecurringTransactionGroup {
  * Returns groups of recurring transactions sorted by frequency.
  */
 export function detectRecurring(
-  transactions: UnifiedTransaction[],
+  transactions: UnifiedTransaction[]
 ): RecurringTransactionGroup[] {
   // Group transactions by counterparty
   const byCounterparty = new Map<string, UnifiedTransaction[]>();
@@ -367,7 +459,7 @@ export function detectRecurring(
 
     // Sort by date
     const sorted = [...txs].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
     // Find clusters of similar amounts (within 10%)
@@ -402,7 +494,7 @@ export function detectRecurring(
 
   // Sort by number of occurrences (descending)
   return recurringGroups.sort(
-    (a, b) => b.transactions.length - a.transactions.length,
+    (a, b) => b.transactions.length - a.transactions.length
   );
 }
 
@@ -411,7 +503,7 @@ export function detectRecurring(
  */
 function findAmountClusters(
   transactions: UnifiedTransaction[],
-  tolerance: number,
+  tolerance: number
 ): UnifiedTransaction[][] {
   const clusters: UnifiedTransaction[][] = [];
 
