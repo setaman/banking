@@ -4,6 +4,7 @@ import {
   RetryError,
   convertToModelMessages,
   createUIMessageStreamResponse,
+  isReasoningUIPart,
   isTextUIPart,
   isToolUIPart,
   safeValidateUIMessages,
@@ -524,6 +525,53 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
+  // Part-type allowlist. `safeValidateUIMessages`'s `uiMessagesSchema` types
+  // a `file`/`reasoning-file` part's `url` as a bare `z.string()` — no
+  // `.url()` refinement — so a schema-valid part like `{ type: "file", url:
+  // "not a URL" }` sails through validation. `convertToModelMessages` then
+  // unconditionally does `new URL(part.url)` for both part types (see
+  // `isFileUIPart`/`isReasoningFileUIPart` branches in
+  // `node_modules/ai/dist/index.js`), with no try/catch around it. An
+  // invalid URL string throws a native `TypeError`, which is not a
+  // `MessageConversionError` — so it escapes the conversion catch below the
+  // same way the forged `role:"system"` and approval-state cases above did,
+  // and gets misreported as a 500 `provider_error` for what is actually a
+  // malformed request. This is the third distinct "schema-valid part that
+  // still isn't safe to convert" gap found in this converter, so rather
+  // than adding another named exception to a denylist, this allowlists the
+  // exact part shapes this app's own client can legitimately produce and
+  // rejects everything else.
+  //
+  // Established from `buildOutgoingMessages` in `assistant/page.tsx`: every
+  // user message is stripped to text-only before it's ever sent, and the
+  // two most recent assistant turns keep every part `useChat` assembled
+  // from the server's own stream verbatim. Given this app's tool-calling
+  // flow — typed, non-`providerExecuted` finance tools, no citation/source
+  // tools, no custom UI data parts, no file-generating tools — that stream
+  // (see `toUIMessageStream`'s output, consumed client-side by
+  // `processUIMessageStream`) can only ever produce `text`, `reasoning`
+  // (Gemini 3's "thinking" content), `step-start`, and tool parts
+  // (`isToolUIPart` covers both the static `tool-<name>` parts this app's
+  // tools produce and `dynamic-tool`, for robustness). `file`,
+  // `reasoning-file`, `source-url`, `source-document`, `custom`, and
+  // `data-*` parts are never legitimately sent by this client and are
+  // rejected outright — a hand-crafted request is the only way to produce
+  // one.
+  const hasDisallowedPart = validated.data.some((m) =>
+    m.parts.some(
+      (part) =>
+        !(
+          isTextUIPart(part) ||
+          isReasoningUIPart(part) ||
+          part.type === "step-start" ||
+          isToolUIPart(part)
+        )
+    )
+  );
+  if (hasDisallowedPart) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
   if (validated.data.length > MAX_MESSAGES) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
@@ -540,6 +588,36 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const messages = trimToRecentPairs(validated.data, MAX_HISTORY_PAIRS);
+
+  // `trimToRecentPairs`'s leading-`user` guard (see its doc comment) can
+  // legitimately reduce an all-assistant or empty input to `[]` — it has no
+  // question left to drop leading messages from. Nothing downstream checked
+  // that, so `streamText` would run with no user turn at all: either an
+  // empty `messages` array or, for a history that has a user message
+  // earlier but happens to end on an assistant one, a `ModelMessage[]` with
+  // no current question at its end. Provider behavior for that input is not
+  // part of this route's request-validation contract (some providers error,
+  // some answer from the system prompt alone), so a client-caused shape
+  // like this must be rejected as `400 invalid_request` here rather than
+  // reaching `streamText` and surfacing as an unpredictable/opaque failure.
+  //
+  // Require ENDS WITH `user`, not merely CONTAINS one: this request exists
+  // to answer one specific, current question, not to process a transcript
+  // in the abstract. `useChat` always appends the in-flight user message as
+  // the last element before firing the request (see `trimToRecentPairs`'s
+  // doc comment on why the array is structurally odd-length), and
+  // `isLikelyDataQuestion` below reads "the latest user message" on exactly
+  // that assumption — a history that contains a user message somewhere in
+  // the middle but ends on an assistant turn has no current question for
+  // that heuristic (or the model) to answer, e.g. a hand-crafted body or a
+  // client bug that failed to append the new turn. A single first-turn user
+  // message trivially satisfies "non-empty and ends with user" and is
+  // unaffected.
+  const hasCurrentUserQuestion =
+    messages.length > 0 && messages[messages.length - 1].role === "user";
+  if (!hasCurrentUserQuestion) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
 
   const { profileId } = profileParsed.data;
   const profile = profileId
