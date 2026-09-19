@@ -40,9 +40,10 @@ import { ProfileSwitcher } from "@/components/assistant/profile-switcher";
 
 import {
   ChatMessageBubble,
-  getToolDisplayLabel,
+  getToolLabels,
   type ChatMessageData,
   type ToolActivity,
+  type ToolOutput,
 } from "@/components/assistant/chat-message";
 import { ChatInput } from "@/components/assistant/chat-input";
 import { ChatErrorBanner } from "@/components/assistant/chat-error-banner";
@@ -86,6 +87,7 @@ const THINKING_MESSAGE: ChatMessageData = {
   timestamp: new Date(0).toISOString(),
   isStreaming: true,
   toolActivities: [],
+  toolOutputs: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -250,13 +252,29 @@ export default function AssistantPage(): React.JSX.Element {
       const isLast = index === filtered.length - 1;
       const isStreaming =
         m.role === "assistant" && isLast && status === "streaming";
-      const toolActivities: ToolActivity[] = m.parts
-        .filter(isToolUIPart)
+      const toolParts = m.parts.filter(isToolUIPart);
+      const toolActivities: ToolActivity[] = toolParts.map((part) => {
+        const toolName = getToolName(part);
+        const labels = getToolLabels(toolName);
+        return {
+          toolCallId: part.toolCallId,
+          toolName,
+          runningLabel: labels.running,
+          completeLabel: labels.complete,
+          errorLabel: labels.error,
+          status: deriveToolStatus(part.state),
+        };
+      });
+      // Captures what was previously discarded: the tool's real, typed
+      // return value. Read nowhere else in the codebase — the evidence
+      // panel (`tool-evidence-panel.tsx`) is now the only place these rows
+      // are ever rendered.
+      const toolOutputs: ToolOutput[] = toolParts
+        .filter((part) => part.state === "output-available")
         .map((part) => ({
           toolCallId: part.toolCallId,
           toolName: getToolName(part),
-          displayLabel: getToolDisplayLabel(getToolName(part)),
-          status: deriveToolStatus(part.state),
+          output: part.output,
         }));
       const interrupted =
         m.role === "assistant" && isLast && Boolean(error) && !isStreaming;
@@ -268,6 +286,7 @@ export default function AssistantPage(): React.JSX.Element {
         timestamp: getTimestamp(m.id),
         isStreaming,
         toolActivities,
+        toolOutputs,
         interrupted,
       };
     });
