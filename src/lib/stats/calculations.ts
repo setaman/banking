@@ -656,8 +656,14 @@ export interface BudgetSplitResult {
   deficit: number;
 }
 
-/** Category names that map to essential / "Needs" spending. */
-const NEEDS_CATEGORIES = new Set<string>([
+/**
+ * Category names that map to essential / "Needs" spending.
+ *
+ * Exported so consumers describing the split (e.g. the `getBudgetSplit`
+ * AI tool) can derive their description directly from this set instead of
+ * duplicating the category list, which previously drifted out of sync.
+ */
+export const NEEDS_CATEGORIES = new Set<string>([
   "Rent",
   "Bills",
   "Groceries",
@@ -665,8 +671,8 @@ const NEEDS_CATEGORIES = new Set<string>([
   "Healthcare",
 ]);
 
-/** Category names that map to discretionary / "Wants" spending. */
-const WANTS_CATEGORIES = new Set<string>([
+/** Category names that map to discretionary / "Wants" spending. See {@link NEEDS_CATEGORIES}. */
+export const WANTS_CATEGORIES = new Set<string>([
   "Dining",
   "Entertainment",
   "Shopping",
