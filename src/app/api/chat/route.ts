@@ -5,6 +5,7 @@ import {
   convertToModelMessages,
   createUIMessageStreamResponse,
   isTextUIPart,
+  isToolUIPart,
   safeValidateUIMessages,
   stepCountIs,
   streamText,
@@ -146,22 +147,57 @@ function extractMessageText(message: ChatUIMessage): string {
 
 /**
  * Keeps only the most recent `pairs` user/assistant turns so the model isn't
- * sent an unbounded conversation history.
+ * sent an unbounded conversation history — then guarantees the result starts
+ * with a `user` message (or is empty), because `slice(-pairs * 2)` alone
+ * cannot make that promise.
+ *
+ * Why the outgoing array's length is structurally ODD, not even: by the time
+ * this runs, the newest user message — the question this very request is
+ * answering — has already been appended to history (see `useChat`/
+ * `assistant/page.tsx`). It has no assistant reply yet. So a history of N
+ * answered turns plus that one in-flight question is `2N + 1` messages long,
+ * not `2N`. `slice(-pairs * 2)` takes an EVEN-sized window off the end of an
+ * ODD-length array, which forces the boundary to fall one message off from
+ * every user/assistant pair — and on a history long enough to be trimmed at
+ * all, that boundary lands on an assistant message just as often as a user
+ * one. A trimmed array starting with `role: "assistant"` converts (via
+ * `convertToModelMessages`) into a `ModelMessage[]` whose first entry has
+ * `role: "assistant"`, which Gemini's API rejects outright as an invalid
+ * first turn — a trimming bug that then surfaces as an opaque 500
+ * `provider_error`, indistinguishable from an actual provider outage.
+ *
+ * The fix: after the length-based slice, drop leading messages until the
+ * first one is `role: "user"` (or nothing is left). This never touches the
+ * *end* of the array, so the in-flight user message — the actual question
+ * being asked — is never at risk of being dropped; only stale history at the
+ * front can be. In the overwhelmingly common case this drops exactly one
+ * orphaned assistant message, costing half a pair of budget — losing one
+ * turn of old context is strictly better than a hard 500. `pairs` (see
+ * `MAX_HISTORY_PAIRS`) is therefore a ceiling on "roughly `pairs` exchanges",
+ * not an exact guarantee.
  *
  * This counts *input* UIMessages, not the ModelMessages `convertToModelMessages`
  * later expands them into — one assistant UIMessage with several tool parts
  * becomes one `assistant` ModelMessage plus one `tool` ModelMessage per tool
  * call once converted. But on the wire, before conversion, the client still
  * sends exactly one UIMessage per user turn and one per assistant turn (see
- * `assistant/page.tsx`'s `buildOutgoingMessages`), so the 1-user : 1-assistant
- * pairing — and therefore `slice(-pairs * 2)` — is still the right trim,
- * it's just trimming UIMessages rather than flat `{role, content}` records.
+ * `assistant/page.tsx`'s `buildOutgoingMessages`), so counting UIMessages
+ * (rather than the later, expanded ModelMessages) is still the right unit to
+ * trim.
  */
 function trimToRecentPairs(
   messages: readonly ChatUIMessage[],
   pairs: number
 ): ChatUIMessage[] {
-  return messages.slice(-pairs * 2);
+  const sliced = messages.slice(-pairs * 2);
+  let firstUserIndex = 0;
+  while (
+    firstUserIndex < sliced.length &&
+    sliced[firstUserIndex].role !== "user"
+  ) {
+    firstUserIndex++;
+  }
+  return sliced.slice(firstUserIndex);
 }
 
 // ---------------------------------------------------------------------------
@@ -439,6 +475,52 @@ export async function POST(request: Request): Promise<Response> {
     tools: financeTools,
   });
   if (!validated.success) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  // The SDK's `uiMessagesSchema` (used by `safeValidateUIMessages` above)
+  // permits `role: "system"` in the wire shape, but the OLD hand-rolled
+  // schema this replaced (`role: z.enum(["user", "assistant"])`) never did —
+  // a client should never be able to inject a system-role message into the
+  // conversation. This is NOT a prompt-injection hole even without this
+  // guard: `streamText` refuses to forward a `system` `ModelMessage`
+  // (`allowSystemInMessages` defaults to `false`), so forged content never
+  // reaches the model. But that refusal throws `InvalidPromptError`, which
+  // isn't a `MessageConversionError` and isn't caught below, so it would
+  // fall through to the generic provider-error catch and misreport a
+  // malformed *request* as a 500 provider failure. Rejecting here, before
+  // conversion, restores the old schema's guarantee and reports the correct
+  // 400. Reject rather than silently strip: a client sending a system
+  // message is malformed, and silently accepting a request while discarding
+  // part of it is worse than a clear error.
+  if (validated.data.some((m) => m.role === "system")) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  // This app defines no approval-gated tools (see `financeTools`), so a tool
+  // part in `approval-requested` or `approval-responded` state can never
+  // arise from normal server-driven streaming — the only way to produce one
+  // is a hand-crafted request. Both states are also a genuine validation
+  // gap: `safeValidateUIMessages` only checks a tool part's `input` against
+  // the tool's zod schema for `input-available`/`output-available` states,
+  // so a malformed input (e.g. `{limit: "not-a-number"}`) sails through
+  // unvalidated in these two states. `ignoreIncompleteToolCalls` (passed to
+  // `convertToModelMessages` below) only filters `input-streaming` and
+  // `input-available` — not these — so without this guard an
+  // `approval-requested` part converts into an assistant tool-call with no
+  // matching tool-result, and its unvalidated input gets forwarded toward
+  // the model. Reject outright as malformed; `output-available`,
+  // `output-error`, and `output-denied` are untouched and continue to
+  // convert normally.
+  const hasUnsupportedToolApprovalState = validated.data.some((m) =>
+    m.parts.some(
+      (part) =>
+        isToolUIPart(part) &&
+        (part.state === "approval-requested" ||
+          part.state === "approval-responded")
+    )
+  );
+  if (hasUnsupportedToolApprovalState) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 

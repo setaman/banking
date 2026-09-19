@@ -110,15 +110,22 @@ function stripToTextParts(message: UIMessage): UIMessage {
  */
 function buildOutgoingMessages(messages: UIMessage[]): UIMessage[] {
   const relevant = messages.filter(isUserOrAssistant);
-  const assistantIds = relevant
-    .filter((m) => m.role === "assistant")
-    .map((m) => m.id);
-  const recentAssistantIds = new Set(
-    assistantIds.slice(-RECENT_ASSISTANT_MESSAGES_WITH_TOOLS)
+  // Selected by POSITION (index into `relevant`), not by `id`: `id`s are
+  // expected to be stable/unique in practice, but keying a "most recent N"
+  // selection off a value that *could* collide (rather than the position
+  // that unambiguously defines "most recent") would let two same-id
+  // assistant messages both wrongly keep full tool parts if that assumption
+  // ever broke. Indexing directly matches the stated intent below.
+  const assistantIndices = relevant.reduce<number[]>((acc, m, index) => {
+    if (m.role === "assistant") acc.push(index);
+    return acc;
+  }, []);
+  const recentAssistantIndices = new Set(
+    assistantIndices.slice(-RECENT_ASSISTANT_MESSAGES_WITH_TOOLS)
   );
 
-  return relevant.map((m) => {
-    if (m.role === "assistant" && recentAssistantIds.has(m.id)) {
+  return relevant.map((m, index) => {
+    if (m.role === "assistant" && recentAssistantIndices.has(index)) {
       return m;
     }
     return stripToTextParts(m);
