@@ -1,9 +1,46 @@
 # Project State: BanKing
 
-**Current Phase:** AI Assistant grounding & trust hardening
-**Current Sprint:** claude/gemini-transaction-hallucination-ngbd73
+**Current Phase:** AI Assistant grounding & trust hardening (multi-turn memory)
+**Current Sprint:** feat/assistant-followup-memory
 **Last Session:** 2026-09-19
-**Branch:** claude/gemini-transaction-hallucination-ngbd73 (3 commits pushed; not yet merged)
+**Branch:** feat/assistant-followup-memory (2 commits; not yet merged; based on `3090afb`, the squash-merge of PR #35)
+
+---
+
+## This session changes (2026-09-19) — Multi-turn history fidelity for the AI Assistant (the PR #35 follow-up) + adversarial QA fixes
+
+**Summary:** Shipped the "Multi-turn history fidelity is NOT fixed" follow-up that PR #35's own hand-off left open: a follow-up question like "and how much of that was hotels?" now arrives with the transactions the assistant just retrieved still in context, instead of the client flattening every message to `{role, content: string}` and dropping all tool parts before sending. Two commits: `539a2e9` (feature) and `bc98118` (four defects found by this session's own adversarial QA, fixed same session). Branch `feat/assistant-followup-memory`, based on `3090afb` (the squash-merge of PR #35).
+
+**What shipped (`539a2e9`):**
+
+- The wire format changed from flattened `{role, content}` to full `UIMessage[]` with parts intact.
+- Client (`src/app/(dashboard)/assistant/page.tsx`): `buildOutgoingMessages` keeps ALL parts (`input`, `output`, `state`, `toolCallId`, `callProviderMetadata`) on the most recent `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS = 2` assistant turns; older assistant turns are stripped to text.
+- Older tool evidence is dropped outright, never summarised. A summary string in a slot where the model expects real data invites it to fabricate the rows behind the summary — the exact failure PR #35 closed. This reasoning is on record; future work should not casually reverse it.
+- `callProviderMetadata` is preserved verbatim on retained tool parts because `@ai-sdk/google` detects Gemini 3 models and falls back to a `skip_thought_signature_validator` sentinel when `providerOptions.google.thoughtSignature` is missing on a replayed tool call. Google documents that sentinel as temporary. The client runs Gemini 3.1 Flash.
+- Server (`src/app/api/chat/route.ts`): the hand-rolled zod message schema was replaced by the SDK's own `safeValidateUIMessages`; `convertToModelMessages(..., { tools, ignoreIncompleteToolCalls: true })` bridges to the `ModelMessage[]` `streamText` requires; a `MessageConversionError` now returns 400, not 500; `MAX_BODY_BYTES` rose 100KB → 150KB (tool outputs now travel in the body); the 4000-char per-message cap moved to concatenated text parts.
+- The grounding gate (`isLikelyDataQuestion` + step-0 `toolChoice: "required"`) is deliberately UNCHANGED. History resolves references and carries filters forward, but every figure must still originate from a tool call made for the current question. A new system-prompt hard rule 8 states this.
+
+**Bugs found by this session's own adversarial QA and fixed in `bc98118`:**
+
+1. `trimToRecentPairs` took an even-sized `slice(-pairs * 2)` off a structurally odd-length array (the in-flight user question has no reply yet), so past ~11 exchanges the boundary deterministically landed on an assistant message → a `ModelMessage[]` starting with `role: "assistant"` → rejected by Gemini → surfaced as an opaque 500 `provider_error`. Pre-existing, not introduced by `539a2e9` — only the function's type signature changed there. Fixed with a guard dropping leading messages until the first is `user`; `MAX_HISTORY_PAIRS` is now a ceiling, not an exact count.
+2. A forged `role: "system"` message returned 500 instead of 400 — the SDK's schema permits system roles where the old hand-rolled one didn't. Not a prompt-injection hole (`streamText` already refuses system messages via `allowSystemInMessages: false`), but it misreported a malformed request as a provider failure. Now rejected explicitly, before conversion.
+3. Tool parts in `approval-requested`/`approval-responded` states bypassed input-schema validation and produced an orphaned tool-call. No approval-gated tools exist in this app, so these states only arise from a hand-crafted body. Now rejected as malformed.
+4. `buildOutgoingMessages` selected the recent assistant turns by `id` membership while intending "the most recent N by position." Latent — not reachable through normal `useChat` flows — now selected by index.
+
+**Known limitations / open follow-ups:**
+
+- **Tool evidence is still not persisted across page reloads.** `src/hooks/use-chat-persistence.ts` stores only `{id, role, content, timestamp}` and restores a single text part, so after a reload the evidence panels from PR #35 are gone and the model has no prior tool context from before the reload. Deliberately out of scope this session; the file was not modified. Its restore guard is all-or-nothing (`messages.every(...)`), so ANY change to the stored shape silently discards every existing saved conversation — a migration, not just a key bump, will be required whenever that's tackled.
+- **A hand-crafted request can replay a real tool name with fabricated output.** No tool declares an `outputSchema`, so `safeValidateUIMessages` validates tool `input` but never `output`. Knowingly accepted: inherent to the feature (the client round-trips its own prior results), and in a local-first single-user app anyone able to craft that request already controls the machine. System-prompt rule 8 mitigates by forbidding history as a source of figures.
+- **Still no test framework.** Everything above was verified by throwaway harness scripts against the real SDK functions and the real `financeTools`, none of it reproducible in CI. This remains the single biggest structural gap — the classifier regression harness from PR #35 and these wire-format harnesses both evaporated at session end. Recommend `vitest`.
+- `trimToRecentPairs` and `buildOutgoingMessages` are private to a Next.js `route.ts` handler and a `"use client"` page respectively, so harnesses had to transcribe their logic rather than import it. If tests are added, extracting these as pure helpers into a `lib` module would make them directly testable.
+
+**Verification performed:** `npx tsc --noEmit` clean; `npm run lint` held the pre-existing 36-problem baseline (28 errors, 8 warnings) with zero new issues across both commits; `npx prettier --check` clean on touched files; `npm run build` succeeds. No AI provider credentials exist in this environment (`banking.config.json` absent), so `POST /api/chat` returns 503 before validation runs — all proof above is from offline harnesses run directly against the real `safeValidateUIMessages`/`convertToModelMessages` and the real `financeTools`.
+
+**Next actions:**
+
+- Lead to review `feat/assistant-followup-memory` (`539a2e9` + `bc98118`) for PR/merge.
+- Persisting tool evidence across page reloads (`use-chat-persistence.ts`) remains open, per the limitation recorded above.
+- Consider `vitest` to lock in the offline harnesses used this session (and PR #35's classifier regression harness) as real, committed, CI-reproducible tests.
 
 ---
 
