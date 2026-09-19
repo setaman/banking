@@ -1,10 +1,18 @@
 import {
   APICallError,
+  MessageConversionError,
   RetryError,
+  convertToModelMessages,
   createUIMessageStreamResponse,
+  isReasoningUIPart,
+  isTextUIPart,
+  isToolUIPart,
+  safeValidateUIMessages,
   stepCountIs,
   streamText,
   toUIMessageStream,
+  type InferUITools,
+  type UIMessage,
 } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -16,6 +24,22 @@ import { buildSystemPrompt, type DataCoverage } from "@/lib/ai/system-prompt";
 import { financeTools } from "@/lib/ai/tools";
 
 export const maxDuration = 60;
+
+/**
+ * The app's concrete `UIMessage` type, parameterized with `financeTools`'
+ * real input/output types via `InferUITools`. Needed so `safeValidateUIMessages`
+ * and `convertToModelMessages` — both generic over `UI_MESSAGE extends
+ * UIMessage` — validate/convert tool parts against the tools' actual typed
+ * schemas rather than the library's default `UITools` (`Record<string,
+ * unknown>`), which is too loose to satisfy the `tools` option's type and
+ * would fail to catch a tool part whose `input`/`output` shape doesn't match
+ * what `financeTools` actually declares.
+ */
+type ChatUIMessage = UIMessage<
+  unknown,
+  never,
+  InferUITools<typeof financeTools>
+>;
 
 // ---------------------------------------------------------------------------
 // Request validation
@@ -35,20 +59,35 @@ const MAX_MESSAGE_LENGTH = 4000;
 // rather than papered over with estimates.
 const MAX_TOOL_STEPS = 12;
 const MAX_HISTORY_PAIRS = 10;
-const MAX_BODY_BYTES = 100 * 1024; // 100KB
+// Raised from 100KB: the client now sends full UIMessages, and the most
+// recent `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS` (see assistant/page.tsx)
+// assistant turns carry their tool parts verbatim — `input`, `output`
+// (which for `search_transactions`/`get_largest_expenses` can be dozens of
+// transaction rows), and `callProviderMetadata`. That's real payload that
+// didn't exist when the body was just flattened `{role, content}` text, so
+// the old 100KB ceiling would reject ordinary multi-turn conversations, not
+// just abuse. 150KB keeps this a defense against pathological/abusive
+// bodies rather than a limit that a normal follow-up question can trip.
+const MAX_BODY_BYTES = 150 * 1024; // 150KB
 
-const chatMessageSchema = z.object({
-  role: z.enum(["user", "assistant"]),
-  content: z.string().max(MAX_MESSAGE_LENGTH),
-});
-
-const chatRequestSchema = z.object({
-  messages: z.array(chatMessageSchema).max(MAX_MESSAGES),
+/**
+ * Message-shape validation now delegates to the AI SDK's own
+ * `safeValidateUIMessages` (see below, in `POST`) rather than a hand-rolled
+ * zod schema — the client sends full `UIMessage[]` (parts, tool calls,
+ * `callProviderMetadata`, etc.) so we want the SDK's actual `uiMessagesSchema`,
+ * not a shape we'd have to keep re-deriving by hand. `profileId` isn't part
+ * of the UIMessage wire shape at all (see `route.ts`'s block comment further
+ * down), so it keeps its own small, standalone schema.
+ */
+const profileIdSchema = z.object({
   // Optional per-conversation override, letting the UI switch AI profiles
   // without writing to banking.config.json (which would change every other
   // conversation/tab too). Validated below against the actual saved
   // profiles — an unknown id is rejected as invalid_request, not silently
-  // ignored.
+  // ignored. `z.object` silently strips unrecognized keys (like the
+  // sibling `messages` field) rather than erroring on them, so this schema
+  // can safely run against the same raw body `safeValidateUIMessages` also
+  // reads from.
   profileId: z.string().trim().min(1).optional(),
 });
 
@@ -96,14 +135,70 @@ function isRateLimited(key: string): boolean {
 }
 
 /**
- * Keeps only the most recent `pairs` user/assistant turns (2 messages per
- * turn) so the model isn't sent an unbounded conversation history.
+ * Concatenates every `text` part of a UI message into a single string — the
+ * equivalent of the old flat `{role, content}` shape's `content` field, now
+ * that message text lives in `parts` alongside tool parts.
+ */
+function extractMessageText(message: ChatUIMessage): string {
+  return message.parts
+    .filter(isTextUIPart)
+    .map((part) => part.text)
+    .join("");
+}
+
+/**
+ * Keeps only the most recent `pairs` user/assistant turns so the model isn't
+ * sent an unbounded conversation history — then guarantees the result starts
+ * with a `user` message (or is empty), because `slice(-pairs * 2)` alone
+ * cannot make that promise.
+ *
+ * Why the outgoing array's length is structurally ODD, not even: by the time
+ * this runs, the newest user message — the question this very request is
+ * answering — has already been appended to history (see `useChat`/
+ * `assistant/page.tsx`). It has no assistant reply yet. So a history of N
+ * answered turns plus that one in-flight question is `2N + 1` messages long,
+ * not `2N`. `slice(-pairs * 2)` takes an EVEN-sized window off the end of an
+ * ODD-length array, which forces the boundary to fall one message off from
+ * every user/assistant pair — and on a history long enough to be trimmed at
+ * all, that boundary lands on an assistant message just as often as a user
+ * one. A trimmed array starting with `role: "assistant"` converts (via
+ * `convertToModelMessages`) into a `ModelMessage[]` whose first entry has
+ * `role: "assistant"`, which Gemini's API rejects outright as an invalid
+ * first turn — a trimming bug that then surfaces as an opaque 500
+ * `provider_error`, indistinguishable from an actual provider outage.
+ *
+ * The fix: after the length-based slice, drop leading messages until the
+ * first one is `role: "user"` (or nothing is left). This never touches the
+ * *end* of the array, so the in-flight user message — the actual question
+ * being asked — is never at risk of being dropped; only stale history at the
+ * front can be. In the overwhelmingly common case this drops exactly one
+ * orphaned assistant message, costing half a pair of budget — losing one
+ * turn of old context is strictly better than a hard 500. `pairs` (see
+ * `MAX_HISTORY_PAIRS`) is therefore a ceiling on "roughly `pairs` exchanges",
+ * not an exact guarantee.
+ *
+ * This counts *input* UIMessages, not the ModelMessages `convertToModelMessages`
+ * later expands them into — one assistant UIMessage with several tool parts
+ * becomes one `assistant` ModelMessage plus one `tool` ModelMessage per tool
+ * call once converted. But on the wire, before conversion, the client still
+ * sends exactly one UIMessage per user turn and one per assistant turn (see
+ * `assistant/page.tsx`'s `buildOutgoingMessages`), so counting UIMessages
+ * (rather than the later, expanded ModelMessages) is still the right unit to
+ * trim.
  */
 function trimToRecentPairs(
-  messages: readonly { role: "user" | "assistant"; content: string }[],
+  messages: readonly ChatUIMessage[],
   pairs: number
-): { role: "user" | "assistant"; content: string }[] {
-  return messages.slice(-pairs * 2);
+): ChatUIMessage[] {
+  const sliced = messages.slice(-pairs * 2);
+  let firstUserIndex = 0;
+  while (
+    firstUserIndex < sliced.length &&
+    sliced[firstUserIndex].role !== "user"
+  ) {
+    firstUserIndex++;
+  }
+  return sliced.slice(firstUserIndex);
 }
 
 // ---------------------------------------------------------------------------
@@ -355,14 +450,176 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const parsed = chatRequestSchema.safeParse(rawBody);
-  if (!parsed.success) {
+  // `profileId` is validated independently of `messages` (see
+  // `profileIdSchema`'s doc comment) — it isn't part of the UIMessage wire
+  // shape, and z.object silently drops the sibling `messages` key rather
+  // than erroring on it.
+  const profileParsed = profileIdSchema.safeParse(rawBody);
+  if (!profileParsed.success) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const messages = trimToRecentPairs(parsed.data.messages, MAX_HISTORY_PAIRS);
+  // `safeValidateUIMessages` is the AI SDK's own, complete validator for the
+  // `UIMessage[]` shape — tool parts, `callProviderMetadata`, states, etc.
+  // included. It's strictly more thorough than a hand-rolled zod schema
+  // could stay in sync with across SDK versions. `messages == null` (missing
+  // field, non-object body, etc.) is itself a validation failure inside the
+  // function, so no separate existence check is needed here. A rejected,
+  // old-style flat `{role, content}` body — or any other malformed shape —
+  // falls into this same `success: false` branch.
+  const rawMessages =
+    typeof rawBody === "object" && rawBody !== null
+      ? (rawBody as { messages?: unknown }).messages
+      : undefined;
+  const validated = await safeValidateUIMessages<ChatUIMessage>({
+    messages: rawMessages,
+    tools: financeTools,
+  });
+  if (!validated.success) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
 
-  const { profileId } = parsed.data;
+  // The SDK's `uiMessagesSchema` (used by `safeValidateUIMessages` above)
+  // permits `role: "system"` in the wire shape, but the OLD hand-rolled
+  // schema this replaced (`role: z.enum(["user", "assistant"])`) never did —
+  // a client should never be able to inject a system-role message into the
+  // conversation. This is NOT a prompt-injection hole even without this
+  // guard: `streamText` refuses to forward a `system` `ModelMessage`
+  // (`allowSystemInMessages` defaults to `false`), so forged content never
+  // reaches the model. But that refusal throws `InvalidPromptError`, which
+  // isn't a `MessageConversionError` and isn't caught below, so it would
+  // fall through to the generic provider-error catch and misreport a
+  // malformed *request* as a 500 provider failure. Rejecting here, before
+  // conversion, restores the old schema's guarantee and reports the correct
+  // 400. Reject rather than silently strip: a client sending a system
+  // message is malformed, and silently accepting a request while discarding
+  // part of it is worse than a clear error.
+  if (validated.data.some((m) => m.role === "system")) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  // This app defines no approval-gated tools (see `financeTools`), so a tool
+  // part in `approval-requested` or `approval-responded` state can never
+  // arise from normal server-driven streaming — the only way to produce one
+  // is a hand-crafted request. Both states are also a genuine validation
+  // gap: `safeValidateUIMessages` only checks a tool part's `input` against
+  // the tool's zod schema for `input-available`/`output-available` states,
+  // so a malformed input (e.g. `{limit: "not-a-number"}`) sails through
+  // unvalidated in these two states. `ignoreIncompleteToolCalls` (passed to
+  // `convertToModelMessages` below) only filters `input-streaming` and
+  // `input-available` — not these — so without this guard an
+  // `approval-requested` part converts into an assistant tool-call with no
+  // matching tool-result, and its unvalidated input gets forwarded toward
+  // the model. Reject outright as malformed; `output-available`,
+  // `output-error`, and `output-denied` are untouched and continue to
+  // convert normally.
+  const hasUnsupportedToolApprovalState = validated.data.some((m) =>
+    m.parts.some(
+      (part) =>
+        isToolUIPart(part) &&
+        (part.state === "approval-requested" ||
+          part.state === "approval-responded")
+    )
+  );
+  if (hasUnsupportedToolApprovalState) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  // Part-type allowlist. `safeValidateUIMessages`'s `uiMessagesSchema` types
+  // a `file`/`reasoning-file` part's `url` as a bare `z.string()` — no
+  // `.url()` refinement — so a schema-valid part like `{ type: "file", url:
+  // "not a URL" }` sails through validation. `convertToModelMessages` then
+  // unconditionally does `new URL(part.url)` for both part types (see
+  // `isFileUIPart`/`isReasoningFileUIPart` branches in
+  // `node_modules/ai/dist/index.js`), with no try/catch around it. An
+  // invalid URL string throws a native `TypeError`, which is not a
+  // `MessageConversionError` — so it escapes the conversion catch below the
+  // same way the forged `role:"system"` and approval-state cases above did,
+  // and gets misreported as a 500 `provider_error` for what is actually a
+  // malformed request. This is the third distinct "schema-valid part that
+  // still isn't safe to convert" gap found in this converter, so rather
+  // than adding another named exception to a denylist, this allowlists the
+  // exact part shapes this app's own client can legitimately produce and
+  // rejects everything else.
+  //
+  // Established from `buildOutgoingMessages` in `assistant/page.tsx`: every
+  // user message is stripped to text-only before it's ever sent, and the
+  // two most recent assistant turns keep every part `useChat` assembled
+  // from the server's own stream verbatim. Given this app's tool-calling
+  // flow — typed, non-`providerExecuted` finance tools, no citation/source
+  // tools, no custom UI data parts, no file-generating tools — that stream
+  // (see `toUIMessageStream`'s output, consumed client-side by
+  // `processUIMessageStream`) can only ever produce `text`, `reasoning`
+  // (Gemini 3's "thinking" content), `step-start`, and tool parts
+  // (`isToolUIPart` covers both the static `tool-<name>` parts this app's
+  // tools produce and `dynamic-tool`, for robustness). `file`,
+  // `reasoning-file`, `source-url`, `source-document`, `custom`, and
+  // `data-*` parts are never legitimately sent by this client and are
+  // rejected outright — a hand-crafted request is the only way to produce
+  // one.
+  const hasDisallowedPart = validated.data.some((m) =>
+    m.parts.some(
+      (part) =>
+        !(
+          isTextUIPart(part) ||
+          isReasoningUIPart(part) ||
+          part.type === "step-start" ||
+          isToolUIPart(part)
+        )
+    )
+  );
+  if (hasDisallowedPart) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  if (validated.data.length > MAX_MESSAGES) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  // Equivalent of the old `chatMessageSchema`'s `.max(MAX_MESSAGE_LENGTH)` on
+  // flat `content`, now applied to each message's concatenated text parts —
+  // tool parts (input/output) are deliberately NOT counted here, they have
+  // their own, much larger, expected size (see `MAX_BODY_BYTES`'s comment).
+  const hasOversizedMessage = validated.data.some(
+    (m) => extractMessageText(m).length > MAX_MESSAGE_LENGTH
+  );
+  if (hasOversizedMessage) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  const messages = trimToRecentPairs(validated.data, MAX_HISTORY_PAIRS);
+
+  // `trimToRecentPairs`'s leading-`user` guard (see its doc comment) can
+  // legitimately reduce an all-assistant or empty input to `[]` — it has no
+  // question left to drop leading messages from. Nothing downstream checked
+  // that, so `streamText` would run with no user turn at all: either an
+  // empty `messages` array or, for a history that has a user message
+  // earlier but happens to end on an assistant one, a `ModelMessage[]` with
+  // no current question at its end. Provider behavior for that input is not
+  // part of this route's request-validation contract (some providers error,
+  // some answer from the system prompt alone), so a client-caused shape
+  // like this must be rejected as `400 invalid_request` here rather than
+  // reaching `streamText` and surfacing as an unpredictable/opaque failure.
+  //
+  // Require ENDS WITH `user`, not merely CONTAINS one: this request exists
+  // to answer one specific, current question, not to process a transcript
+  // in the abstract. `useChat` always appends the in-flight user message as
+  // the last element before firing the request (see `trimToRecentPairs`'s
+  // doc comment on why the array is structurally odd-length), and
+  // `isLikelyDataQuestion` below reads "the latest user message" on exactly
+  // that assumption — a history that contains a user message somewhere in
+  // the middle but ends on an assistant turn has no current question for
+  // that heuristic (or the model) to answer, e.g. a hand-crafted body or a
+  // client bug that failed to append the new turn. A single first-turn user
+  // message trivially satisfies "non-empty and ends with user" and is
+  // unaffected.
+  const hasCurrentUserQuestion =
+    messages.length > 0 && messages[messages.length - 1].role === "user";
+  if (!hasCurrentUserQuestion) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  const { profileId } = profileParsed.data;
   const profile = profileId
     ? profiles.find((p) => p.id === profileId)
     : getActiveAiProfile();
@@ -378,17 +635,38 @@ export async function POST(request: Request): Promise<Response> {
     .reverse()
     .find((m) => m.role === "user");
   const requireToolOnFirstStep = latestUserMessage
-    ? isLikelyDataQuestion(latestUserMessage.content)
+    ? isLikelyDataQuestion(extractMessageText(latestUserMessage))
     : false;
 
   try {
     const model = resolveModel(profile);
     const coverage = await getDataCoverage();
 
+    // `convertToModelMessages` is the SDK's bridge from `UIMessage[]` (what
+    // the client sends and what `streamText` no longer accepts directly) to
+    // `ModelMessage[]` (what it does accept). It throws `MessageConversionError`
+    // for a shape it can't convert (e.g. an incomplete tool call left in a
+    // state it doesn't know how to translate) — that reflects a malformed
+    // *request*, not a provider/server failure, so it's caught here and
+    // reported as 400 rather than falling through to the provider-error
+    // catch below, which would misreport it as a 500.
+    let modelMessages: Awaited<ReturnType<typeof convertToModelMessages>>;
+    try {
+      modelMessages = await convertToModelMessages(messages, {
+        tools: financeTools,
+        ignoreIncompleteToolCalls: true,
+      });
+    } catch (conversionError) {
+      if (MessageConversionError.isInstance(conversionError)) {
+        return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      }
+      throw conversionError;
+    }
+
     const result = streamText({
       model,
       system: buildSystemPrompt(coverage),
-      messages,
+      messages: modelMessages,
       tools: financeTools,
       stopWhen: stepCountIs(MAX_TOOL_STEPS),
       // Lowered from 0.3: this is a factual assistant that reports numbers
