@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useEffect, useState, type ReactNode } from "react";
+import { Component, useEffect, useMemo, useState, type ReactNode } from "react";
 import { format, parseISO } from "date-fns";
 import { motion } from "motion/react";
 import {
@@ -10,7 +10,6 @@ import {
   Copy,
   Loader2,
   Sparkles,
-  XCircle,
 } from "lucide-react";
 
 import { parseVisualizationSpec } from "@/lib/ai/visualization";
@@ -19,6 +18,11 @@ import {
   DataTable,
   type ColumnAlign,
 } from "@/components/assistant/charts/data-table";
+import {
+  parseTransactionEvidence,
+  type TransactionEvidence,
+} from "@/lib/ai/parse-tool-evidence";
+import { ToolEvidencePanel } from "@/components/assistant/tool-evidence-panel";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -37,8 +41,19 @@ import { cn } from "@/lib/utils";
 export interface ToolActivity {
   readonly toolCallId: string;
   readonly toolName: string;
-  readonly displayLabel: string;
+  readonly runningLabel: string;
+  readonly completeLabel: string;
+  readonly errorLabel: string;
   readonly status: "running" | "complete" | "error";
+}
+
+/** A completed tool call's raw output, captured so the panel below can
+ * render the real data the model actually retrieved. `output` is `unknown`
+ * here — see `parse-tool-evidence.ts` for the defensive validation. */
+export interface ToolOutput {
+  readonly toolCallId: string;
+  readonly toolName: string;
+  readonly output: unknown;
 }
 
 export interface ChatMessageData {
@@ -48,34 +63,110 @@ export interface ChatMessageData {
   readonly timestamp: string;
   readonly isStreaming: boolean;
   readonly toolActivities: readonly ToolActivity[];
+  readonly toolOutputs: readonly ToolOutput[];
   /** True when the response was cut off by an error before it finished. */
   readonly interrupted?: boolean;
 }
 
 // ---------------------------------------------------------------------------
-// Tool display-label mapping
+// Tool display-label mapping — present-progressive while running, past
+// tense on completion, and an explicit "Could not ..." on error (a silent
+// tool failure is exactly when the model would otherwise invent numbers, so
+// the error case is spelled out rather than folded into a generic label).
 // ---------------------------------------------------------------------------
 
-const TOOL_LABELS: Record<string, string> = {
-  get_accounts: "Checking your accounts…",
-  get_total_balance: "Checking your balances…",
-  get_monthly_cash_flow: "Reviewing monthly cash flow…",
-  get_category_breakdown: "Analyzing categories…",
-  get_budget_split: "Splitting needs vs. wants…",
-  get_savings_rate: "Calculating your savings rate…",
-  get_recurring_expenses: "Looking at recurring payments…",
-  get_expense_volatility: "Measuring spending volatility…",
-  get_income_stability: "Checking income stability…",
-  get_emergency_fund: "Sizing your emergency fund…",
-  get_balance_prediction: "Projecting your future balance…",
-  search_transactions: "Searching your transactions…",
-  compare_periods: "Comparing time periods…",
-  get_largest_expenses: "Finding your largest expenses…",
-  get_spending_patterns: "Analyzing spending patterns…",
+interface ToolLabels {
+  readonly running: string;
+  readonly complete: string;
+  readonly error: string;
+}
+
+const TOOL_LABELS: Record<string, ToolLabels> = {
+  search_transactions: {
+    running: "Searching your transactions…",
+    complete: "Searched your transactions",
+    error: "Could not search transactions",
+  },
+  get_largest_expenses: {
+    running: "Finding your largest expenses…",
+    complete: "Found your largest expenses",
+    error: "Could not find expenses",
+  },
+  get_accounts: {
+    running: "Checking your accounts…",
+    complete: "Checked your accounts",
+    error: "Could not check accounts",
+  },
+  get_total_balance: {
+    running: "Checking your balances…",
+    complete: "Checked your balances",
+    error: "Could not check balances",
+  },
+  get_monthly_cash_flow: {
+    running: "Reviewing monthly cash flow…",
+    complete: "Reviewed monthly cash flow",
+    error: "Could not review cash flow",
+  },
+  get_category_breakdown: {
+    running: "Analyzing categories…",
+    complete: "Analyzed categories",
+    error: "Could not analyze categories",
+  },
+  get_budget_split: {
+    running: "Splitting needs vs. wants…",
+    complete: "Split needs vs. wants",
+    error: "Could not split budget",
+  },
+  get_savings_rate: {
+    running: "Calculating your savings rate…",
+    complete: "Calculated your savings rate",
+    error: "Could not calculate savings rate",
+  },
+  get_recurring_expenses: {
+    running: "Looking at recurring payments…",
+    complete: "Found recurring payments",
+    error: "Could not find recurring payments",
+  },
+  get_expense_volatility: {
+    running: "Measuring spending volatility…",
+    complete: "Measured spending volatility",
+    error: "Could not measure volatility",
+  },
+  get_income_stability: {
+    running: "Checking income stability…",
+    complete: "Checked income stability",
+    error: "Could not check income stability",
+  },
+  get_emergency_fund: {
+    running: "Sizing your emergency fund…",
+    complete: "Sized your emergency fund",
+    error: "Could not size emergency fund",
+  },
+  get_balance_prediction: {
+    running: "Projecting your future balance…",
+    complete: "Projected your future balance",
+    error: "Could not project balance",
+  },
+  compare_periods: {
+    running: "Comparing time periods…",
+    complete: "Compared time periods",
+    error: "Could not compare periods",
+  },
+  get_spending_patterns: {
+    running: "Analyzing spending patterns…",
+    complete: "Analyzed spending patterns",
+    error: "Could not analyze patterns",
+  },
 };
 
-export function getToolDisplayLabel(toolName: string): string {
-  return TOOL_LABELS[toolName] ?? "Analyzing your data…";
+const FALLBACK_TOOL_LABELS: ToolLabels = {
+  running: "Analyzing your data…",
+  complete: "Analysis complete",
+  error: "Could not complete analysis",
+};
+
+export function getToolLabels(toolName: string): ToolLabels {
+  return TOOL_LABELS[toolName] ?? FALLBACK_TOOL_LABELS;
 }
 
 // ---------------------------------------------------------------------------
@@ -510,11 +601,42 @@ function ThinkingIndicator(): React.JSX.Element {
   );
 }
 
+/**
+ * A silent tool failure is exactly when the model is most likely to invent
+ * numbers instead of admitting it doesn't have them — so an errored tool
+ * call gets an expanded, explicit warning rather than a quiet red icon on an
+ * otherwise easy-to-miss one-line chip.
+ */
+function ToolErrorChip({
+  activity,
+}: {
+  activity: ToolActivity;
+}): React.JSX.Element {
+  return (
+    <div className="border-destructive/20 bg-destructive/5 mb-2 rounded-lg border px-3 py-2">
+      <div className="flex items-center gap-2 text-xs">
+        <AlertTriangle className="text-destructive h-3.5 w-3.5 shrink-0" />
+        <span className="text-destructive font-medium">
+          {activity.errorLabel}
+        </span>
+      </div>
+      <p className="text-destructive/80 mt-1 text-[11px]">
+        The assistant may not have complete information for this answer. Take
+        any figures below with extra caution.
+      </p>
+    </div>
+  );
+}
+
 function ToolActivityIndicator({
   activity,
 }: {
   activity: ToolActivity;
 }): React.JSX.Element {
+  if (activity.status === "error") {
+    return <ToolErrorChip activity={activity} />;
+  }
+
   return (
     <div
       className="text-muted-foreground mb-2 flex items-center gap-2 text-xs"
@@ -522,14 +644,13 @@ function ToolActivityIndicator({
     >
       {activity.status === "running" ? (
         <Loader2 className="text-primary h-3 w-3 animate-spin" />
-      ) : activity.status === "complete" ? (
-        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
       ) : (
-        <XCircle className="text-destructive h-3 w-3" />
+        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
       )}
-      <span className="italic">{activity.displayLabel}</span>
-      <span className="text-muted-foreground/60 font-mono text-[10px]">
-        {activity.toolName}
+      <span className={cn(activity.status === "running" && "italic")}>
+        {activity.status === "running"
+          ? activity.runningLabel
+          : activity.completeLabel}
       </span>
     </div>
   );
@@ -573,6 +694,30 @@ function AssistantBubble({
   const segments = splitContent(message.content);
   const hasText = message.content.trim().length > 0;
 
+  // Real tool output, validated defensively — a malformed or stale
+  // (localStorage-restored) `output` simply yields no panel for that call
+  // rather than crashing the message list. Order matches `toolOutputs`
+  // (i.e. tool-call completion order), so data appears before the prose
+  // that interprets it.
+  const evidencePanels = useMemo(
+    () =>
+      message.toolOutputs
+        .map((toolOutput) => ({
+          toolCallId: toolOutput.toolCallId,
+          evidence: parseTransactionEvidence(
+            toolOutput.toolName,
+            toolOutput.output
+          ),
+        }))
+        .filter(
+          (
+            entry
+          ): entry is { toolCallId: string; evidence: TransactionEvidence } =>
+            entry.evidence !== null
+        ),
+    [message.toolOutputs]
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -8 }}
@@ -594,6 +739,14 @@ function AssistantBubble({
             activity={activity}
           />
         ))}
+
+        {evidencePanels.length > 0 && (
+          <div className="space-y-3">
+            {evidencePanels.map(({ toolCallId, evidence }) => (
+              <ToolEvidencePanel key={toolCallId} evidence={evidence} />
+            ))}
+          </div>
+        )}
 
         <div
           className={cn(

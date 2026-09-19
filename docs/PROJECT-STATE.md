@@ -1,9 +1,68 @@
 # Project State: BanKing
 
-**Current Phase:** AI Assistant v1.1 (provider profiles)
-**Current Sprint:** feat/ai-provider-profiles
-**Last Session:** 2026-07-11
-**Branch:** feat/ai-provider-profiles (not merged; no commits made per task scope)
+**Current Phase:** AI Assistant grounding & trust hardening
+**Current Sprint:** claude/gemini-transaction-hallucination-ngbd73
+**Last Session:** 2026-09-19
+**Branch:** claude/gemini-transaction-hallucination-ngbd73 (3 commits pushed; not yet merged)
+
+---
+
+## This session changes (2026-09-19) — Fix: Gemini profile fabricated vacation transactions; grounding, evidence panel, classifier collision fixes
+
+**Summary:** A client asked the AI Assistant (Google Gemini 3.1 Flash profile) to sum up their vacation transactions over a supplied date range. It fabricated transactions; when challenged, it retrieved the correct ones — proving the model was capable and the app's grounding was at fault. An audit found ten root causes; nine are fixed across three commits (`2319d7d`, `6d63b83`, `39382d1`), all pushed to this branch. No commits were made by this session (git history already reflects the work); this session only wrote up the findings.
+
+**The incident:** Date-ranged, thematic query ("vacation") against real synced transaction data returned invented rows on the first attempt.
+
+**Root causes found (audit of all ten; nine fixed, one open):**
+
+1. `streamText` (`src/app/api/chat/route.ts`) set `tools` but no `toolChoice`, so the SDK's default `"auto"` let the model answer with zero tool calls. **Fixed.**
+2. `prepareSendMessagesRequest` in the assistant page strips all tool-call/result parts from history before sending. **NOT fixed** — see Next actions.
+3. The system prompt (`src/lib/ai/system-prompt.ts`) actively steered the model away from `search_transactions` for thematic queries — the dead end that produced this bug. **Fixed.**
+4. No Travel category existed, and the category list was never given to the model (hand-maintained copy that could drift). **Fixed.**
+5. The prompt forbade invented numbers without mandating a tool call, and separately contradicted itself on "verbatim" vs. de-DE reformatting of figures. **Fixed.**
+6. No data coverage range (earliest/latest transaction date) was injected into the prompt, so out-of-range periods couldn't get a straight answer. **Fixed.**
+7. The step budget (8) was too low for a tool round-trip (~2 steps) plus composing an answer. **Fixed.**
+8. `part.output` (the actual tool result) was never rendered anywhere in the UI, so the model had to hand-transcribe retrieved rows into prose or a table — with no way for the user to tell a real transaction from an invented one. **Fixed.**
+9. The category filter in `transactions.actions.ts` compared the _stored_ `t.category` field, which is `undefined` on real synced data and only populated on demo/seed rows — so any category filter silently returned zero rows against real bank data while appearing to work on demo data. **Fixed.**
+10. (Found and fixed while investigating #9) `classifyTransaction`'s plain substring matching let short keywords match inside unrelated words (e.g. "wage" inside "Mietwagen"), corrupting category totals even when the assistant read the data correctly. **Fixed** in the third commit.
+
+**What shipped, per commit:**
+
+- **`2319d7d` — fix(assistant): ground every answer in real tool data.**
+  - Grounding layer (`src/app/api/chat/route.ts`, `src/lib/ai/system-prompt.ts`): `prepareStep` now forces `toolChoice: "required"` on step 0 only — verified against the installed `ai@7` types (`PrepareStepFunction`/`PrepareStepResult` and the step loop's `prepareStepResult?.toolChoice ?? toolChoice` fallback). Step-0-only is deliberate: forcing `toolChoice: "required"` on every step traps the model in a tool loop with no way to produce final text.
+  - A conservative `isLikelyDataQuestion` gate keeps genuinely conversational turns (greetings, thanks, capability/generic finance-education questions) from triggering a pointless lookup, while biasing toward requiring a tool whenever intent is unclear — a needless query is harmless, a fabricated number is not.
+  - System prompt rewritten around seven non-negotiable grounding rules (call a tool first; numbers must originate from tool results; empty/partial/failed/budget-exhausted results must be stated plainly rather than filled in), no longer steers away from `search_transactions` for thematic queries, imports `CATEGORIES` live so the category list can't drift from the code, injects the actual transaction date coverage window, and tells the model not to re-transcribe rows since the UI will render the real ones.
+  - Step budget 8 → 12; temperature 0.3 → 0.1 (factual reporting tool).
+  - Tool failures now logged server-side via `onToolExecutionEnd` with the tool name.
+  - **Correction on record:** the pre-existing `onError: () => {}` was **not** swallowing tool errors. In `ai@7`, a throwing tool is converted to a tool-error part and fed back to the model automatically; `onError` only fires for top-level stream errors. A comment was added in the route so this wrong assumption isn't reintroduced later.
+  - Data layer (`src/actions/transactions.actions.ts`, `src/lib/stats/calculations.ts`, `src/lib/stats/categories.ts`, `src/lib/ai/tools/search-transactions.ts`, `src/lib/ai/tools/get-largest-expenses.ts`): category filtering now derives the category the same way the rest of the app does, instead of reading the unpopulated stored field (`internal-transfer` still short-circuits first so `excludeInternal` behavior is unchanged); search now matches multiple whitespace-separated terms as OR, reads the DKB merchant name and merchant category from the raw payload (`raw.attributes.merchant.*`, the adapter's actual shape), and normalizes diacritics plus German umlaut transliteration (`muenchen`/`München`/`Munchen` all match); a new Travel category was added (ordered after Transport so commuter rail/car-sharing keep first refusal, with `hrs` narrowed to `hrs.de` to avoid substring false positives) and added to `WANTS_CATEGORIES` (without it, travel spend fell into neither needs nor wants and silently inflated reported savings in the budget split); `search_transactions` and `get_largest_expenses` now return `truncated`, an explicit `note`, and the filters actually applied, so a capped list can't be mistaken for the complete set and an empty result reads as definite rather than an invitation to improvise.
+- **`6d63b83` — feat(assistant): show the real transactions behind every answer.**
+  - `src/lib/ai/parse-tool-evidence.ts` (new): validates `part.output` with Zod `safeParse`, returning `null` on anything unexpected so malformed or stale output can never crash the chat. Only the row array and `totalMatches` are required; `truncated`/`appliedFilters` are optional so localStorage-restored conversations from before this change still parse.
+  - `src/components/assistant/tool-evidence-panel.tsx` (new): renders the actual tool rows beneath the tool chips and above the prose, with a provenance line (count, date range, total) so a stated figure can be checked at a glance, and a second muted line echoing the filters actually applied. Truncation notice is always shown (amber, independent of collapse/show-all state) whenever the result is capped — preferring the backend's `truncated` flag, falling back to comparing `totalMatches` against returned rows. Empty results render as a definite "no transactions matched" rather than a failure or empty shell.
+  - `src/components/assistant/chat-message.tsx`: wires in the evidence panel; tool chips drop the raw snake_case tool name in favor of past-tense completion labels, and a failed tool call now expands into an explicit warning that the answer may be incomplete (previously a bare red X).
+  - `src/app/(dashboard)/assistant/page.tsx`: minor changes to plumb tool-evidence data through.
+  - Known light-mode nit recorded in the commit: the category badge's `bg-muted` sits close to the card background in light mode and reads subtly; it follows the design spec's prescribed classes and is flagged, not fixed, here.
+- **`39382d1` — fix(categories): stop short keywords matching inside unrelated words.**
+  - Five confirmed collisions fixed with a new reusable `wholeWordKeywords` mechanism (word-boundary regex match, added alongside the existing bare-substring keywords) in `src/lib/stats/categories.ts`: `"wage"` (Income) matching inside "Mietwagen" — inverted the sign of a car-rental expense into income; `"rwe"` (Bills) matching inside "Überweisung" (any bank transfer misfiled as a utility bill); `"gas"` (Bills) matching inside "Gaststätte" (restaurants misfiled as bills, shadowing Dining); `"ticket"` (Transport) matching inside "Flugticket" (flights misfiled as commuting, and shadowing Entertainment's "ticketmaster"); `"swiss"` (Travel) matching "Swiss Life AG" (an insurance premium misfiled as travel — narrowed to `"swiss air"`/`"swiss international"`/`"swiss intl"`/`"swiss.com"`, with `"swiss life"` added to Bills). Also fixed on review: `"tk "` (trailing-space match, both a false positive inside "3 Stk Batterien" and a recall gap at end-of-string) and `"enterprise"` (narrowed to `"enterprise rent"`/`"enterprise-rent"`, following the existing `"hrs.de"` precedent). Earlier in the branch (first commit), `"rent"`/Mietwagen and `"wohnung"`/Ferienwohnung had already been addressed as part of the Travel-category work.
+  - `NEEDS_CATEGORIES`/`WANTS_CATEGORIES` exported from `src/lib/stats/calculations.ts` and imported by `src/lib/ai/tools/get-budget-split.ts`, replacing duplicated local arrays, so the tool description is derived from the real sets and can't drift from the code again (that drift is what left Travel out of the prompt's category list in the first place).
+
+**Verification:**
+
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — at the pre-existing 36-problem baseline (28 errors / 8 warnings), zero new issues across all three commits.
+- `npx prettier --check` — clean.
+- `npm run build` — succeeds.
+- Data-layer assertions (throwaway scripts, not committed): 31/31 passing, covering the category-filter bug, multi-term and diacritic search, merchant-field reach, a classification regression table, and the truncation/empty-result contracts.
+- Classifier regression harness (throwaway script, not committed): 75/75 fixtures pass, 0 regressions, 12 confirmed-collision fixtures flip from wrong to correct, and every touched keyword is proved to still match its genuine cases (real RWE and Erdgas bills, fused transit tickets, real Swiss Air flights, TK health insurance, wage income, Enterprise Rent-A-Car).
+- Headless Chromium QA of the evidence panel in light and dark, covering populated, truncated, empty and tool-failure states, show-all/collapse interactions, and 390px mobile (Description column hidden, no horizontal overflow) — zero console errors and zero page errors asserted programmatically.
+
+**Next actions / known follow-ups:**
+
+- **Multi-turn history fidelity is NOT fixed.** The assistant page's `prepareSendMessagesRequest` still flattens messages to text and drops tool-call/result parts before sending, and the `/api/chat` request schema only accepts `user`/`assistant` roles. Follow-up questions therefore can't build on prior tool evidence in the same conversation. This was the planned "Package 3" scope and remains open.
+- Flagged-but-deliberately-unfixed classifier collisions (reasoning recorded in `src/lib/stats/categories.ts`): `"pension"` (a genuine two-sense ambiguity — the guesthouse sense has no enumerable phrase to narrow to); `"total"`, `"db "`, `"avis"` (no plausible collision found in German banking text); `"miete"` (fragile by luck, but narrowing would cost far more recall than it buys, since genuine rent payments are overwhelmingly bare "Miete ..."). Also pre-existing and out of scope: `"müller"` (Groceries) matching inside "Dr. Müller Zahnarzt", and `"eon"` (Bills) matching inside "Patreon".
+- `"wohnung"`'s whole-word matching no longer matches inside `"Eigentumswohnung"` — an accepted, undemonstrated trade-off.
+- Light-mode contrast nit on the evidence panel's `bg-muted` category badge (recorded above; not fixed).
+- No test framework exists in this repo. All verification above was done via throwaway scripts and headless QA, none of which are reproducible in CI. Recommend adding `vitest` to lock in the classifier regression harness and the data-layer assertions as real, committed tests.
 
 ---
 

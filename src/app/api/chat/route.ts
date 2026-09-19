@@ -9,9 +9,10 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getTransactions } from "@/actions/transactions.actions";
 import { getActiveAiProfile, getAiProfiles } from "@/config/ai";
 import { resolveModel } from "@/lib/ai/provider";
-import { buildSystemPrompt } from "@/lib/ai/system-prompt";
+import { buildSystemPrompt, type DataCoverage } from "@/lib/ai/system-prompt";
 import { financeTools } from "@/lib/ai/tools";
 
 export const maxDuration = 60;
@@ -22,7 +23,17 @@ export const maxDuration = 60;
 
 const MAX_MESSAGES = 50;
 const MAX_MESSAGE_LENGTH = 4000;
-const MAX_TOOL_STEPS = 8;
+// Raised from 8: a multi-tool financial question (e.g. compare two periods,
+// or gather several aggregates before composing an answer) can legitimately
+// need more than a handful of steps. Each tool round-trip costs one "tool
+// call" step plus one "continue" step, so 8 left barely two tool calls of
+// headroom before the model was forced to answer regardless of whether it
+// had enough data — precisely the gap that produced the invented vacation
+// transactions. 12 gives room for ~5 tool calls plus a final composition
+// step while staying well within `maxDuration` (60s) and, per the grounding
+// rules in the system prompt, an exhausted budget must be reported honestly
+// rather than papered over with estimates.
+const MAX_TOOL_STEPS = 12;
 const MAX_HISTORY_PAIRS = 10;
 const MAX_BODY_BYTES = 100 * 1024; // 100KB
 
@@ -196,6 +207,125 @@ async function peekThenResume<T extends { type: string; error?: unknown }>(
   });
 }
 
+// ---------------------------------------------------------------------------
+// Grounding gate: require a tool call before the model may answer a data
+// question (Fix B1)
+//
+// AI SDK v7's `streamText` accepts a `prepareStep` callback — see
+// `PrepareStepFunction`/`PrepareStepResult` in `node_modules/ai/dist/index.d.ts`
+// — that can override `toolChoice` (among other things) per step, where
+// `stepNumber` is 0-indexed (the SDK's internal loop passes
+// `stepNumber: recordedSteps.length`). `ToolChoice<TOOLS>` includes the
+// literal `"required"`, which forces the model to call *some* tool that step
+// without pinning it to a specific one, so the model still picks whichever
+// tool fits per the system prompt's guidance.
+//
+// We force `toolChoice: "required"` ONLY on step 0. Forcing it on every step
+// would be a trap: the model would be told "you must call a tool" again
+// after it already has the facts it needs, and — since `stopWhen` still
+// eventually cuts it off — it would either loop until the step budget is
+// exhausted or be forced to call a pointless extra tool instead of ever
+// emitting final text. Restricting the requirement to the first step
+// guarantees at least one real tool call grounds the answer, while every
+// later step falls back to `undefined` (which inherits the outer, unset
+// `toolChoice`, i.e. the SDK default `"auto"`), letting the model compose
+// its final response freely once it has data.
+//
+// Whether step 0 requires a tool depends on a conservative, cheap heuristic:
+// bias toward requiring a tool whenever it's plausible the user is asking
+// about their own financial data, since a needless lookup is harmless but a
+// fabricated number is not. Only a small, explicit allowlist of
+// conversational/non-data turns is exempted so they stay natural instead of
+// triggering a spurious database query.
+// ---------------------------------------------------------------------------
+
+/** Short conversational openers/closers that never concern the user's data. */
+const GREETING_OR_ACK_RE =
+  /^(hi|hello|hey|hallo|servus|moin|thanks?( you)?( very much)?|thank you( very much)?|many thanks|danke( dir| schön| sehr)?|dankeschön|ok|okay|cool|great|nice|good|got it|alles klar|verstanden|bye|goodbye|tschüss|sorry|sry|no worries)[!.,\s]*$/i;
+
+/**
+ * Questions about the assistant itself rather than the user's data.
+ *
+ * Anchored to match the ENTIRE trimmed message (not just a substring), with
+ * an optional trailing "?". Previously this used a shared `\b(...)\b` group
+ * around alternatives that also embedded their own `\??$`; at end-of-string
+ * after a literal "?", the preceding character is non-word, so the trailing
+ * `\b` failed to match, and JS regex engines do not backtrack into an
+ * already-satisfied earlier alternative to drop the "?" — so "what are
+ * you?", "help?", and "can you help me?" (with the "?") were silently NOT
+ * exempted, forcing a pointless tool call on a pure capability question.
+ * Anchoring the whole alternation with `^...\??$` fixes that and also
+ * avoids the previous false positive where these phrases matched as a bare
+ * substring inside an unrelated, longer data question (e.g. "who are you
+ * sending money to?"). Also fixes a typo: "was kannst du( du)?" duplicated
+ * "du" instead of allowing the same optional trailing "?" as every other
+ * phrase here.
+ */
+const CAPABILITY_QUESTION_RE =
+  /^(what can you do|what do you do|who are you|what are you|can you help( me)?|help|wer bist du|was kannst du|was bist du)\??$/i;
+
+/**
+ * A generic "define/explain this concept" question (e.g. "what is a savings
+ * rate?", "explain compound interest"). Educational and answerable from
+ * general knowledge — UNLESS it also references the user's own data (see
+ * `PERSONAL_REFERENCE_RE`), e.g. "what's my savings rate?" is a data
+ * question, not a definition request.
+ */
+const CONCEPTUAL_QUESTION_RE =
+  /^(what('?s| is)\b|explain\b|define\b|how (does|do|is)\b)/i;
+
+/** A first- or second-person possessive/subject reference to the user's own finances. */
+const PERSONAL_REFERENCE_RE =
+  /\b(my|mine|i'?ve|i have|i spent|i earned|i paid|did i|am i|ich|mein\w*|habe ich)\b/i;
+
+/**
+ * Conservative, cheap heuristic for "does this turn plausibly concern the
+ * user's own financial data?" Used only to decide whether step 0 of the
+ * agent loop must call a tool — see the block comment above. Defaults to
+ * `true` (require a tool) whenever the message isn't a recognized
+ * conversational or purely-conceptual turn.
+ */
+function isLikelyDataQuestion(latestUserText: string): boolean {
+  const trimmed = latestUserText.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+  if (
+    GREETING_OR_ACK_RE.test(trimmed) ||
+    CAPABILITY_QUESTION_RE.test(trimmed)
+  ) {
+    return false;
+  }
+  if (
+    CONCEPTUAL_QUESTION_RE.test(trimmed) &&
+    !PERSONAL_REFERENCE_RE.test(trimmed)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Data coverage (Fix B4-e): the earliest/latest transaction date, injected
+// into the system prompt so the model can tell whether a time-based question
+// is even answerable instead of silently assuming data exists. Computed here
+// (route.ts already has DB access via the existing `getTransactions` action)
+// rather than inside the prompt module, per the task's guidance — keeps
+// `buildSystemPrompt` synchronous and free of DB imports.
+// ---------------------------------------------------------------------------
+
+async function getDataCoverage(): Promise<DataCoverage> {
+  const transactions = await getTransactions();
+  if (transactions.length === 0) {
+    return { earliestDate: null, latestDate: null };
+  }
+  // `getTransactions()` returns transactions sorted most-recent-first.
+  return {
+    earliestDate: transactions[transactions.length - 1].bookingDate,
+    latestDate: transactions[0].bookingDate,
+  };
+}
+
 export async function POST(request: Request): Promise<Response> {
   const profiles = getAiProfiles();
 
@@ -244,20 +374,74 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  const latestUserMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "user");
+  const requireToolOnFirstStep = latestUserMessage
+    ? isLikelyDataQuestion(latestUserMessage.content)
+    : false;
+
   try {
     const model = resolveModel(profile);
+    const coverage = await getDataCoverage();
 
     const result = streamText({
       model,
-      system: buildSystemPrompt(),
+      system: buildSystemPrompt(coverage),
       messages,
       tools: financeTools,
       stopWhen: stepCountIs(MAX_TOOL_STEPS),
-      temperature: 0.3,
+      // Lowered from 0.3: this is a factual assistant that reports numbers
+      // out of tool results, not a creative writer — less sampling variance
+      // reduces the odds of the model drifting into confident-sounding but
+      // ungrounded phrasing around a number. Not 0: a small amount of
+      // temperature keeps phrasing natural and avoids the occasional
+      // degenerate/repetitive output some providers exhibit at strict
+      // greedy decoding, and grounding here is enforced structurally (B1/B4)
+      // rather than by temperature alone.
+      temperature: 0.1,
+      // See the grounding-gate block comment above `isLikelyDataQuestion`:
+      // require a tool call on step 0 only when the turn plausibly concerns
+      // the user's data, then hand control back to the default "auto" so
+      // the model can compose its final answer once it has facts in hand.
+      prepareStep: ({ stepNumber }) =>
+        stepNumber === 0 && requireToolOnFirstStep
+          ? { toolChoice: "required" as const }
+          : undefined,
+      // Dedicated hook for logging tool execution outcomes (Fix B3): unlike
+      // `streamText`'s own `onError` below (which only fires for top-level
+      // stream errors — a failed provider call — never for an individual
+      // tool's `execute` throwing), `onToolExecutionEnd` fires for every
+      // tool call, success or failure, and is the SDK's documented
+      // mechanism for exactly this. A concise, tool-scoped log line here is
+      // the only piece actually missing: the SDK already turns a thrown
+      // tool error into an explicit `tool-result` with `errorMode: "text"`
+      // that's fed back to the model on the next step (see
+      // `createToolModelOutput`/the `"tool-error"` case in
+      // `node_modules/ai/dist/index.js`), so the model already sees the
+      // failure and can report it honestly per the system prompt's Hard
+      // Rules — no code change was needed for that part, only for surfacing
+      // it in the server logs. No secrets are logged: only the tool name
+      // and the error's `message`.
+      onToolExecutionEnd: (event) => {
+        if (event.toolOutput.type === "tool-error") {
+          const message =
+            event.toolOutput.error instanceof Error
+              ? event.toolOutput.error.message
+              : "unknown tool error";
+          console.error(
+            `Tool execution failed (${event.toolOutput.toolName}):`,
+            message
+          );
+        }
+      },
       // Errors are handled explicitly via `peekThenResume` / the outer
       // try/catch and the `toUIMessageStream` `onError` below. Suppress the
       // SDK's own default `console.error` (which dumps full stack traces
-      // and request bodies) to avoid duplicate, noisier server logs.
+      // and request bodies) to avoid duplicate, noisier server logs. This
+      // only affects top-level stream errors (e.g. a failed provider call)
+      // — it never receives tool execution errors (see `onToolExecutionEnd`
+      // above), so it does not regress B3.
       onError: () => {},
     });
 

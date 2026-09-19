@@ -2,9 +2,27 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { getTransactions } from "@/actions/transactions.actions";
-import { calculateBudgetSplit } from "@/lib/stats/calculations";
+import {
+  calculateBudgetSplit,
+  NEEDS_CATEGORIES,
+  WANTS_CATEGORIES,
+} from "@/lib/stats/calculations";
 
 import { isoDateParam, round2 } from "./shared";
+
+/**
+ * Category names used in the tool description below, derived directly
+ * from `NEEDS_CATEGORIES` / `WANTS_CATEGORIES` in `calculations.ts` (the
+ * actual runtime source of truth used by `calculateBudgetSplit`) so the
+ * description can never drift out of sync with the real classification
+ * logic again.
+ */
+const NEEDS_CATEGORY_NAMES = Array.from(NEEDS_CATEGORIES, (c) =>
+  c.toLowerCase()
+);
+const WANTS_CATEGORY_NAMES = Array.from(WANTS_CATEGORIES, (c) =>
+  c.toLowerCase()
+);
 
 const paramsSchema = z.object({
   startDate: isoDateParam(
@@ -27,7 +45,12 @@ export interface GetBudgetSplitResult {
 
 export const getBudgetSplitTool = tool({
   description:
-    "Splits spending into Needs (rent, bills, groceries, transport, healthcare), Wants (dining, entertainment, shopping, subscriptions, other), and Saved, following the 50/30/20 budgeting framework. Amounts in EUR. Use this for budgeting/affordability questions.",
+    `Splits spending into Needs (${NEEDS_CATEGORY_NAMES.join(", ")}), ` +
+    `Wants (${WANTS_CATEGORY_NAMES.join(", ")}), and Saved, following the ` +
+    "50/30/20 budgeting framework. Amounts in EUR. If spending exceeds " +
+    "income, `saved` is 0 and the shortfall is returned as a negative " +
+    "`deficit` (0 when not in deficit). Use this for budgeting/" +
+    "affordability questions.",
   inputSchema: paramsSchema,
   execute: async ({ startDate, endDate }): Promise<GetBudgetSplitResult> => {
     const transactions = await getTransactions(
