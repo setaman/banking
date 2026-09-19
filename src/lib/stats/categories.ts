@@ -46,11 +46,13 @@ interface CategoryRule {
    * is instead resolved by matching specific multi-word phrases (see the
    * Rent rule below) rather than the bare word.
    *
-   * Trade-off: this also stops "wohnung" from matching inside other
-   * compounds such as "Eigentumswohnung" (owner-occupied flat). No such
-   * transaction exists in this codebase's fixtures/seed data today, so
-   * this is a deliberate, low-risk trade-off rather than a proven
-   * regression — flagged for product follow-up if it turns out to matter.
+   * Caveat: this also stops "wohnung" from matching inside OTHER fused
+   * compounds such as "Mietwohnung" (rented flat) and "Eigentumswohnung"
+   * (owner-occupied flat) — those lose their word boundary the same way
+   * "Ferienwohnung" would have. Unlike "Ferienwohnung" (which has its own
+   * home in the Travel rule), these two are genuinely Rent-category
+   * transactions, so they are listed as explicit bare-substring keywords
+   * on the Rent rule below rather than left to fall through to "Other".
    */
   wholeWordKeywords?: string[];
 }
@@ -161,6 +163,13 @@ const CATEGORY_RULES: CategoryRule[] = [
       "rent due",
       "landlord",
       "property management",
+      // Fused "wohnung" compounds that lose their word boundary under
+      // `wholeWordKeywords` below (same shape as "mietzahlung" above): these
+      // are genuine Rent transactions, not the "Ferienwohnung"/Travel
+      // collision that word-boundary matching is protecting against, so
+      // they need their own explicit bare-substring entries.
+      "mietwohnung",
+      "eigentumswohnung",
     ],
     // See `wholeWordKeywords` doc above: bare "wohnung" is too generic to
     // safely substring-match (it shadows "Ferienwohnung"). Unlike "rent",
@@ -180,7 +189,11 @@ const CATEGORY_RULES: CategoryRule[] = [
     //     has no standalone alternate meaning: it never appears as its own
     //     word inside "Überweisung" (no boundary on either side of the
     //     embedded "rwe"), so `\brwe\b` fully resolves the collision while
-    //     still matching genuine standalone "RWE Vertrieb AG" etc.
+    //     still matching genuine standalone "RWE Vertrieb AG" etc. Audited
+    //     for the same class of breakage as "gas"/"wohnung" below: "RWE" is
+    //     a proper noun, not a German noun root that other real words fuse
+    //     onto, so no equivalent fused compound (analogous to
+    //     "Gasrechnung") was found — no additional keyword needed.
     //   - "gas" (utility) is a substring of "Gaststätte" (restaurant),
     //     shadowing Dining's own "gaststätte" keyword since Bills is
     //     checked first. Same reasoning: "gas" has no boundary before the
@@ -188,8 +201,10 @@ const CATEGORY_RULES: CategoryRule[] = [
     //     between "gas" and the following "t"), so `\bgas\b` resolves it.
     //     To avoid a foreseeable new regression, common fused German gas
     //     compounds that would ALSO lose their word boundary under this
-    //     change ("Erdgas", "GASAG") are kept as explicit bare-substring
-    //     keywords below rather than silently dropped.
+    //     change ("Erdgas", "GASAG", "Gasrechnung", "Gasabschlag",
+    //     "Gaspreis") are kept as explicit bare-substring keywords below
+    //     rather than silently dropped — "Gasrechnung" in particular is an
+    //     extremely common way German gas bills are labeled.
     category: "Bills",
     keywords: [
       "stadtwerke",
@@ -210,6 +225,9 @@ const CATEGORY_RULES: CategoryRule[] = [
       "strom",
       "gasag",
       "erdgas",
+      "gasrechnung",
+      "gasabschlag",
+      "gaspreis",
       "wasser",
       "internet",
       "telefon",
@@ -283,6 +301,11 @@ const CATEGORY_RULES: CategoryRule[] = [
       "deutschlandticket",
       "9-euro-ticket",
       "nahverkehrsticket",
+      // Additional common fused transit-ticket compounds found during a
+      // systematic audit of every `wholeWordKeywords` entry introduced in
+      // this PR (same shape as the ones enumerated above).
+      "jobticket",
+      "semesterticket",
     ],
     wholeWordKeywords: ["ticket"],
   },
@@ -490,6 +513,10 @@ const CATEGORY_RULES: CategoryRule[] = [
     // the real `wholeWordKeywords` mechanism (`\btk\b`), which requires a
     // boundary on BOTH sides: it excludes "Stk" (no boundary before "tk")
     // while still matching standalone "TK" anywhere, including string end.
+    // Audited for the same class of breakage as "gas"/"wohnung" elsewhere
+    // in this file: "TK" is a 2-letter abbreviation, not a German word root
+    // that legitimate Healthcare-relevant compounds fuse onto, so no
+    // equivalent of "Gasrechnung" was found here.
     category: "Healthcare",
     keywords: [
       "apotheke",
@@ -570,6 +597,9 @@ const CATEGORY_RULES: CategoryRule[] = [
     // "wages" is added back explicitly as a bare substring since it would
     // fail the whole-word check on "wage" alone (no trailing boundary
     // before the "s") — safe to add, it is not a substring of "Mietwagen".
+    // Audited for the same class of breakage as "gas"/"wohnung" elsewhere
+    // in this file: "wage" is an English loanword with no German compounds
+    // that fuse onto it, so no equivalent of "Gasrechnung" exists here.
     category: "Income",
     keywords: [
       "gehalt",

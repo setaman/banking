@@ -243,9 +243,26 @@ async function peekThenResume<T extends { type: string; error?: unknown }>(
 const GREETING_OR_ACK_RE =
   /^(hi|hello|hey|hallo|servus|moin|thanks?( you)?( very much)?|thank you( very much)?|many thanks|danke( dir| schön| sehr)?|dankeschön|ok|okay|cool|great|nice|good|got it|alles klar|verstanden|bye|goodbye|tschüss|sorry|sry|no worries)[!.,\s]*$/i;
 
-/** Questions about the assistant itself rather than the user's data. */
+/**
+ * Questions about the assistant itself rather than the user's data.
+ *
+ * Anchored to match the ENTIRE trimmed message (not just a substring), with
+ * an optional trailing "?". Previously this used a shared `\b(...)\b` group
+ * around alternatives that also embedded their own `\??$`; at end-of-string
+ * after a literal "?", the preceding character is non-word, so the trailing
+ * `\b` failed to match, and JS regex engines do not backtrack into an
+ * already-satisfied earlier alternative to drop the "?" — so "what are
+ * you?", "help?", and "can you help me?" (with the "?") were silently NOT
+ * exempted, forcing a pointless tool call on a pure capability question.
+ * Anchoring the whole alternation with `^...\??$` fixes that and also
+ * avoids the previous false positive where these phrases matched as a bare
+ * substring inside an unrelated, longer data question (e.g. "who are you
+ * sending money to?"). Also fixes a typo: "was kannst du( du)?" duplicated
+ * "du" instead of allowing the same optional trailing "?" as every other
+ * phrase here.
+ */
 const CAPABILITY_QUESTION_RE =
-  /\b(what can you do|what do you do|who are you|what are you\??$|can you help( me)?\??$|help\??$|wer bist du|was kannst du( du)?|was bist du)\b/i;
+  /^(what can you do|what do you do|who are you|what are you|can you help( me)?|help|wer bist du|was kannst du|was bist du)\??$/i;
 
 /**
  * A generic "define/explain this concept" question (e.g. "what is a savings

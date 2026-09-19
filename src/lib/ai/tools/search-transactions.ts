@@ -20,7 +20,7 @@ const paramsSchema = z.object({
     )
     .optional(),
   category: z
-    .string()
+    .enum(CATEGORIES)
     .describe(
       `Category to filter by. Matched against each transaction's classified category — derived automatically via keyword rules when the bank doesn't supply one, exactly like the rest of this app (NOT a literal database field lookup), so this reliably matches real synced transactions. One of: ${CATEGORY_LIST}. For thematic spending like a trip, prefer category: 'Travel' (covers airlines, hotels, booking platforms, car rental, and travel-adjacent costs) optionally combined with a multi-term 'search' and a date range.`
     )

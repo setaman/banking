@@ -22,8 +22,47 @@
 
 import { z } from "zod";
 
+/**
+ * Validates a REQUIRED date string as ISO `YYYY-MM-DD` via `z.iso.date()`,
+ * but never fails the parse on a malformed value — `.catch()` substitutes
+ * the original raw value instead (or `""` if the value wasn't even a
+ * string).
+ *
+ * Why not just `z.iso.date()` directly: this schema sits inside
+ * `z.array(transactionEntrySchema)`, and `safeParse` fails an array (and
+ * everything nested above it) the moment ANY single element fails ANY
+ * field. Given this module's `null`-on-failure contract (see the file
+ * banner above), one row with a stale/provider-malformed date would
+ * silently blank out the ENTIRE evidence panel — including every other,
+ * perfectly valid row — which is a strictly worse outcome than rendering
+ * that one row's raw date string. The panel already renders defensively:
+ * `formatShortDate`/`buildDateRangeText` in `tool-evidence-panel.tsx` wrap
+ * `date-fns` parsing in `try`/`catch` and fall back to the raw string on
+ * failure, so a malformed value here degrades to an odd-looking date cell
+ * rather than a crash or a missing panel.
+ */
+const lenientIsoDate = z.iso
+  .date()
+  .catch((ctx) => (typeof ctx.value === "string" ? ctx.value : ""));
+
+/**
+ * Same reasoning as `lenientIsoDate`, but for optional/nullable date
+ * strings (`appliedFilters.startDate`/`endDate`). These are pure
+ * provenance metadata (used only to render the "Searched: ..." caption),
+ * so a malformed value here has even less business taking down the whole
+ * transaction table than a malformed row date would. Also closes a
+ * pre-existing hole: the previous bare `z.string().nullable().optional()`
+ * already failed the ENTIRE parse for a non-string value (e.g. a stray
+ * number) — `.catch()` now degrades that case to `null` instead.
+ */
+const lenientIsoDateNullable = z.iso
+  .date()
+  .nullable()
+  .optional()
+  .catch((ctx) => (typeof ctx.value === "string" ? ctx.value : null));
+
 const transactionEntrySchema = z.object({
-  date: z.string(),
+  date: lenientIsoDate,
   amount: z.number(),
   description: z.string(),
   counterparty: z.string(),
@@ -39,8 +78,8 @@ export type TransactionEntry = z.infer<typeof transactionEntrySchema>;
 const appliedFiltersSchema = z.object({
   search: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
-  startDate: z.string().nullable().optional(),
-  endDate: z.string().nullable().optional(),
+  startDate: lenientIsoDateNullable,
+  endDate: lenientIsoDateNullable,
   direction: z.enum(["debit", "credit"]).nullable().optional(),
   minAmount: z.number().nullable().optional(),
   maxAmount: z.number().nullable().optional(),

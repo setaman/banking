@@ -74,13 +74,22 @@ function buildDateRangeText(rows: readonly TransactionEntry[]): string | null {
 
 /**
  * The third provenance segment. For `search_transactions`, sums the
- * returned rows and labels the (always positive, absolute) figure by what
- * kind of rows they are — "total" for an all-expense result (the common
- * case: "how much did I spend on X"), "income" when all rows are credits,
- * "net" for a mixed result. For `get_largest_expenses`, a top-N list of the
- * biggest expenses is not a complete spending total for any period, so a
- * sum would overstate what the figure represents — a static label is shown
- * instead.
+ * returned rows and labels the figure by what kind of rows they are —
+ * "total" for an all-expense result (the common case: "how much did I
+ * spend on X"), "income" when all rows are credits. A mixed result shows
+ * the *signed* net (via `signedCurrencyFormatter`) rather than an absolute
+ * value, so an inflow and an outflow of the same size stay distinguishable
+ * instead of both collapsing to the same unsigned number.
+ *
+ * When the evidence is truncated (`evidence.truncated`), the sum only
+ * covers the rows actually returned, not every match — labelling that as an
+ * unqualified "total"/"income"/"net" would understate the real figure while
+ * still looking authoritative. The label is scoped to "... of rows shown"
+ * in that case, consistent with the "Showing N of M" notice rendered below.
+ *
+ * For `get_largest_expenses`, a top-N list of the biggest expenses is not a
+ * complete spending total for any period, so a sum would overstate what the
+ * figure represents — a static label is shown instead.
  */
 function buildAmountSegment(evidence: TransactionEvidence): string | null {
   if (evidence.rows.length === 0) return null;
@@ -89,8 +98,18 @@ function buildAmountSegment(evidence: TransactionEvidence): string | null {
   const sum = evidence.rows.reduce((total, row) => total + row.amount, 0);
   const allExpenses = evidence.rows.every((row) => row.amount < 0);
   const allIncome = evidence.rows.every((row) => row.amount > 0);
-  const label = allExpenses ? "total" : allIncome ? "income" : "net";
-  return `${currencyFormatter.format(Math.abs(sum))} ${label}`;
+  const scope = evidence.truncated ? " of rows shown" : "";
+
+  if (allExpenses) {
+    return `${currencyFormatter.format(Math.abs(sum))} total${scope}`;
+  }
+  if (allIncome) {
+    return `${currencyFormatter.format(sum)} income${scope}`;
+  }
+  // Mixed credits and debits — preserve direction instead of Math.abs-ing
+  // it away, since a net inflow and a net outflow of the same magnitude
+  // must not read the same.
+  return `${signedCurrencyFormatter.format(sum)} net${scope}`;
 }
 
 function buildCountText(evidence: TransactionEvidence): string {
@@ -231,9 +250,15 @@ export interface ToolEvidencePanelProps {
   readonly evidence: TransactionEvidence;
 }
 
+/**
+ * Rendered *inside* the common panel (not as a standalone early return) so
+ * the provenance line and the "Searched: ..." applied-filters line stay
+ * visible even when zero rows come back — otherwise "nothing found" carries
+ * no information about what scope was actually searched.
+ */
 function EmptyEvidence(): React.JSX.Element {
   return (
-    <div className="bg-card text-muted-foreground dark:bg-card/80 border-border mb-2 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm backdrop-blur-xl">
+    <div className="text-muted-foreground flex items-center gap-2 px-1 py-2 text-sm">
       <SearchX className="h-4 w-4 shrink-0" />
       <span>No matching transactions found for this search.</span>
     </div>
@@ -261,10 +286,7 @@ export function ToolEvidencePanel({
     [evidence.appliedFilters]
   );
 
-  if (evidence.rows.length === 0) {
-    return <EmptyEvidence />;
-  }
-
+  const isEmpty = evidence.rows.length === 0;
   const provenanceAriaLabel = `Source data: ${provenanceParts.join(", ")}`;
   const maxVisibleRows =
     evidence.rows.length > INITIAL_VISIBLE_ROWS && !showAll
@@ -322,33 +344,39 @@ export function ToolEvidencePanel({
             transition={collapseTransition}
             className="overflow-hidden"
           >
-            <DataTable
-              columns={COLUMN_HEADERS}
-              rows={tableRows}
-              aligns={COLUMN_ALIGNS}
-              maxVisibleRows={maxVisibleRows}
-              rowKeyPrefix={panelId}
-            />
+            {isEmpty ? (
+              <EmptyEvidence />
+            ) : (
+              <>
+                <DataTable
+                  columns={COLUMN_HEADERS}
+                  rows={tableRows}
+                  aligns={COLUMN_ALIGNS}
+                  maxVisibleRows={maxVisibleRows}
+                  rowKeyPrefix={panelId}
+                />
 
-            {evidence.rows.length > INITIAL_VISIBLE_ROWS && !showAll && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="text-primary hover:text-primary/80 mt-1.5 text-[11px] font-medium transition-colors"
-              >
-                Show all {evidence.rows.length} rows
-              </button>
-            )}
+                {evidence.rows.length > INITIAL_VISIBLE_ROWS && !showAll && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAll(true)}
+                    className="text-primary hover:text-primary/80 mt-1.5 text-[11px] font-medium transition-colors"
+                  >
+                    Show all {evidence.rows.length} rows
+                  </button>
+                )}
 
-            {evidence.truncated && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
-                <Info className="h-3 w-3 shrink-0" />
-                <span>
-                  Showing {evidence.rows.length} of {evidence.totalMatches}{" "}
-                  matching {evidence.rowLabel}. Ask me to narrow the search for
-                  the full picture.
-                </span>
-              </p>
+                {evidence.truncated && (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                    <Info className="h-3 w-3 shrink-0" />
+                    <span>
+                      Showing {evidence.rows.length} of {evidence.totalMatches}{" "}
+                      matching {evidence.rowLabel}. Ask me to narrow the search
+                      for the full picture.
+                    </span>
+                  </p>
+                )}
+              </>
             )}
           </motion.div>
         )}
