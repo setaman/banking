@@ -25,11 +25,20 @@
  *
  * Persists each message's full `parts` array (not just joined text) so the
  * PR #36 tool-evidence panel survives a reload — but only a strict allowlist
- * of part shapes, matched exactly to what `POST /api/chat` (see
+ * of part shapes, structurally aligned with what `POST /api/chat` (see
  * `src/app/api/chat/route.ts`) will accept when a restored message is sent
  * back as part of a follow-up question: the approval-state guard, the
  * part-type allowlist, and `convertToModelMessages(...,
- * { ignoreIncompleteToolCalls: true })`. Concretely:
+ * { ignoreIncompleteToolCalls: true })`. "Aligned" is deliberately narrower
+ * than "matched exactly": this module checks part *shape* (type, state,
+ * required fields present) only. It does NOT validate a tool part's `input`
+ * against that tool's zod schema — that stays `safeValidateUIMessages`'s job
+ * server-side (duplicating the finance tools' zod schemas here would be a
+ * second, divergence-prone copy of validation the server already owns). So a
+ * structurally-valid persisted part with a semantically-wrong `input` (e.g.
+ * `{ limit: "not-a-number" }`) still loads cleanly here and still gets
+ * rejected with a 400 on the next request — this module cannot and does not
+ * prevent that. Concretely, the structural allowlist is:
  *  - `text` parts: kept (text + `providerMetadata`, plain JSON), `state`
  *    stripped (normalized away "streaming"/"done", which never make sense
  *    for an already-finished, persisted message). `providerMetadata` matters
@@ -293,6 +302,30 @@ function toPersistedToolPart(
           : {}),
       };
     case "output-error":
+      // A static tool part (`tool-<name>`, not `dynamic-tool`) whose input
+      // failed the SDK's own validation is emitted with `input: undefined`
+      // and the rejected payload kept separately in `rawInput` (see
+      // `updateToolPart`'s "tool-input-error" case in
+      // `node_modules/ai/dist/index.js`, and the `ToolUIPart` "output-error"
+      // branch in `node_modules/ai/dist/index.d.ts`, which types `input` as
+      // `... | undefined` specifically for this state). We don't persist
+      // `rawInput`, so if we persisted `input: undefined` here,
+      // `JSON.stringify` would drop the key entirely (it never round-trips
+      // through `JSON.parse` as `undefined`), and our own
+      // `isPersistedToolPartShape` — which requires `"input" in c` — would
+      // then reject the reloaded part, which `pruneToValidPrefix` treats as
+      // corruption and truncates from there on, silently amputating every
+      // later message. Returning `null` drops just this tool part instead
+      // (the caller falls back to `hasNoMeaningfulContent`, so a message
+      // left with only a `step-start` after this is skipped entirely, and a
+      // message that also has real text still persists that text). This
+      // also matches the installed `ai@7.0.22`'s own `safeValidateUIMessages`
+      // (`uiMessagesSchema`), which never validates `input` against the
+      // tool's zod schema for `output-error` — only for
+      // `input-available`/`output-available` — so there is no fixed-up
+      // upstream schema that would accept this shape more usefully anyway;
+      // the failed call simply isn't worth persisting.
+      if (part.input === undefined) return null;
       return {
         ...base,
         state: "output-error",
