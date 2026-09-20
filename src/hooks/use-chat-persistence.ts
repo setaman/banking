@@ -30,9 +30,14 @@
  * back as part of a follow-up question: the approval-state guard, the
  * part-type allowlist, and `convertToModelMessages(...,
  * { ignoreIncompleteToolCalls: true })`. Concretely:
- *  - `text` parts: kept, `state` stripped (normalized away
- *    "streaming"/"done", which never make sense for an already-finished,
- *    persisted message).
+ *  - `text` parts: kept (text + `providerMetadata`, plain JSON), `state`
+ *    stripped (normalized away "streaming"/"done", which never make sense
+ *    for an already-finished, persisted message). `providerMetadata` matters
+ *    here exactly as it does for tool/reasoning parts below: `@ai-sdk/google`
+ *    attaches a `thoughtSignature` to TEXT parts too (not just tool calls),
+ *    and Gemini 3's `skip_thought_signature_validator` fallback only covers
+ *    `functionCall` parts — a text part replayed without its signature has
+ *    no such safety net. Dropping it here would silently discard that.
  *  - `reasoning` parts: kept (text + `providerMetadata`, plain JSON), same
  *    `state` stripping.
  *  - `step-start` parts: kept as-is.
@@ -75,6 +80,12 @@ import type {
 // intentionally NOT migrated (product decision — see PR description) and the
 // v1 key is never read.
 const STORAGE_KEY = "banking:assistant:conversation:v2";
+
+// The v1 key is never read (see the comment above) but was also never
+// cleaned up, so every browser that ever used the old shape carries a dead
+// blob for the life of the origin. No migration (product decision), but we
+// reclaim the space once per load — see `pruneLegacyV1Key`.
+const LEGACY_STORAGE_KEY_V1 = "banking:assistant:conversation:v1";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -122,6 +133,12 @@ interface PersistedConversation {
 export interface PersistedTextPart {
   readonly type: "text";
   readonly text: string;
+  /**
+   * Preserved verbatim, same as `PersistedReasoningPart.providerMetadata` —
+   * see the module doc comment's `text` bullet for why this can't be
+   * dropped for a Gemini 3 client (thought-signature continuity).
+   */
+  readonly providerMetadata?: ProviderMetadata;
 }
 
 export interface PersistedReasoningPart {
@@ -214,6 +231,33 @@ function isPersistedTextPart(
   return part.type === "text";
 }
 
+/**
+ * A part counts as "content" for the purposes of deciding whether a message
+ * is an empty shell — `text`, `reasoning`, and tool parts all carry
+ * something a user or the model could see again after a reload.
+ * `step-start` deliberately does NOT count: it's a bookkeeping marker the
+ * SDK emits at the start of every agent step, not content, and a message
+ * that (after filtering) contains only `step-start` parts (e.g. `[step-
+ * start, tool-x(input-available)]` with the tool call stripped because it
+ * never reached a terminal state — see the module doc comment) renders as an
+ * empty avatar-only "ghost bubble" with no way to remove it short of
+ * clearing the whole conversation.
+ */
+function isMeaningfulPart(part: PersistedMessagePart): boolean {
+  return (
+    part.type === "text" ||
+    part.type === "reasoning" ||
+    isPersistedToolPart(part)
+  );
+}
+
+/** True when `parts` contains no text, reasoning, or tool part — see `isMeaningfulPart`. */
+function hasNoMeaningfulContent(
+  parts: readonly PersistedMessagePart[]
+): boolean {
+  return !parts.some(isMeaningfulPart);
+}
+
 // ---------------------------------------------------------------------------
 // UIMessage -> PersistedMessagePart (write path)
 // ---------------------------------------------------------------------------
@@ -284,7 +328,15 @@ function toPersistedParts(message: UIMessage): PersistedMessagePart[] {
   const result: PersistedMessagePart[] = [];
   for (const part of message.parts) {
     if (part.type === "text") {
-      result.push({ type: "text", text: part.text });
+      result.push(
+        part.providerMetadata !== undefined
+          ? {
+              type: "text",
+              text: part.text,
+              providerMetadata: part.providerMetadata,
+            }
+          : { type: "text", text: part.text }
+      );
       continue;
     }
     if (part.type === "reasoning") {
@@ -314,11 +366,59 @@ function toPersistedParts(message: UIMessage): PersistedMessagePart[] {
   return result;
 }
 
+// ---------------------------------------------------------------------------
+// Message-count cap
+//
+// `route.ts`'s `MAX_MESSAGES` (50) is checked BEFORE that route's own
+// `trimToRecentPairs` trims history — so a conversation that grows past 50
+// UIMessages gets a flat `400 invalid_request` on every request, and since
+// this hook restores from localStorage on every load, a reload does NOT
+// recover it: the assistant stays bricked until the user clicks Clear. The
+// byte budget below (`BYTE_BUDGET`/`fitToByteBudget`) bounds payload SIZE,
+// not message COUNT — a long run of short text-only exchanges can blow past
+// 50 messages while staying tiny in bytes. `MAX_PERSISTED_MESSAGES` is that
+// missing count cap, kept comfortably under 50 so it — plus whatever
+// `assistant/page.tsx`'s `buildOutgoingMessages` does with the persisted
+// history on top of it — never approaches the server's ceiling. See
+// `buildOutgoingMessages`'s doc comment in `page.tsx`, which reuses this same
+// constant, for the other half of the fix.
+// ---------------------------------------------------------------------------
+
+export const MAX_PERSISTED_MESSAGES = 40;
+
+/**
+ * Slices `messages` down to at most `limit` most recent entries, then drops
+ * any leading assistant messages so the result starts on a `user` message
+ * (or is empty). Mirrors `trimToRecentPairs`'s leading-`user` guard in
+ * `route.ts`: a plain `slice(-limit)` can land the cut point on an assistant
+ * message just as easily as a user one, and a history that starts with
+ * `role: "assistant"` converts into a `ModelMessage[]` whose first entry has
+ * `role: "assistant"` — which the provider rejects outright. Exported so
+ * `page.tsx`'s `buildOutgoingMessages` can apply the identical cap to the
+ * OUTGOING request, not just what's persisted.
+ */
+export function capMessageCount<T extends { readonly role: string }>(
+  messages: readonly T[],
+  limit: number
+): T[] {
+  const capped = messages.slice(-limit);
+  let firstUserIndex = 0;
+  while (
+    firstUserIndex < capped.length &&
+    capped[firstUserIndex].role !== "user"
+  ) {
+    firstUserIndex++;
+  }
+  return capped.slice(firstUserIndex);
+}
+
 /**
  * Builds the persistable message list from `useChat`'s current messages. A
- * message left with zero parts after filtering (e.g. only a non-terminal
- * tool call, nothing else) is skipped entirely rather than persisted as an
- * empty shell.
+ * message left with no meaningful content after filtering (e.g. only a
+ * non-terminal tool call and/or a bare `step-start`, nothing else — see
+ * `hasNoMeaningfulContent`) is skipped entirely rather than persisted as an
+ * empty "ghost bubble" shell. The result is then capped to the most recent
+ * `MAX_PERSISTED_MESSAGES` messages (see that constant's doc comment).
  */
 function buildPersistedMessages(
   messages: readonly UIMessage[],
@@ -328,7 +428,7 @@ function buildPersistedMessages(
   for (const m of messages) {
     if (m.role !== "user" && m.role !== "assistant") continue;
     const parts = toPersistedParts(m);
-    if (parts.length === 0) continue;
+    if (hasNoMeaningfulContent(parts)) continue;
     result.push({
       id: m.id,
       role: m.role,
@@ -336,7 +436,7 @@ function buildPersistedMessages(
       parts,
     });
   }
-  return result;
+  return capMessageCount(result, MAX_PERSISTED_MESSAGES);
 }
 
 // ---------------------------------------------------------------------------
@@ -409,7 +509,13 @@ function toRuntimeToolPart(
 function toRuntimePart(part: PersistedMessagePart): UIMessage["parts"][number] {
   switch (part.type) {
     case "text":
-      return { type: "text", text: part.text };
+      return part.providerMetadata !== undefined
+        ? {
+            type: "text",
+            text: part.text,
+            providerMetadata: part.providerMetadata,
+          }
+        : { type: "text", text: part.text };
     case "reasoning":
       return part.providerMetadata !== undefined
         ? {
@@ -490,13 +596,33 @@ function isPersistedToolPartShape(value: unknown): value is PersistedToolPart {
   }
   if (typeof c.state !== "string" || !isTerminalToolState(c.state))
     return false;
-  if (c.state === "output-error" && typeof c.errorText !== "string")
-    return false;
+
+  // Every terminal state's persisted shape (see `PersistedToolPart`)
+  // requires `input`. Use `in` (does the key exist at all) AND an explicit
+  // `!== undefined` check (a key present but holding `undefined` — possible
+  // from a hand-edited/legacy storage value, since `JSON.parse` can never
+  // itself produce `undefined` but this validator must not assume its input
+  // came only from `JSON.parse`) rather than deep-validating against the
+  // tools' zod schemas, which stays the server's job (see the block comment
+  // above). Without this, a part like `{state: "output-available"}` with no
+  // `input`/`output` loads cleanly here, then fails the server's
+  // `safeValidateUIMessages` with a 400 on every subsequent request — and
+  // since it's already in localStorage, that 400 repeats forever until the
+  // user clears the conversation.
+  if (!("input" in c) || c.input === undefined) return false;
+
   if (
-    c.state === "output-denied" &&
-    (typeof c.approval !== "object" || c.approval === null)
+    c.state === "output-available" &&
+    (!("output" in c) || c.output === undefined)
   ) {
     return false;
+  }
+  if (c.state === "output-error" && typeof c.errorText !== "string")
+    return false;
+  if (c.state === "output-denied") {
+    if (typeof c.approval !== "object" || c.approval === null) return false;
+    const approval = c.approval as Record<string, unknown>;
+    if (typeof approval.id !== "string") return false;
   }
   return true;
 }
@@ -547,6 +673,29 @@ function pruneToValidPrefix(
   return valid.length > 0 ? valid : null;
 }
 
+// Guards `pruneLegacyV1Key` to run at most once per module lifetime (a fresh
+// value on every full page load, which is the granularity that matters —
+// there's no benefit to re-attempting `removeItem` on every soft-nav
+// remount of a component that shares this module).
+let hasPrunedLegacyV1Key = false;
+
+/**
+ * Removes the orphaned v1 storage key once, defensively. No migration is
+ * performed (product decision — see the module doc comment): this exists
+ * purely to stop a dead blob from occupying localStorage for the life of
+ * the origin. Must never throw out of a read path, so a disabled/unavailable
+ * `localStorage` (e.g. some private-browsing modes) is silently ignored.
+ */
+function pruneLegacyV1Key(): void {
+  if (hasPrunedLegacyV1Key) return;
+  hasPrunedLegacyV1Key = true;
+  try {
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY_V1);
+  } catch {
+    // Intentionally silent — see doc comment above.
+  }
+}
+
 /**
  * Attempts to read and validate the persisted conversation from
  * localStorage. Returns `null` on the server, when the key is absent, or
@@ -554,6 +703,7 @@ function pruneToValidPrefix(
  */
 function loadFromStorage(): PersistedChatMessage[] | null {
   if (typeof window === "undefined") return null;
+  pruneLegacyV1Key();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -599,9 +749,13 @@ function serialize(messages: readonly PersistedChatMessage[]): string {
 /**
  * Strips tool parts from the oldest assistant messages first (one at a
  * time, re-measuring) until the serialized payload fits `BYTE_BUDGET` or no
- * tool parts remain anywhere. A message that ends up with zero parts once
- * its tool parts are removed is dropped outright, consistent with
- * `buildPersistedMessages` never persisting an empty-parts message.
+ * tool parts remain anywhere. A message left with no meaningful content
+ * once its tool parts are removed (e.g. it was just `[step-start, tool-x]`)
+ * is dropped outright — checked via `hasNoMeaningfulContent`, not a bare
+ * `length > 0`, since a stripped `[step-start]` remainder has length 1 but
+ * is still an empty "ghost bubble" shell (see that helper's doc comment and
+ * `buildPersistedMessages`, which applies the identical rule before this
+ * function ever runs).
  */
 function fitToByteBudget(
   messages: readonly PersistedChatMessage[]
@@ -613,12 +767,11 @@ function fitToByteBudget(
     const strippedParts = working[index].parts.filter(
       (p) => !isPersistedToolPart(p)
     );
-    working =
-      strippedParts.length > 0
-        ? working.map((m, i) =>
-            i === index ? { ...m, parts: strippedParts } : m
-          )
-        : [...working.slice(0, index), ...working.slice(index + 1)];
+    working = !hasNoMeaningfulContent(strippedParts)
+      ? working.map((m, i) =>
+          i === index ? { ...m, parts: strippedParts } : m
+        )
+      : [...working.slice(0, index), ...working.slice(index + 1)];
   }
   return working;
 }
@@ -634,11 +787,19 @@ function toTextOnlyMessage(
  * Writes the (already byte-budgeted) message list to localStorage. On a
  * quota/write failure, retries once with a text-only payload so plain
  * conversation text is never lost even when tool evidence can't fit.
+ *
+ * Returns exactly what ended up in storage (`messages` verbatim, the
+ * text-only fallback, or `null` if both writes failed) so the caller
+ * (`saveToStorage`) can keep `cachedSnapshot` in sync with reality rather
+ * than with what was merely requested — see that module-scope cache's doc
+ * comment.
  */
-function writeToStorage(messages: readonly PersistedChatMessage[]): void {
+function writeToStorage(
+  messages: readonly PersistedChatMessage[]
+): PersistedChatMessage[] | null {
   try {
     window.localStorage.setItem(STORAGE_KEY, serialize(messages));
-    return;
+    return [...messages];
   } catch {
     console.warn(
       "chat-persistence: localStorage write failed (likely quota exceeded); retrying with a text-only conversation. Tool evidence for this session may not survive a reload."
@@ -649,10 +810,12 @@ function writeToStorage(messages: readonly PersistedChatMessage[]): void {
       .map(toTextOnlyMessage)
       .filter((m) => m.parts.length > 0);
     window.localStorage.setItem(STORAGE_KEY, serialize(textOnly));
+    return textOnly;
   } catch {
     // The text-only retry also failed (storage disabled entirely, e.g.
     // private browsing) — nothing more can be done without losing text, so
     // give up silently rather than throwing out of a persistence side-effect.
+    return null;
   }
 }
 
@@ -660,7 +823,15 @@ function writeToStorage(messages: readonly PersistedChatMessage[]): void {
 function saveToStorage(messages: readonly PersistedChatMessage[]): void {
   if (typeof window === "undefined") return;
   try {
-    writeToStorage(fitToByteBudget(messages));
+    const written = writeToStorage(fitToByteBudget(messages));
+    // Only overwrite the cache when a write actually landed — see the
+    // module-scope cache's doc comment. If both attempts above failed,
+    // storage is unchanged, so the cache must stay unchanged too (writing
+    // `written` here, `null`, would otherwise make a later read think the
+    // conversation was cleared).
+    if (written !== null) {
+      cachedSnapshot = written;
+    }
   } catch {
     // Intentionally silent — matches the previous behavior for anything
     // unexpected outside the quota-handling path above (e.g. `JSON.stringify`
@@ -685,14 +856,39 @@ function clearStorage(): void {
 // requires `getSnapshot` to return a referentially-stable value when
 // nothing has changed (React re-invokes it on every render to detect
 // updates), and re-parsing localStorage on every render would both violate
-// that contract and be wasteful. `clear()` resets the cache so a
-// subsequently-restored hook consumer doesn't see stale data.
+// that contract and be wasteful.
+//
+// `subscribe` is a no-op (this hook is the sole writer, and nothing external
+// notifies us of changes), but the module stays loaded across an App Router
+// soft-navigation remount (/assistant -> /transactions -> /assistant) — so
+// without active upkeep, `cachedSnapshot` would silently go stale the moment
+// `persist` writes something new, and the restore effect would then hand the
+// STALE snapshot back to `setMessages`, wiping the real (newer) conversation
+// out of the UI, and the following persist effect would write that stale
+// list right back over the good data in localStorage. Two rules keep this
+// from happening within a single tab (multi-tab sync is out of scope):
+//  1. `saveToStorage` sets `cachedSnapshot` to exactly what
+//     `writeToStorage` reports actually landed in storage, every time a
+//     write succeeds (see both functions' doc comments) — so a remounted
+//     consumer's very first `getClientSnapshot()` call sees the latest data
+//     instead of whatever was cached at last module load.
+//  2. `clear()` resets the cache to `undefined` — the same "not yet read"
+//     sentinel `getClientSnapshot` checks for below — rather than `null`
+//     (a legitimate "storage was checked and is empty" value). `null` would
+//     permanently short-circuit `getClientSnapshot`'s `if` guard, so
+//     storage would never be re-read again for the rest of the page's
+//     lifetime even after something new was persisted.
 // ---------------------------------------------------------------------------
 
 const NOT_YET_HYDRATED = Symbol("chat-persistence-not-yet-hydrated");
 
 type Snapshot = PersistedChatMessage[] | null | typeof NOT_YET_HYDRATED;
 
+/**
+ * `undefined` means "not yet read from storage this module lifetime" (see
+ * `getClientSnapshot`); `null` means "read, and there's nothing there" — a
+ * real, cacheable result in its own right, not a sentinel.
+ */
 let cachedSnapshot: PersistedChatMessage[] | null | undefined;
 
 function subscribe(): () => void {
@@ -771,7 +967,11 @@ export function useChatPersistence(): UseChatPersistenceReturn {
     clearStorage();
     timestampsRef.current.clear();
     isFirstPersist.current = true;
-    cachedSnapshot = null;
+    // `undefined`, not `null` — see the module-scope cache's doc comment:
+    // this must be the "re-read on next access" sentinel, not the cached
+    // "storage is empty" result, or a later write elsewhere in the module's
+    // lifetime would never be picked up again.
+    cachedSnapshot = undefined;
   }, []);
 
   return {
