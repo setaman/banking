@@ -52,7 +52,11 @@ import {
   AiNotConfiguredState,
   NoTransactionDataState,
 } from "@/components/assistant/empty-states";
-import { useChatPersistence } from "@/hooks/use-chat-persistence";
+import {
+  capMessageCount,
+  MAX_PERSISTED_MESSAGES,
+  useChatPersistence,
+} from "@/hooks/use-chat-persistence";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -92,6 +96,30 @@ function isUserOrAssistant(
  */
 export const RECENT_ASSISTANT_MESSAGES_WITH_TOOLS = 2;
 
+/**
+ * Caps the outgoing history length. Reuses `use-chat-persistence.ts`'s
+ * `MAX_PERSISTED_MESSAGES` rather than inventing a second, independent
+ * number — the two caps exist for the exact same reason (`route.ts`'s
+ * `MAX_MESSAGES = 50`, checked BEFORE that route's own `trimToRecentPairs`
+ * trims history) and must not silently diverge from each other or from the
+ * server constant, which lives in a third file this hook/page pair can't
+ * import from (`route.ts` is server-only).
+ *
+ * By the time `buildOutgoingMessages` runs, `useChat`'s `sendMessage` has
+ * already pushed the in-flight user message — the question this very
+ * request is answering — onto `messages` (see `AbstractChat.sendMessage` in
+ * the `ai` package: it calls `state.pushMessage` before `makeRequest`, and
+ * the transport's `prepareSendMessagesRequest` reads `state.messages`
+ * afterward). So capping `relevant` to `MAX_OUTGOING_MESSAGES` here bounds
+ * the TOTAL outgoing count — in-flight question included — not just the
+ * answered history before it. `MAX_OUTGOING_MESSAGES` (40) is kept
+ * comfortably under the server's `MAX_MESSAGES` (50) specifically so this
+ * holds with margin to spare even before `trimToRecentPairs` ever runs
+ * server-side. If either number changes, re-check that
+ * `MAX_OUTGOING_MESSAGES < MAX_MESSAGES` still holds.
+ */
+const MAX_OUTGOING_MESSAGES = MAX_PERSISTED_MESSAGES;
+
 /** Returns a copy of `message` containing only its `text` parts. */
 function stripToTextParts(message: UIMessage): UIMessage {
   return {
@@ -102,14 +130,19 @@ function stripToTextParts(message: UIMessage): UIMessage {
 
 /**
  * Builds the outgoing message list for the chat request: user/assistant
- * messages only, with tool parts preserved solely on the most recent
- * `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS` assistant turns (see that
- * constant's doc comment). User messages never carry tool parts, so
- * stripping them to text is a no-op beyond dropping any stray reasoning/
- * step parts.
+ * messages only, capped to the most recent `MAX_OUTGOING_MESSAGES` (see that
+ * constant's doc comment for why this cap exists and how it relates to the
+ * server's `MAX_MESSAGES`), with tool parts preserved solely on the most
+ * recent `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS` assistant turns *of that
+ * capped list* (see that constant's doc comment). User messages never carry
+ * tool parts, so stripping them to text is a no-op beyond dropping any stray
+ * reasoning/step parts.
  */
 function buildOutgoingMessages(messages: UIMessage[]): UIMessage[] {
-  const relevant = messages.filter(isUserOrAssistant);
+  const relevant = capMessageCount(
+    messages.filter(isUserOrAssistant),
+    MAX_OUTGOING_MESSAGES
+  );
   // Selected by POSITION (index into `relevant`), not by `id`: `id`s are
   // expected to be stable/unique in practice, but keying a "most recent N"
   // selection off a value that *could* collide (rather than the position

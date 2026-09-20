@@ -1,9 +1,48 @@
 # Project State: BanKing
 
 **Current Phase:** AI Assistant grounding & trust hardening (multi-turn memory)
-**Current Sprint:** feat/assistant-followup-memory
-**Last Session:** 2026-09-19
-**Branch:** feat/assistant-followup-memory (2 commits; not yet merged; based on `3090afb`, the squash-merge of PR #35)
+**Current Sprint:** feat/assistant-evidence-persistence
+**Last Session:** 2026-09-20
+**Branch:** feat/assistant-evidence-persistence (2 commits; not yet merged; based on `ff0d084`, the squash-merge of PR #36, itself on `main`)
+
+---
+
+## This session changes (2026-09-20) — Persist AI assistant tool evidence across page reloads (the PR #36 follow-up) + adversarial QA fixes
+
+**Summary:** Fixed the last item left open by the previous session's `feat/assistant-followup-memory` notes below: the assistant's retrieved transactions did not survive a page reload. `src/hooks/use-chat-persistence.ts` saved the conversation to localStorage as flat text (`{id, role, content, timestamp}`), so a reload discarded every tool call's input and output — the tool-evidence panel under each answer disappeared, and follow-up questions could no longer build on previously retrieved transactions (the capability shipped in PR #36) because the evidence they referred to was gone. Two commits: `3dc3235` (feature) and `02534eb` (six defects found by this session's own adversarial QA, fixed same session). Branch `feat/assistant-evidence-persistence`, based on `ff0d084` (the squash-merge of PR #36, itself on `main`).
+
+**What shipped (`3dc3235`):**
+
+- Each message's full `parts` array is now persisted, under a bumped key (`banking:assistant:conversation:v2`). v1 conversations are deliberately NOT migrated and the v1 key is never read — a product decision (the client explicitly accepted losing saved conversations). The stale v1 key is removed once per load to reclaim storage.
+- Only a strict allowlist of part shapes is persisted — text (with `providerMetadata` kept, `state` stripped), reasoning, step-start, and tool parts ONLY in a terminal state (`output-available`, `output-error`, `output-denied`). `input-streaming`/`input-available` are incomplete; `approval-requested`/`approval-responded` are rejected outright by `POST /api/chat` with a 400. The allowlist is a structural check (part type, state, required fields present) deliberately aligned with the route's part-type and state guards, since restored messages are replayed to the server on the next question — it does not validate a tool part's `input` against that tool's zod schema (that stays the route's `safeValidateUIMessages` job), so a structurally-valid part with a semantically-wrong `input` still loads and still 400s on the next request.
+- Evidence is persisted for the whole conversation, not just recent turns, so panels render uniformly after a reload. Payload size is unaffected — `buildOutgoingMessages` already strips tool parts from all but the last 2 assistant turns.
+- Write path degrades instead of failing: a 256KB budget strips tool parts oldest-first, and a quota failure retries once text-only so conversation text is never lost.
+- Load validation keeps the valid leading prefix instead of discarding the whole conversation over one bad message (the previous guard was all-or-nothing AND silent).
+- New `MAX_PERSISTED_MESSAGES = 40` caps both stored and outgoing history, and prunes leading assistant messages, mirroring `trimToRecentPairs` in `src/app/api/chat/route.ts`. It must stay below that route's `MAX_MESSAGES = 50`, which is checked before the route's own trimming — the two constants live in different files and must not diverge.
+
+**Bugs found by this session's own adversarial QA and fixed in `02534eb`:**
+
+1. HIGH — restored history bricked the assistant after ~25 exchanges with a permanent 400 (`MAX_MESSAGES` is checked before trimming); reloading did not recover it since history was restored from storage. Fixed by the 40-message cap on both stored and outgoing history. Verified: 30 turns now sends 39 messages and passes the full server validation chain; pre-fix it sent 61 and was rejected.
+2. HIGH — an interrupted tool turn persisted as an empty bubble (the "no content" guard tested `parts.length === 0`, but allowlisted `step-start` counted). Now tests for actual content.
+3. MEDIUM-HIGH — the module-level snapshot cache went stale across a soft-nav remount and then overwrote storage with the stale copy, destroying the newest exchange. Cache now tracks what actually landed in storage.
+4. MEDIUM — text parts dropped `providerMetadata`, losing Gemini 3 thought signatures (the provider's `skip_thought_signature_validator` fallback covers only functionCall parts).
+5. MEDIUM — the load validator accepted tool parts with missing `input`/`output`, which then 400'd on every request with no recovery but Clear.
+6. LOW — the v1 key was orphaned in storage forever.
+
+**Known limitations / accepted risks:**
+
+- **New at-rest exposure:** transaction rows retrieved by the assistant now sit unencrypted in browser localStorage between sessions, where previously only the composed answer text did. Same data the evidence panel already renders on screen, on the user's own machine, but it now persists on disk. Accepted, and the client was told.
+- Multi-tab: `subscribe` remains a no-op, so two open /assistant tabs still clobber each other's conversation. Pre-existing, out of scope.
+- `fitToByteBudget` re-serializes the whole payload per strip (O(n²)); bounded in practice by the new 40-message cap. Pre-existing pattern, rated LOW.
+- Conversations older than 40 messages are truncated in storage by design.
+- No automated tests — the repo has no test framework and the client has explicitly asked us to stop proposing one. Verification was offline execution of the real persistence and validation code plus `npm run build`.
+
+**Verification performed:** `npx tsc --noEmit` clean; `npm run build` succeeds; Prettier clean on both changed files; `npm run lint` shows only the 36 pre-existing problems in unrelated files (`src/lib/banking/**`, `src/actions/**`, `src/components/dashboard/**`) — none in the changed files (`src/hooks/use-chat-persistence.ts`, `src/app/(dashboard)/assistant/page.tsx`).
+
+**Next actions:**
+
+- Lead to review `feat/assistant-evidence-persistence` (`3dc3235` + `02534eb`) for PR/merge.
+- Do NOT propose adding a test framework. The client has explicitly asked us to stop raising it; treat this as settled, not as an open item.
 
 ---
 
