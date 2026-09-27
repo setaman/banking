@@ -187,24 +187,55 @@ export function ChatErrorBanner({
   // exactly once per distinct failure, so this never loops — but doing the
   // reset inside an Effect would call `setState` synchronously in the
   // Effect's body, which triggers an extra, avoidable render pass.
+  //
+  // The countdown is anchored to a fixed `retryDeadline` timestamp (`Date.now()
+  // + retryAfterSeconds * 1000`) rather than decrementing `secondsRemaining`
+  // by 1 every tick: a `setTimeout` scheduled from a backgrounded/throttled
+  // tab can fire many seconds late (browsers clamp inactive-tab timers), and
+  // decrementing by a flat 1 per tick would silently extend the wait past
+  // the provider's actual window. Deriving `secondsRemaining` from `now -
+  // retryDeadline` on every tick self-corrects regardless of how late a tick
+  // actually fires.
+  //
+  // `Date.now()` is an impure call the `react-hooks/purity` lint rule forbids
+  // directly in the render body, so seeding/reseeding `retryDeadline` calls
+  // it only inside a `setState` updater function (not evaluated during
+  // render — lint treats it as deferred), and the per-tick recomputation
+  // calls it only inside the `setTimeout` callback below (also not render).
   const [seenError, setSeenError] = useState(error);
+  const [retryDeadline, setRetryDeadline] = useState<number | null>(() =>
+    parsed.retryAfterSeconds != null
+      ? Date.now() + parsed.retryAfterSeconds * 1000
+      : null
+  );
   const [secondsRemaining, setSecondsRemaining] = useState<number | null>(
     parsed.retryAfterSeconds ?? null
   );
   if (error !== seenError) {
     setSeenError(error);
+    setRetryDeadline(() =>
+      parsed.retryAfterSeconds != null
+        ? Date.now() + parsed.retryAfterSeconds * 1000
+        : null
+    );
     setSecondsRemaining(parsed.retryAfterSeconds ?? null);
   }
 
   useEffect(() => {
-    if (secondsRemaining === null || secondsRemaining <= 0) {
+    if (
+      retryDeadline === null ||
+      secondsRemaining === null ||
+      secondsRemaining <= 0
+    ) {
       return;
     }
     const timer = setTimeout(() => {
-      setSecondsRemaining((s) => (s === null ? null : s - 1));
+      setSecondsRemaining(
+        Math.max(0, Math.ceil((retryDeadline - Date.now()) / 1000))
+      );
     }, 1000);
     return () => clearTimeout(timer);
-  }, [secondsRemaining]);
+  }, [retryDeadline, secondsRemaining]);
 
   const isCountingDown = secondsRemaining !== null && secondsRemaining > 0;
 

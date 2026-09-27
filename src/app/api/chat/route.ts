@@ -762,7 +762,10 @@ export async function POST(request: Request): Promise<Response> {
           effective instanceof Error ? effective.message : "unknown error"
         );
 
-        const classification = classifyProviderError(effective);
+        const classification = classifyProviderError(
+          effective,
+          profile.provider
+        );
         if (classification) {
           const { code, ...rest } = classification;
           return JSON.stringify({ error: code, ...rest });
@@ -780,7 +783,7 @@ export async function POST(request: Request): Promise<Response> {
       effective instanceof Error ? effective.message : "unknown error"
     );
 
-    const classification = classifyProviderError(effective);
+    const classification = classifyProviderError(effective, profile.provider);
     if (classification) {
       const { code, ...rest } = classification;
       const status = code === "rate_limit" ? 429 : 503;
