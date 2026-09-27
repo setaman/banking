@@ -1,7 +1,6 @@
 import {
   APICallError,
   MessageConversionError,
-  RetryError,
   convertToModelMessages,
   createUIMessageStreamResponse,
   isReasoningUIPart,
@@ -20,6 +19,10 @@ import { z } from "zod";
 import { getTransactions } from "@/actions/transactions.actions";
 import { getActiveAiProfile, getAiProfiles } from "@/config/ai";
 import { resolveModel } from "@/lib/ai/provider";
+import {
+  classifyProviderError,
+  unwrapProviderError,
+} from "@/lib/ai/provider-errors";
 import { buildSystemPrompt, type DataCoverage } from "@/lib/ai/system-prompt";
 import { financeTools } from "@/lib/ai/tools";
 
@@ -47,17 +50,18 @@ type ChatUIMessage = UIMessage<
 
 const MAX_MESSAGES = 50;
 const MAX_MESSAGE_LENGTH = 4000;
-// Raised from 8: a multi-tool financial question (e.g. compare two periods,
-// or gather several aggregates before composing an answer) can legitimately
-// need more than a handful of steps. Each tool round-trip costs one "tool
-// call" step plus one "continue" step, so 8 left barely two tool calls of
-// headroom before the model was forced to answer regardless of whether it
-// had enough data — precisely the gap that produced the invented vacation
-// transactions. 12 gives room for ~5 tool calls plus a final composition
-// step while staying well within `maxDuration` (60s) and, per the grounding
-// rules in the system prompt, an exhausted budget must be reported honestly
+// Lowered from 12: the client's active provider is Gemini's free tier (5
+// requests/minute — see `resolveModel`/`AiProfile`), and every tool-call step
+// here is a separate request to Google. 12 steps, each of which could
+// exhaust its (now disabled, see `maxRetries` below) retry budget, could
+// burn most or all of a minute's quota answering a single question. 5 still
+// gives room for ~2 tool calls plus a final composition step — the
+// `prepareStep` override below forces that last step to answer instead of
+// calling another tool, so the budget is spent on real evidence rather than
+// on a would-be call that gets cut off mid-flight. Per the grounding rules
+// in the system prompt, an exhausted budget must still be reported honestly
 // rather than papered over with estimates.
-const MAX_TOOL_STEPS = 12;
+const MAX_TOOL_STEPS = 5;
 const MAX_HISTORY_PAIRS = 10;
 // Raised from 100KB: the client now sends full UIMessages, and the most
 // recent `RECENT_ASSISTANT_MESSAGES_WITH_TOOLS` (see assistant/page.tsx)
@@ -204,15 +208,6 @@ function trimToRecentPairs(
 // ---------------------------------------------------------------------------
 // Error classification
 // ---------------------------------------------------------------------------
-
-/**
- * `streamText` retries transient failures internally and, if every attempt
- * fails, throws a `RetryError` wrapping the underlying provider error.
- * Unwraps it so status-code/connection checks below see the real cause.
- */
-function unwrapProviderError(error: unknown): unknown {
-  return RetryError.isInstance(error) ? error.lastError : error;
-}
 
 /**
  * Detects a connection-refused error, which for the Ollama provider means
@@ -669,6 +664,17 @@ export async function POST(request: Request): Promise<Response> {
       messages: modelMessages,
       tools: financeTools,
       stopWhen: stepCountIs(MAX_TOOL_STEPS),
+      // Google's free tier allows only 5 requests/minute, and the SDK's
+      // default `maxRetries: 2` backs off just 2s then 4s — nowhere near
+      // Google's actual ~17s+ post-429 cooldown (see
+      // `classifyProviderError`'s `retryAfterSeconds` parsing). Retrying
+      // there only burns two more requests of an already-exhausted budget
+      // before failing anyway, which is strictly worse than failing once,
+      // fast, and telling the user how long to actually wait. Other
+      // providers keep the SDK default: they don't share this free-tier
+      // constraint, and their own transient failures (e.g. a brief network
+      // blip) are genuinely worth one retry.
+      maxRetries: profile.provider === "google" ? 0 : undefined,
       // Lowered from 0.3: this is a factual assistant that reports numbers
       // out of tool results, not a creative writer — less sampling variance
       // reduces the odds of the model drifting into confident-sounding but
@@ -682,10 +688,25 @@ export async function POST(request: Request): Promise<Response> {
       // require a tool call on step 0 only when the turn plausibly concerns
       // the user's data, then hand control back to the default "auto" so
       // the model can compose its final answer once it has facts in hand.
-      prepareStep: ({ stepNumber }) =>
-        stepNumber === 0 && requireToolOnFirstStep
-          ? { toolChoice: "required" as const }
-          : undefined,
+      //
+      // On the LAST allowed step, force `toolChoice: "none"` instead: with
+      // `MAX_TOOL_STEPS` now lowered to 5 (see that constant's doc comment),
+      // letting the model attempt one more tool call there would just have
+      // `stopWhen` cut the run off mid-tool-call — spending this request's
+      // final step on a call whose result the model never gets to see or
+      // compose an answer from. Forbidding tools on that step guarantees the
+      // budget's last step is always spent producing an actual answer
+      // (honest about any gaps, per the system prompt's grounding rules)
+      // instead of ending on a dangling, wasted call.
+      prepareStep: ({ stepNumber }) => {
+        if (stepNumber === 0 && requireToolOnFirstStep) {
+          return { toolChoice: "required" as const };
+        }
+        if (stepNumber === MAX_TOOL_STEPS - 1) {
+          return { toolChoice: "none" as const };
+        }
+        return undefined;
+      },
       // Dedicated hook for logging tool execution outcomes (Fix B3): unlike
       // `streamText`'s own `onError` below (which only fires for top-level
       // stream errors — a failed provider call — never for an individual
@@ -728,12 +749,28 @@ export async function POST(request: Request): Promise<Response> {
     const uiStream = toUIMessageStream({
       stream: resumedStream,
       tools: financeTools,
+      // Errors reaching this hook occur AFTER the 200 response is already
+      // committed (see `peekThenResume`'s doc comment) — the HTTP status
+      // can no longer change, so the best this can do is embed a small JSON
+      // payload in the stream's error part for the client's
+      // `classifyChatError`/`ChatErrorBanner` to parse and render, mirroring
+      // the shape returned from the pre-stream catch below.
       onError: (error) => {
+        const effective = unwrapProviderError(error);
         console.error(
           "Chat stream error (mid-stream):",
-          error instanceof Error ? error.message : "unknown error"
+          effective instanceof Error ? effective.message : "unknown error"
         );
-        return "An error occurred while generating the response.";
+
+        const classification = classifyProviderError(
+          effective,
+          profile.provider
+        );
+        if (classification) {
+          const { code, ...rest } = classification;
+          return JSON.stringify({ error: code, ...rest });
+        }
+        return JSON.stringify({ error: "stream_error" });
       },
     });
 
@@ -746,12 +783,16 @@ export async function POST(request: Request): Promise<Response> {
       effective instanceof Error ? effective.message : "unknown error"
     );
 
+    const classification = classifyProviderError(effective, profile.provider);
+    if (classification) {
+      const { code, ...rest } = classification;
+      const status = code === "rate_limit" ? 429 : 503;
+      return NextResponse.json({ error: code, ...rest }, { status });
+    }
+
     if (APICallError.isInstance(effective)) {
       if (effective.statusCode === 401 || effective.statusCode === 403) {
         return NextResponse.json({ error: "auth" }, { status: 401 });
-      }
-      if (effective.statusCode === 429) {
-        return NextResponse.json({ error: "rate_limit" }, { status: 429 });
       }
     }
 

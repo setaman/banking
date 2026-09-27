@@ -1,9 +1,35 @@
 # Project State: BanKing
 
 **Current Phase:** AI Assistant grounding & trust hardening (multi-turn memory)
-**Current Sprint:** feat/assistant-evidence-persistence
-**Last Session:** 2026-09-20
-**Branch:** feat/assistant-evidence-persistence (2 commits; not yet merged; based on `ff0d084`, the squash-merge of PR #36, itself on `main`)
+**Current Sprint:** fix/assistant-gemini-free-tier
+**Last Session:** 2026-09-27
+**Branch:** fix/assistant-gemini-free-tier (PR #38, awaiting client functionality check)
+
+---
+
+## This session changes (2026-09-27) — Gemini free-tier hardening
+
+**Summary:** The client runs Gemini 3.8 Flash on Google's FREE tier only (5 requests/minute) and has confirmed they will not upgrade to a paid tier, so the assistant must live within that ceiling rather than assume it will go away. Root cause of the reported failures: the tool-calling loop could issue up to 12 steps per question, and the AI SDK's own `maxRetries: 2` for the Google provider retried each rate-limited step with a 2s/4s backoff — well inside Google's roughly 17-second free-tier cooldown window — so retries kept colliding with the same quota window instead of waiting it out. Separately, an error surfacing mid-stream (after some tokens had already been sent) was collapsed into the same generic "Could not reach the server" banner as a pre-stream connection failure, giving the client no indication that the real cause was rate limiting.
+
+**Fixes shipped:**
+
+- `maxRetries: 0` for the Google provider — stop retrying inside the SDK where the backoff schedule is too fast for the free tier's cooldown; let the app's own error handling own the retry/backoff decision instead.
+- Tool-step budget `MAX_TOOL_STEPS` reduced 12 → 5, with `toolChoice: "none"` forced on the last step so the model is guaranteed to compose a final answer from whatever it already retrieved rather than attempt a 6th tool call and fail the budget outright.
+- New `src/lib/ai/provider-errors.ts` — classifies provider errors into distinct, user-meaningful cases: HTTP 429 (rate limit), tagged with `freeTier: true` and a parsed `retryAfterSeconds` where Google's response provides one, and HTTP 503/overload, handled separately whether it occurs before the stream starts or mid-stream (a partial answer already on screen is preserved rather than being wiped by the error banner).
+- `chat-error-banner.tsx` — distinct titles/messages per classified error case, a live countdown timer for rate-limit errors driven by `retryAfterSeconds`, and the Retry button disabled for the duration of that countdown so the client can't immediately re-trigger the same 429.
+- Investigated the recurring "thought signature" console warnings during this session: confirmed benign — they arise from Gemini 3's parallel tool calls combined with the SDK's documented `skip_thought_signature_validator` sentinel behavior (see the 2026-09-19 session notes below for the original context on this sentinel). No code change made; not a regression.
+
+**Verification performed:** `npx tsc --noEmit` clean; `npx prettier --check .` clean; `npm run lint` clean (no new issues); `npm run build` succeeds. A standalone classifier script exercised `provider-errors.ts` against synthetic 429/503/overload payloads (with and without a parseable retry-after) to confirm each maps to the intended case. Also ran 17 live requests against the client's real free-tier Gemini profile without triggering a single failure — the fixes did not regress ordinary usage.
+
+**Known limitation:** the rate-limit banner itself (the 429/`freeTier`/countdown path) was not observed live end-to-end during this session, because the test traffic above did not happen to hit the client's quota window. The classification and UI logic were verified via the offline classifier script and code review only, not a live 429 response.
+
+**Accepted trade-off:** capping tool steps at 5 (down from 12) may make very multi-lookup questions (several distinct tool calls chained in one turn) less thorough, since the model now has less room to retrieve, re-check, and refine before it must answer. Chosen deliberately over exhausting the free tier's request budget on a single question.
+
+**Note:** the earlier `feat/assistant-evidence-persistence` work (documented in the 2026-09-20 session below) is merged as PR #37.
+
+**Next actions:**
+
+- Awaiting the client's own functionality check on PR #38 before merge.
 
 ---
 
