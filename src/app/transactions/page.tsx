@@ -58,7 +58,9 @@ import {
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { getTransactions } from "@/actions/transactions.actions";
 import { getAccounts } from "@/actions/accounts.actions";
+import { TransactionSummaryStrip } from "@/components/transactions/transaction-summary-strip";
 import { categorizeTransaction, CATEGORIES } from "@/lib/stats/categories";
+import { computeTransactionSummary } from "@/lib/stats/transaction-summary";
 import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { cn } from "@/lib/utils";
 import type { DateRangePreset } from "@/hooks/use-date-range";
@@ -216,6 +218,12 @@ function TransactionsPageContent() {
     dateFrom,
     dateTo,
   ]);
+
+  // Summary stats for the filtered (not just the current page's) transactions
+  const summary = useMemo(
+    () => computeTransactionSummary(filteredTransactions),
+    [filteredTransactions]
+  );
 
   // Sort transactions
   const sortedTransactions = useMemo(() => {
@@ -776,6 +784,9 @@ function TransactionsPageContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Summary Strip (reflects the currently filtered transactions) */}
+      {!loading && <TransactionSummaryStrip summary={summary} />}
 
       {/* Table Card */}
       <Card className="shadow-primary/10 dark:shadow-primary/5">

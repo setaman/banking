@@ -7,6 +7,24 @@
 
 ---
 
+## This session changes (2026-10-07) — Transaction summary strip on the Transactions page
+
+**Summary:** Added a strip of 4 compact stat cards above the transactions table, computed live from the currently filtered transactions (all pages, not just the visible page): Total income, Total expenses, Net cash flow, Largest single expense (counterparty/description, amount, date). Covers PRD §5.3 KPI K11 (Largest Single Expense). Income/expense logic mirrors `getDashboardStats`: internal transfers are excluded, income sums credits, expenses sum absolute debits, largest expense reuses `findLargestExpense`. The strip hides when there are no transactions and shows "No expenses" when none are expenses.
+
+**Files:**
+
+- New `src/lib/stats/transaction-summary.ts` (`computeTransactionSummary`, pure, single pass)
+- New `src/components/transactions/transaction-summary-strip.tsx`
+- Modified `src/app/transactions/page.tsx` (memoised summary + strip between filters and table)
+
+**Verification:** `npx tsc --noEmit`, `npm run lint`, `npx prettier --check` on changed files, `npm run build`, and a demo-mode load of `/transactions` (see PR for results).
+
+**Next actions:**
+
+- Client reviews the PR; it also serves as the first live test of the CodeBoarding PR architecture review.
+
+---
+
 ## This session changes (2026-10-07) — CodeBoarding sync now delivers via a rolling PR
 
 **Summary:** The CodeBoarding sync workflow (`.github/workflows/codeboarding-sync.yml`) no longer pushes generated architecture files straight to `main`. It now opens/updates a single rolling pull request instead.
