@@ -24,7 +24,8 @@ on:
         default: false
 
 permissions:
-  contents: write   # commit the generated baseline + docs to the branch
+  contents: write   # push the generated baseline + docs to the sync branch (not to main)
+  pull-requests: write   # open/update the rolling CodeBoarding sync PR
   id-token: write   # identifies this repo to CodeBoarding's hosted tier, used by the free
                     # tier AND a license, and as the fallback until your own key exists
 
@@ -43,6 +44,8 @@ jobs:
           mode: sync
           force_full: ${{ inputs.force_full || false }}
           target_branch: 'main'
+          # Deliver via a rolling pull request instead of pushing straight to main.
+          sync_strategy: pull_request
           # CodeBoarding's free hosted tier. No secret to add: the run authenticates
           # with the GitHub OIDC token that `id-token: write` above grants.
           llm: hosted
