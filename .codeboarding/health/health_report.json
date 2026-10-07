@@ -1,0 +1,375 @@
+{
+  "repository_name": ".codeboarding-target",
+  "timestamp": "2026-10-07T15:28:09.082517+00:00",
+  "overall_score": 0.9671523178807948,
+  "check_summaries": [
+    {
+      "check_name": "function_size",
+      "description": "Checks that functions/methods do not exceed line count thresholds",
+      "languages": [],
+      "check_type": "standard",
+      "total_entities_checked": 751,
+      "findings_count": 24,
+      "warning_count": 24,
+      "score": 0.9680426098535286,
+      "finding_groups": [
+        {
+          "severity": "warning",
+          "threshold": 150,
+          "description": "Functions exceeding 150.0 lines",
+          "entities": [
+            {
+              "entity_name": "src.app.(dashboard).insights.page.InsightsPage",
+              "file_path": "src/app/(dashboard)/insights/page.tsx",
+              "line_start": 60,
+              "line_end": 1215,
+              "metric_value": 1155
+            },
+            {
+              "entity_name": "src.app.transactions.page.TransactionsPageContent",
+              "file_path": "src/app/transactions/page.tsx",
+              "line_start": 75,
+              "line_end": 993,
+              "metric_value": 918
+            },
+            {
+              "entity_name": "src.app.(dashboard).assistant.page.AssistantPage",
+              "file_path": "src/app/(dashboard)/assistant/page.tsx",
+              "line_start": 190,
+              "line_end": 633,
+              "metric_value": 443
+            },
+            {
+              "entity_name": "src.components.dashboard.balance-history-chart.BalanceHistoryChart",
+              "file_path": "src/components/dashboard/balance-history-chart.tsx",
+              "line_start": 20,
+              "line_end": 458,
+              "metric_value": 438
+            },
+            {
+              "entity_name": "src.components.settings.ai-profile-form.AiProfileForm",
+              "file_path": "src/components/settings/ai-profile-form.tsx",
+              "line_start": 51,
+              "line_end": 467,
+              "metric_value": 416
+            },
+            {
+              "entity_name": "src.app.page.Home",
+              "file_path": "src/app/page.tsx",
+              "line_start": 31,
+              "line_end": 422,
+              "metric_value": 391
+            },
+            {
+              "entity_name": "src.app.api.chat.route.POST",
+              "file_path": "src/app/api/chat/route.ts",
+              "line_start": 419,
+              "line_end": 808,
+              "metric_value": 389
+            },
+            {
+              "entity_name": "src.components.settings.bank-connection-card.BankConnectionCard",
+              "file_path": "src/components/settings/bank-connection-card.tsx",
+              "line_start": 195,
+              "line_end": 551,
+              "metric_value": 356
+            },
+            {
+              "entity_name": "src.components.settings.ai-provider-card.AiProviderCard",
+              "file_path": "src/components/settings/ai-provider-card.tsx",
+              "line_start": 68,
+              "line_end": 417,
+              "metric_value": 349
+            },
+            {
+              "entity_name": "src.components.sandbox.comparison-chart.ComparisonChart",
+              "file_path": "src/components/sandbox/comparison-chart.tsx",
+              "line_start": 35,
+              "line_end": 366,
+              "metric_value": 331
+            },
+            {
+              "entity_name": "src.components.dashboard.income-expenses-chart.IncomeExpensesChart",
+              "file_path": "src/components/dashboard/income-expenses-chart.tsx",
+              "line_start": 21,
+              "line_end": 340,
+              "metric_value": 319
+            },
+            {
+              "entity_name": "src.components.settings.account-management-card.AccountManagementCard",
+              "file_path": "src/components/settings/account-management-card.tsx",
+              "line_start": 123,
+              "line_end": 420,
+              "metric_value": 297
+            },
+            {
+              "entity_name": "src.app.(dashboard).sandbox.page.SandboxPage",
+              "file_path": "src/app/(dashboard)/sandbox/page.tsx",
+              "line_start": 452,
+              "line_end": 734,
+              "metric_value": 282
+            },
+            {
+              "entity_name": "src.components.sandbox.comparison-chart.ComparisonChart.option.useMemo() callback",
+              "file_path": "src/components/sandbox/comparison-chart.tsx",
+              "line_start": 45,
+              "line_end": 321,
+              "metric_value": 276
+            },
+            {
+              "entity_name": "src.app.(dashboard).sandbox.page.ScenarioPanel",
+              "file_path": "src/app/(dashboard)/sandbox/page.tsx",
+              "line_start": 175,
+              "line_end": 446,
+              "metric_value": 271
+            },
+            {
+              "entity_name": "src.lib.banking.sync.syncBank",
+              "file_path": "src/lib/banking/sync.ts",
+              "line_start": 13,
+              "line_end": 239,
+              "metric_value": 226
+            },
+            {
+              "entity_name": "src.app.(dashboard).insights.page.InsightsPage.forecastChartOption.useMemo() callback",
+              "file_path": "src/app/(dashboard)/insights/page.tsx",
+              "line_start": 510,
+              "line_end": 698,
+              "metric_value": 188
+            },
+            {
+              "entity_name": "src.lib.ai.system-prompt.buildSystemPrompt",
+              "file_path": "src/lib/ai/system-prompt.ts",
+              "line_start": 32,
+              "line_end": 214,
+              "metric_value": 182
+            },
+            {
+              "entity_name": "src.components.dashboard.category-breakdown-chart.CategoryBreakdownChart",
+              "file_path": "src/components/dashboard/category-breakdown-chart.tsx",
+              "line_start": 78,
+              "line_end": 258,
+              "metric_value": 180
+            },
+            {
+              "entity_name": "src.components.dashboard.date-range-picker.DateRangePicker",
+              "file_path": "src/components/dashboard/date-range-picker.tsx",
+              "line_start": 61,
+              "line_end": 234,
+              "metric_value": 173
+            },
+            {
+              "entity_name": "src.components.settings.ai-model-combobox.AiModelCombobox",
+              "file_path": "src/components/settings/ai-model-combobox.tsx",
+              "line_start": 57,
+              "line_end": 222,
+              "metric_value": 165
+            },
+            {
+              "entity_name": "src.components.dashboard.monthly-average-cards.MonthlyAverageCardsView",
+              "file_path": "src/components/dashboard/monthly-average-cards.tsx",
+              "line_start": 75,
+              "line_end": 237,
+              "metric_value": 162
+            },
+            {
+              "entity_name": "src.components.ui.calendar.Calendar",
+              "file_path": "src/components/ui/calendar.tsx",
+              "line_start": 18,
+              "line_end": 180,
+              "metric_value": 162
+            },
+            {
+              "entity_name": "src.components.dashboard.budget-split-strip.BudgetSplitStrip",
+              "file_path": "src/components/dashboard/budget-split-strip.tsx",
+              "line_start": 74,
+              "line_end": 224,
+              "metric_value": 150
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "check_name": "circular_dependencies",
+      "description": "Detects circular dependencies between packages",
+      "languages": [],
+      "check_type": "circular_dependencies",
+      "cycles": [
+        "src.lib.db -> src.lib.banking -> src.lib.db",
+        "src.lib.banking.adapters.dkb -> src.lib.banking -> src.lib.banking.adapters.dkb"
+      ],
+      "packages_checked": 32,
+      "packages_in_cycles": 3
+    },
+    {
+      "check_name": "unused_code_diagnostics",
+      "description": "Detects unused imports, variables, functions, and dead code via LSP diagnostics",
+      "languages": [],
+      "check_type": "standard",
+      "total_entities_checked": 4,
+      "findings_count": 4,
+      "warning_count": 0,
+      "score": 0.8,
+      "finding_groups": [
+        {
+          "severity": "info",
+          "threshold": 0,
+          "description": "Variables declared but never used",
+          "entities": [
+            {
+              "entity_name": "[unused_variable] 'formatDate' is declared but its value is never read.",
+              "file_path": "src/lib/banking/adapters/dkb/index.ts",
+              "line_start": 44,
+              "line_end": 44,
+              "metric_value": 0.0
+            },
+            {
+              "entity_name": "[unused_variable] 'id' is declared but its value is never read.",
+              "file_path": "src/lib/banking/adapters/dkb/mapper.ts",
+              "line_start": 154,
+              "line_end": 154,
+              "metric_value": 0.0
+            },
+            {
+              "entity_name": "[unused_variable] 'AnimatePresence' is declared but its value is never read.",
+              "file_path": "src/components/dashboard/category-breakdown-chart.tsx",
+              "line_start": 5,
+              "line_end": 5,
+              "metric_value": 0.0
+            },
+            {
+              "entity_name": "[unused_variable] 'extra' is declared but its value is never read.",
+              "file_path": "src/components/settings/bank-connection-card.tsx",
+              "line_start": 71,
+              "line_end": 71,
+              "metric_value": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "file_summaries": [
+    {
+      "file_path": "src/app/(dashboard)/insights/page.tsx",
+      "total_findings": 2,
+      "warning_findings": 2,
+      "composite_risk_score": 30.0
+    },
+    {
+      "file_path": "src/components/sandbox/comparison-chart.tsx",
+      "total_findings": 2,
+      "warning_findings": 2,
+      "composite_risk_score": 30.0
+    },
+    {
+      "file_path": "src/app/(dashboard)/sandbox/page.tsx",
+      "total_findings": 2,
+      "warning_findings": 2,
+      "composite_risk_score": 30.0
+    },
+    {
+      "file_path": "src/components/settings/bank-connection-card.tsx",
+      "total_findings": 2,
+      "warning_findings": 1,
+      "composite_risk_score": 25.0
+    },
+    {
+      "file_path": "src/components/dashboard/category-breakdown-chart.tsx",
+      "total_findings": 2,
+      "warning_findings": 1,
+      "composite_risk_score": 25.0
+    },
+    {
+      "file_path": "src/app/transactions/page.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/app/(dashboard)/assistant/page.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/dashboard/balance-history-chart.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/settings/ai-profile-form.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/app/page.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/app/api/chat/route.ts",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/settings/ai-provider-card.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/dashboard/income-expenses-chart.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/settings/account-management-card.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/lib/banking/sync.ts",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/lib/ai/system-prompt.ts",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/dashboard/date-range-picker.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/settings/ai-model-combobox.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/dashboard/monthly-average-cards.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    },
+    {
+      "file_path": "src/components/ui/calendar.tsx",
+      "total_findings": 1,
+      "warning_findings": 1,
+      "composite_risk_score": 15.0
+    }
+  ]
+}
