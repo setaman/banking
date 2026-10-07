@@ -2,8 +2,22 @@
 
 **Current Phase:** AI Assistant grounding & trust hardening (multi-turn memory)
 **Current Sprint:** fix/assistant-gemini-free-tier
-**Last Session:** 2026-09-27
+**Last Session:** 2026-10-07
 **Branch:** fix/assistant-gemini-free-tier (PR #38, awaiting client functionality check)
+
+---
+
+## This session changes (2026-10-07) — CodeBoarding sync now delivers via a rolling PR
+
+**Summary:** The CodeBoarding sync workflow (`.github/workflows/codeboarding-sync.yml`) no longer pushes generated architecture files straight to `main`. It now opens/updates a single rolling pull request instead.
+
+- Workflow: added `sync_strategy: pull_request` to the `CodeBoarding/CodeBoarding-action@v1` step and `pull-requests: write` to the top-level `permissions:` (`contents: write` is kept, now to push the sync branch; `id-token: write` unchanged). `target_branch: 'main'` unchanged.
+- Repo setting "Allow GitHub Actions to create and approve pull requests" was confirmed enabled by the client.
+- The CodeBoarding UI shows "Actions PR permission is unverified" only because it cannot read that admin-level setting. Safe to ignore.
+
+**Next actions:**
+
+- Merge the PR that carries this workflow change. The next push to `main` should then produce a CodeBoarding sync PR to review and merge.
 
 ---
 
