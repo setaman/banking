@@ -1,17 +1,17 @@
 {
   "repository_name": ".codeboarding-target",
-  "timestamp": "2026-10-07T15:28:09.082517+00:00",
-  "overall_score": 0.9671523178807948,
+  "timestamp": "2026-10-08T06:50:32.008088+00:00",
+  "overall_score": 0.9672823218997362,
   "check_summaries": [
     {
       "check_name": "function_size",
       "description": "Checks that functions/methods do not exceed line count thresholds",
       "languages": [],
       "check_type": "standard",
-      "total_entities_checked": 751,
+      "total_entities_checked": 754,
       "findings_count": 24,
       "warning_count": 24,
-      "score": 0.9680426098535286,
+      "score": 0.9681697612732095,
       "finding_groups": [
         {
           "severity": "warning",
@@ -28,9 +28,9 @@
             {
               "entity_name": "src.app.transactions.page.TransactionsPageContent",
               "file_path": "src/app/transactions/page.tsx",
-              "line_start": 75,
-              "line_end": 993,
-              "metric_value": 918
+              "line_start": 91,
+              "line_end": 1018,
+              "metric_value": 927
             },
             {
               "entity_name": "src.app.(dashboard).assistant.page.AssistantPage",
@@ -189,18 +189,6 @@
           ]
         }
       ]
-    },
-    {
-      "check_name": "circular_dependencies",
-      "description": "Detects circular dependencies between packages",
-      "languages": [],
-      "check_type": "circular_dependencies",
-      "cycles": [
-        "src.lib.db -> src.lib.banking -> src.lib.db",
-        "src.lib.banking.adapters.dkb -> src.lib.banking -> src.lib.banking.adapters.dkb"
-      ],
-      "packages_checked": 32,
-      "packages_in_cycles": 3
     },
     {
       "check_name": "unused_code_diagnostics",
