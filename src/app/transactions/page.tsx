@@ -58,7 +58,9 @@ import {
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { getTransactions } from "@/actions/transactions.actions";
 import { getAccounts } from "@/actions/accounts.actions";
+import { TransactionSummaryStrip } from "@/components/transactions/transaction-summary-strip";
 import { categorizeTransaction, CATEGORIES } from "@/lib/stats/categories";
+import { computeTransactionSummary } from "@/lib/stats/transaction-summary";
 import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { cn } from "@/lib/utils";
 import type { DateRangePreset } from "@/hooks/use-date-range";
@@ -72,6 +74,20 @@ type SortField =
   | "account";
 type SortDirection = "asc" | "desc";
 
+/**
+ * Transactions page body: loads all transactions and accounts once, then
+ * filters, sorts and paginates them client-side.
+ *
+ * Filter, sort and page state lives in the URL query string (`search`,
+ * `categories`, `accounts`, `minAmount`, `maxAmount`, `dateFrom`, `dateTo`,
+ * `sort`, `dir`, `page`). Filtering (search on description/counterparty,
+ * derived category, account, absolute amount range, booking date range)
+ * produces the filtered set; that set is sorted (default: date, descending)
+ * and then sliced into pages of 50. The summary strip is computed from the
+ * whole filtered set, not just the current page.
+ *
+ * Wrapped in `Suspense` by the default export because it reads search params.
+ */
 function TransactionsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -216,6 +232,12 @@ function TransactionsPageContent() {
     dateFrom,
     dateTo,
   ]);
+
+  // Summary stats for the filtered (not just the current page's) transactions
+  const summary = useMemo(
+    () => computeTransactionSummary(filteredTransactions),
+    [filteredTransactions]
+  );
 
   // Sort transactions
   const sortedTransactions = useMemo(() => {
@@ -776,6 +798,9 @@ function TransactionsPageContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Summary Strip (reflects the currently filtered transactions) */}
+      {!loading && <TransactionSummaryStrip summary={summary} />}
 
       {/* Table Card */}
       <Card className="shadow-primary/10 dark:shadow-primary/5">

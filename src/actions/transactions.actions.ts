@@ -1,6 +1,7 @@
 "use server";
 
 import { getDb } from "@/lib/db";
+import { isInternalTransfer } from "@/lib/banking/internal-transfer";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { classifyTransaction } from "@/lib/stats/categories";
 
@@ -96,6 +97,28 @@ function searchNormalizedVariants(value: string): string[] {
   );
 }
 
+/**
+ * Loads transactions from the local DB, optionally filtered, newest first.
+ *
+ * `filters` (all optional, combined with AND):
+ * - `accountId`: exact account match.
+ * - `startDate` / `endDate`: inclusive bounds on `bookingDate` (ISO date).
+ * - `category`: matches the stored category, or the one derived via
+ *   `classifyTransaction` when none is stored.
+ * - `direction`: `"debit"` or `"credit"`.
+ * - `minAmount` / `maxAmount`: inclusive bounds on the absolute amount.
+ * - `search`: whitespace-separated terms matched with OR semantics against
+ *   description, counterparty and DKB merchant name/category. Matching is
+ *   case-insensitive and normalizes diacritics and German umlauts/eszett, so
+ *   "muenchen" and "Munchen" both find "München".
+ *
+ * `options.excludeInternal` drops internal transfers (see
+ * `isInternalTransfer`) after the filters are applied.
+ *
+ * @param filters - Optional transaction filters.
+ * @param options - Optional behaviour flags, e.g. `excludeInternal`.
+ * @returns Matching transactions sorted by `bookingDate` descending.
+ */
 export async function getTransactions(
   filters?: TransactionFilters,
   options?: GetTransactionsOptions
@@ -186,11 +209,7 @@ export async function getTransactions(
   }
 
   if (options?.excludeInternal) {
-    transactions = transactions.filter(
-      (t) =>
-        t.category !== "internal-transfer" &&
-        !(t.raw && (t.raw as any).__internalTransfer)
-    );
+    transactions = transactions.filter((t) => !isInternalTransfer(t));
   }
 
   return transactions.sort((a, b) =>
@@ -198,6 +217,14 @@ export async function getTransactions(
   );
 }
 
+/**
+ * Counts the transactions {@link getTransactions} would return for the same
+ * `filters` and `options`.
+ *
+ * @param filters - Optional transaction filters.
+ * @param options - Optional behaviour flags, e.g. `excludeInternal`.
+ * @returns The number of matching transactions.
+ */
 export async function getTransactionCount(
   filters?: TransactionFilters,
   options?: GetTransactionsOptions
