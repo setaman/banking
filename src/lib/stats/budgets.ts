@@ -30,18 +30,63 @@ export interface BudgetProgress {
   projectedStatus: BudgetStatus;
 }
 
+/** Rounds to two decimal places. */
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+/** Maps a usage percentage to a {@link BudgetStatus}. */
 function statusFor(percent: number): BudgetStatus {
   if (percent > 100) return "over";
   if (percent >= BUDGET_WARNING_THRESHOLD) return "warning";
   return "ok";
 }
 
-function pad(n: number): string {
-  return String(n).padStart(2, "0");
+/** Timezone in which budget months roll over (bookingDate is a Berlin date). */
+export const BUDGET_TIMEZONE = "Europe/Berlin";
+
+/** Calendar facts about "today" in {@link BUDGET_TIMEZONE}. */
+export interface BudgetCalendarToday {
+  /** Today as yyyy-MM-dd. */
+  today: string;
+  /** Month prefix "yyyy-MM-". */
+  prefix: string;
+  year: number;
+  /** 1-based month. */
+  month: number;
+  dayOfMonth: number;
+  daysInMonth: number;
+  /** Days left in the month including today. */
+  daysLeft: number;
+}
+
+/**
+ * Resolves the current calendar date in {@link BUDGET_TIMEZONE}, independent
+ * of the server/browser timezone, so client and server agree.
+ *
+ * @param now - Reference instant, defaults to the current time.
+ * @returns Today's date parts, e.g. 2026-10-31T23:30Z gives 2026-11-01.
+ */
+export function getBudgetCalendarToday(
+  now: Date = new Date()
+): BudgetCalendarToday {
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BUDGET_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const [year, month, dayOfMonth] = today.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return {
+    today,
+    prefix: today.slice(0, 8),
+    year,
+    month,
+    dayOfMonth,
+    daysInMonth,
+    daysLeft: daysInMonth - dayOfMonth + 1,
+  };
 }
 
 /**
@@ -58,12 +103,8 @@ export function computeBudgetProgress(
   transactions: readonly UnifiedTransaction[],
   now: Date = new Date()
 ): BudgetProgress {
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const dayOfMonth = now.getDate();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const prefix = `${year}-${pad(month + 1)}-`;
-  const today = `${prefix}${pad(dayOfMonth)}`;
+  const { prefix, today, dayOfMonth, daysInMonth } =
+    getBudgetCalendarToday(now);
 
   let total = 0;
   for (const tx of transactions) {

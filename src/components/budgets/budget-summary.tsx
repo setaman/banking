@@ -1,15 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
-import type { BudgetProgress } from "@/lib/stats/budgets";
+import {
+  getBudgetCalendarToday,
+  type BudgetProgress,
+} from "@/lib/stats/budgets";
 
 interface BudgetSummaryProps {
   items: readonly BudgetProgress[];
-}
-
-/** Days remaining in the current month, including today. */
-function daysLeftInMonth(now: Date = new Date()): number {
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return last - now.getDate() + 1;
 }
 
 /**
@@ -21,7 +18,7 @@ export function BudgetSummary({ items }: BudgetSummaryProps) {
   const spent = items.reduce((s, i) => s + i.spent, 0);
   const over = items.filter((i) => i.status === "over").length;
   const atRisk = items.filter((i) => i.status === "warning").length;
-  const days = daysLeftInMonth();
+  const days = getBudgetCalendarToday().daysLeft;
 
   const stats = [
     { label: "Total budgeted", value: formatCurrency(budgeted) },

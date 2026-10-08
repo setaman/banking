@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { BudgetProgressBar } from "./budget-progress-bar";
 import { CategoryIcon } from "./category-icon";
 
+/** Badge label and classes per budget status. */
 const STATUS_BADGE: Record<BudgetStatus, { label: string; className: string }> =
   {
     ok: {

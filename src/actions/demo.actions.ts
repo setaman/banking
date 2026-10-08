@@ -1,6 +1,13 @@
 "use server";
 
-import { getDb, setDbMode, getDbMode, invalidateDbCache } from "@/lib/db";
+import {
+  clearMissingBudgets,
+  getDb,
+  getDbMode,
+  hadMissingBudgets,
+  invalidateDbCache,
+  setDbMode,
+} from "@/lib/db";
 import { generateDemoBudgets, generateDemoData } from "@/lib/db/seed";
 import { revalidatePath } from "next/cache";
 
@@ -18,9 +25,11 @@ export async function enableDemoMode(): Promise<{
     const demoData = generateDemoData();
     db.data = demoData;
     await db.write();
-  } else if (db.data.budgets.length === 0) {
-    // Demo DB created before budgets existed: add the demo budgets.
+  } else if (hadMissingBudgets(db)) {
+    // Demo DB created before budgets existed (field absent): seed once.
+    // An explicit [] (user deleted all budgets) is preserved.
     db.data.budgets = generateDemoBudgets();
+    clearMissingBudgets(db);
     await db.write();
   }
 

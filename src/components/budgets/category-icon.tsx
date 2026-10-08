@@ -15,6 +15,7 @@ import {
 
 import { cn } from "@/lib/utils";
 
+/** Lucide icon per category id. */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Groceries: ShoppingCart,
   Rent: Home,

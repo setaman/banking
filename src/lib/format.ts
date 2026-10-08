@@ -5,6 +5,7 @@
  * considerably cheaper than constructing a new `Intl.NumberFormat` per call.
  */
 
+/** Locale used for all number/currency formatting. */
 const LOCALE = "de-DE";
 
 const currencyFormatter = new Intl.NumberFormat(LOCALE, {

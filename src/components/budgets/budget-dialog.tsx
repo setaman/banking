@@ -37,9 +37,34 @@ interface BudgetDialogProps {
   onSaved: () => void;
 }
 
-/** Parses a user-entered limit (accepts "," or "." decimals). */
+/**
+ * Parses a user-entered limit using de-DE conventions ("." thousands,
+ * "," decimal). A lone "." is a thousands separator only in groups of three.
+ *
+ * @example parseLimit("1.000") // 1000
+ * @example parseLimit("1.234,56") // 1234.56
+ * @example parseLimit("12.5") // 12.5
+ * @example parseLimit("abc") // NaN
+ * @param raw - Raw input text (spaces and "€" are ignored).
+ * @returns The parsed number, 0 for empty input, or NaN when invalid.
+ */
 function parseLimit(raw: string): number {
-  return Number(raw.trim().replace(",", "."));
+  const text = raw.replace(/[\s€]/g, "");
+  if (text === "") return 0;
+  const hasDot = text.includes(".");
+  const hasComma = text.includes(",");
+  let normalized: string;
+  if (hasDot && hasComma) {
+    if (text.lastIndexOf(",") < text.lastIndexOf(".")) return NaN;
+    normalized = text.replace(/\./g, "").replace(",", ".");
+  } else if (hasComma) {
+    normalized = text.replace(",", ".");
+  } else if (hasDot && /^\d{1,3}(\.\d{3})+$/.test(text)) {
+    normalized = text.replace(/\./g, "");
+  } else {
+    normalized = text;
+  }
+  return /^\d+(\.\d+)?$/.test(normalized) ? Number(normalized) : NaN;
 }
 
 /**
@@ -57,6 +82,7 @@ export function BudgetDialog(props: BudgetDialogProps) {
   );
 }
 
+/** Form body of {@link BudgetDialog}; remounted on each open. */
 function BudgetDialogForm({
   onOpenChange,
   budgetedCategories,

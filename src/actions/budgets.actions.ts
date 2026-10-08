@@ -11,6 +11,7 @@ import {
   type BudgetProgress,
 } from "@/lib/stats/budgets";
 
+/** Validated client input for creating/updating a budget. */
 const UpsertBudgetInputSchema = BudgetSchema.pick({
   category: true,
   monthlyLimit: true,
@@ -26,6 +27,7 @@ export interface BudgetActionResult<T = undefined> {
   error?: string;
 }
 
+/** Revalidates all pages that display budget data. */
 function revalidateBudgetPaths(): void {
   revalidatePath("/budgets");
   revalidatePath("/");
