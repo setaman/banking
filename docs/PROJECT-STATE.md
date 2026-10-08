@@ -2,8 +2,29 @@
 
 **Current Phase:** AI Assistant grounding & trust hardening (multi-turn memory)
 **Current Sprint:** fix/assistant-gemini-free-tier
-**Last Session:** 2026-10-07
+**Last Session:** 2026-10-08
 **Branch:** fix/assistant-gemini-free-tier (PR #38, awaiting client functionality check)
+
+---
+
+## This session changes (2026-10-08) — Monthly category budgets + shared formatters
+
+**Summary:** Two workstreams on branch `claude/youthful-dijkstra-zcbi14`.
+
+1. **Shared formatters:** new `src/lib/format.ts` (`formatCurrency`, `formatCurrencySigned`, `formatCurrencyWhole`, `formatCurrencyCompact`, `formatPercent`) with module-level `Intl` instances. About 15 files migrated off local formatters; rendered output is unchanged.
+2. **Monthly category budgets:** one budget per category (Income excluded), compared against the current calendar month's debits (internal transfers excluded).
+   - Data layer: `BudgetSchema`/`MAX_BUDGET_LIMIT` in `src/lib/db/schema.ts`, demo seed budgets, pure calculations in `src/lib/stats/budgets.ts` (status ok/warning/over, linear month-end projection), server actions in `src/actions/budgets.actions.ts`.
+   - UI: `/budgets` page (`src/app/budgets/page.tsx`) with summary strip, card grid, create/edit dialog, delete confirm, loading skeleton and empty state; reloads after mutations and when demo mode toggles. Components in `src/components/budgets/` (`budget-progress-bar`, `budget-card`, `budget-list`, `budget-dialog`, `budget-summary`, `category-icon`), `src/components/ui/progress.tsx` (shadcn Progress via `radix-ui`; the shadcn CLI was unreachable so it was written by hand, no new dependency).
+   - Navigation: "Budgets" link after Transactions in `src/components/layout/nav.tsx` (shared by desktop and mobile menu).
+   - Dashboard: `src/components/dashboard/budget-widget.tsx` (top 3 budgets by usage, "View all", empty state) rendered on `src/app/page.tsx`.
+   - README feature list updated.
+
+**Verification:** prettier, `npx tsc --noEmit`, eslint on changed files, `npm run build`, and a Playwright demo-mode run of `/budgets` and `/` (mixed statuses, create/edit/delete, no console errors).
+
+**Next actions:**
+
+- Client review of the PR.
+- Use this large PR as a test of the CodeBoarding architecture review.
 
 ---
 

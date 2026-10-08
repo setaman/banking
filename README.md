@@ -33,6 +33,7 @@ import transactions automatically. All data is stored locally on your machine wi
 - **Interactive Dashboard**: Real-time balance history, income vs expenses, spending categories
 - **Advanced Filtering**: Filter transactions by date range, account, category, amount, and search
 - **Transaction Management**: Full table view with sorting, pagination, and export-ready data
+- **Monthly Budgets**: Per-category monthly limits with progress, month-end projection, and a dashboard widget
 - **Financial Insights**: 17 KPI metrics including savings rate, burn rate, cash flow analysis
 - **Demo Mode**: Test the app with realistic sample data before connecting your bank
 - **Automatic Categorization**: Smart transaction categorization into 11 categories
@@ -218,6 +219,7 @@ banking/
 │   │   ├── page.tsx            # Dashboard with charts and KPIs
 │   │   ├── globals.css         # Theme variables + Tailwind
 │   │   ├── transactions/       # Transactions table with filters
+│   │   ├── budgets/            # Monthly category budgets
 │   │   ├── insights/           # Financial insights and analytics
 │   │   ├── (dashboard)/assistant/ # AI Assistant chat page
 │   │   ├── api/sync/           # DKB sync API endpoint
