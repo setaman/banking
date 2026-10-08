@@ -1,13 +1,13 @@
 {
   "metadata": {
-    "generated_at": "2026-10-07T15:29:31.313603+00:00",
-    "source_tree_hash": "7e0dded8b068044a52920ee3631a388fdc8972097292d9de515b9d8a02ee4627",
+    "generated_at": "2026-10-08T06:52:29.231239+00:00",
+    "source_tree_hash": "ec500938720a79d5a4216c87dd088ffdf7951a84380d113b9ee192ca8316321a",
     "repo_name": ".codeboarding-target",
     "depth_level": 2,
     "depth_cap": 2,
     "file_coverage_summary": {
-      "total_files": 166,
-      "analyzed": 136,
+      "total_files": 169,
+      "analyzed": 139,
       "not_analyzed": 30,
       "not_analyzed_by_reason": {
         "other": 26,
@@ -1715,6 +1715,16 @@
       "content_hash": "0c710656758644f6",
       "module_hash": "5662f29b13c25344"
     },
+    "src/components/transactions/transaction-summary-strip.tsx": {
+      "method_keys": [
+        "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.TransactionSummaryStripProps",
+        "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCardProps",
+        "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard",
+        "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.TransactionSummaryStrip"
+      ],
+      "content_hash": "bd6a721ec7506f4c",
+      "module_hash": "a78d86777caa6dcc"
+    },
     "src/components/ui/alert-dialog.tsx": {
       "method_keys": [
         "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialog",
@@ -2365,6 +2375,13 @@
       "content_hash": "e16b6985d909cf9d",
       "module_hash": "5a3f7ddc776da243"
     },
+    "src/lib/banking/internal-transfer.ts": {
+      "method_keys": [
+        "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer"
+      ],
+      "content_hash": "58fbc0e1f4bb4e40",
+      "module_hash": "33ae3c18074e3914"
+    },
     "src/lib/banking/pending-reconciliation.ts": {
       "method_keys": [
         "src/lib/banking/pending-reconciliation.ts|src.lib.banking.pending-reconciliation.ReconcilePendingOptions",
@@ -2624,6 +2641,15 @@
       ],
       "content_hash": "449fa06b3757ccfb",
       "module_hash": "f978e9be523db426"
+    },
+    "src/lib/stats/transaction-summary.ts": {
+      "method_keys": [
+        "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.LargestExpenseSummary",
+        "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.TransactionSummary",
+        "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary"
+      ],
+      "content_hash": "12dcbcc9db05d1eb",
+      "module_hash": "87eb51e647dcc367"
     },
     "src/lib/utils.ts": {
       "method_keys": [
@@ -2896,6 +2922,8 @@
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.filteredTransactions",
         "src/app/transactions/page.tsx|src.app.transactions.page.filteredTransactions.useMemo() callback.filtered.filter() callback",
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback.filtered.filter() callback",
+        "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.summary",
+        "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.summary.useMemo() callback",
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.sortedTransactions",
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback",
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback.sorted.sort() callback",
@@ -2918,8 +2946,8 @@
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback.<function>.<function>",
         "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPage"
       ],
-      "content_hash": "bffedcb523a2cf8a",
-      "module_hash": "b914e4086ac72957"
+      "content_hash": "f3fff4c6f09a6efb",
+      "module_hash": "78056cbeb3d0b24d"
     },
     "src/config/ai.ts": {
       "method_keys": [
@@ -3212,8 +3240,8 @@
         "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.transactions.sort() callback",
         "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactionCount"
       ],
-      "content_hash": "1d37254c7660950e",
-      "module_hash": "9ae87c113b70c8f4"
+      "content_hash": "b8e590a2eae18772",
+      "module_hash": "e145850e80efde58"
     }
   },
   "methods_index": {
@@ -6065,6 +6093,38 @@
       "type": "FUNCTION",
       "content_hash": "5fa03d64c44ba140"
     },
+    "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.TransactionSummaryStripProps": {
+      "file_path": "src/components/transactions/transaction-summary-strip.tsx",
+      "qualified_name": "src.components.transactions.transaction-summary-strip.TransactionSummaryStripProps",
+      "start_line": 15,
+      "end_line": 18,
+      "type": "INTERFACE",
+      "content_hash": "956a078dd0b8cdbb"
+    },
+    "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCardProps": {
+      "file_path": "src/components/transactions/transaction-summary-strip.tsx",
+      "qualified_name": "src.components.transactions.transaction-summary-strip.StatCardProps",
+      "start_line": 29,
+      "end_line": 35,
+      "type": "INTERFACE",
+      "content_hash": "6f5dcac2646482e8"
+    },
+    "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard": {
+      "file_path": "src/components/transactions/transaction-summary-strip.tsx",
+      "qualified_name": "src.components.transactions.transaction-summary-strip.StatCard",
+      "start_line": 38,
+      "end_line": 66,
+      "type": "FUNCTION",
+      "content_hash": "0fd28f203a6cafee"
+    },
+    "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.TransactionSummaryStrip": {
+      "file_path": "src/components/transactions/transaction-summary-strip.tsx",
+      "qualified_name": "src.components.transactions.transaction-summary-strip.TransactionSummaryStrip",
+      "start_line": 73,
+      "end_line": 171,
+      "type": "FUNCTION",
+      "content_hash": "943b1397127f0a80"
+    },
     "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialog": {
       "file_path": "src/components/ui/alert-dialog.tsx",
       "qualified_name": "src.components.ui.alert-dialog.AlertDialog",
@@ -8721,6 +8781,14 @@
       "type": "FUNCTION",
       "content_hash": "1be526c56f9e076f"
     },
+    "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer": {
+      "file_path": "src/lib/banking/internal-transfer.ts",
+      "qualified_name": "src.lib.banking.internal-transfer.isInternalTransfer",
+      "start_line": 31,
+      "end_line": 38,
+      "type": "FUNCTION",
+      "content_hash": "8fdc031418d3c6bb"
+    },
     "src/lib/banking/pending-reconciliation.ts|src.lib.banking.pending-reconciliation.ReconcilePendingOptions": {
       "file_path": "src/lib/banking/pending-reconciliation.ts",
       "qualified_name": "src.lib.banking.pending-reconciliation.ReconcilePendingOptions",
@@ -10321,6 +10389,30 @@
       "type": "FUNCTION",
       "content_hash": "adab902a1914114f"
     },
+    "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.LargestExpenseSummary": {
+      "file_path": "src/lib/stats/transaction-summary.ts",
+      "qualified_name": "src.lib.stats.transaction-summary.LargestExpenseSummary",
+      "start_line": 25,
+      "end_line": 34,
+      "type": "INTERFACE",
+      "content_hash": "e199ddfd8cd6a77d"
+    },
+    "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.TransactionSummary": {
+      "file_path": "src/lib/stats/transaction-summary.ts",
+      "qualified_name": "src.lib.stats.transaction-summary.TransactionSummary",
+      "start_line": 37,
+      "end_line": 48,
+      "type": "INTERFACE",
+      "content_hash": "44e6ebcada8e0a00"
+    },
+    "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary": {
+      "file_path": "src/lib/stats/transaction-summary.ts",
+      "qualified_name": "src.lib.stats.transaction-summary.computeTransactionSummary",
+      "start_line": 57,
+      "end_line": 91,
+      "type": "FUNCTION",
+      "content_hash": "5421efb9cabf246d"
+    },
     "src/lib/utils.ts|src.lib.utils.cn": {
       "file_path": "src/lib/utils.ts",
       "qualified_name": "src.lib.utils.cn",
@@ -11868,296 +11960,312 @@
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent",
-      "start_line": 75,
-      "end_line": 993,
+      "start_line": 91,
+      "end_line": 1018,
       "type": "FUNCTION",
-      "content_hash": "a937579f3bfc34ca"
+      "content_hash": "b11800f5a7e221f0"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.selectedCategories": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.selectedCategories",
-      "start_line": 97,
-      "end_line": 100,
+      "start_line": 113,
+      "end_line": 116,
       "type": "CLASS",
       "content_hash": "be0a01ad0d15134b"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.selectedCategories.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.selectedCategories.useMemo() callback",
-      "start_line": 98,
-      "end_line": 98,
+      "start_line": 114,
+      "end_line": 114,
       "type": "FUNCTION",
       "content_hash": "0d0783a998567ba1"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.selectedAccounts": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.selectedAccounts",
-      "start_line": 101,
-      "end_line": 104,
+      "start_line": 117,
+      "end_line": 120,
       "type": "CLASS",
       "content_hash": "1305751b98470a84"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.selectedAccounts.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.selectedAccounts.useMemo() callback",
-      "start_line": 102,
-      "end_line": 102,
+      "start_line": 118,
+      "end_line": 118,
       "type": "FUNCTION",
       "content_hash": "596765f574dc3053"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.updateParams": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.updateParams",
-      "start_line": 123,
-      "end_line": 135,
+      "start_line": 139,
+      "end_line": 151,
       "type": "CLASS",
       "content_hash": "0f05520763ebd45c"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.updateParams.forEach() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.updateParams.forEach() callback",
-      "start_line": 126,
-      "end_line": 132,
+      "start_line": 142,
+      "end_line": 148,
       "type": "FUNCTION",
       "content_hash": "484b45610654fd44"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.useEffect() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.useEffect() callback",
-      "start_line": 137,
-      "end_line": 154,
+      "start_line": 153,
+      "end_line": 170,
       "type": "FUNCTION",
       "content_hash": "2d1fe97ce62dc8f2"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.useEffect() callback.loadData": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.useEffect() callback.loadData",
-      "start_line": 138,
-      "end_line": 152,
+      "start_line": 154,
+      "end_line": 168,
       "type": "FUNCTION",
       "content_hash": "c3ce1da4920ccc6c"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.accountMap": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.accountMap",
-      "start_line": 157,
-      "end_line": 161,
+      "start_line": 173,
+      "end_line": 177,
       "type": "CLASS",
       "content_hash": "eb03868d81755b8d"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.accountMap.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.accountMap.useMemo() callback",
-      "start_line": 157,
-      "end_line": 161,
+      "start_line": 173,
+      "end_line": 177,
       "type": "FUNCTION",
       "content_hash": "eb03868d81755b8d"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.accountMap.useMemo() callback.accounts.forEach() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.accountMap.useMemo() callback.accounts.forEach() callback",
-      "start_line": 159,
-      "end_line": 159,
+      "start_line": 175,
+      "end_line": 175,
       "type": "FUNCTION",
       "content_hash": "7b237d63df30ac97"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback",
-      "start_line": 164,
-      "end_line": 209,
+      "start_line": 180,
+      "end_line": 225,
       "type": "FUNCTION",
       "content_hash": "271c044684f9e3a8"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.filteredTransactions": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.filteredTransactions",
-      "start_line": 164,
-      "end_line": 218,
+      "start_line": 180,
+      "end_line": 234,
       "type": "CLASS",
       "content_hash": "e53e423d44fc898a"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.filteredTransactions.useMemo() callback.filtered.filter() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.filteredTransactions.useMemo() callback.filtered.filter() callback",
-      "start_line": 171,
-      "end_line": 173,
+      "start_line": 187,
+      "end_line": 189,
       "type": "FUNCTION",
       "content_hash": "3bcefc020d705129"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback.filtered.filter() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback.filtered.filter() callback",
-      "start_line": 205,
-      "end_line": 205,
+      "start_line": 221,
+      "end_line": 221,
       "type": "FUNCTION",
       "content_hash": "5d571ee8fa53fa80"
+    },
+    "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.summary": {
+      "file_path": "src/app/transactions/page.tsx",
+      "qualified_name": "src.app.transactions.page.TransactionsPageContent.summary",
+      "start_line": 237,
+      "end_line": 240,
+      "type": "CLASS",
+      "content_hash": "4a91b9764274e661"
+    },
+    "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.summary.useMemo() callback": {
+      "file_path": "src/app/transactions/page.tsx",
+      "qualified_name": "src.app.transactions.page.TransactionsPageContent.summary.useMemo() callback",
+      "start_line": 238,
+      "end_line": 238,
+      "type": "FUNCTION",
+      "content_hash": "a966a8a6ac4afbbf"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.sortedTransactions": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.sortedTransactions",
-      "start_line": 221,
-      "end_line": 263,
+      "start_line": 243,
+      "end_line": 285,
       "type": "CLASS",
       "content_hash": "2aba7ce7834b406d"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback",
-      "start_line": 221,
-      "end_line": 263,
+      "start_line": 243,
+      "end_line": 285,
       "type": "FUNCTION",
       "content_hash": "2aba7ce7834b406d"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback.sorted.sort() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback.sorted.sort() callback",
-      "start_line": 224,
-      "end_line": 260,
+      "start_line": 246,
+      "end_line": 282,
       "type": "FUNCTION",
       "content_hash": "46c4087886f4db50"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.paginatedTransactions": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.paginatedTransactions",
-      "start_line": 266,
-      "end_line": 270,
+      "start_line": 288,
+      "end_line": 292,
       "type": "CLASS",
       "content_hash": "223892a7000f56b3"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.paginatedTransactions.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.paginatedTransactions.useMemo() callback",
-      "start_line": 266,
-      "end_line": 270,
+      "start_line": 288,
+      "end_line": 292,
       "type": "FUNCTION",
       "content_hash": "223892a7000f56b3"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.toggleCategory.newCategories": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.toggleCategory.newCategories",
-      "start_line": 296,
-      "end_line": 298,
+      "start_line": 318,
+      "end_line": 320,
       "type": "CLASS",
       "content_hash": "aa355d2fe31dfad9"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.toggleCategory.newCategories.selectedCategories.filter() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.toggleCategory.newCategories.selectedCategories.filter() callback",
-      "start_line": 297,
-      "end_line": 297,
+      "start_line": 319,
+      "end_line": 319,
       "type": "FUNCTION",
       "content_hash": "a709956145bde4fe"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.toggleAccount.newAccounts": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.toggleAccount.newAccounts",
-      "start_line": 307,
-      "end_line": 309,
+      "start_line": 329,
+      "end_line": 331,
       "type": "CLASS",
       "content_hash": "72e832d64c11b60f"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.toggleAccount.newAccounts.selectedAccounts.filter() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.toggleAccount.newAccounts.selectedAccounts.filter() callback",
-      "start_line": 308,
-      "end_line": 308,
+      "start_line": 330,
+      "end_line": 330,
       "type": "FUNCTION",
       "content_hash": "540cde90d8d011b8"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.activeFilterCount.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.activeFilterCount.useMemo() callback",
-      "start_line": 344,
-      "end_line": 352,
+      "start_line": 366,
+      "end_line": 374,
       "type": "FUNCTION",
       "content_hash": "a0ba4c41d0d71870"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.activeFilterCount": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.activeFilterCount",
-      "start_line": 344,
-      "end_line": 360,
+      "start_line": 366,
+      "end_line": 382,
       "type": "CLASS",
       "content_hash": "159c38a7c6e3723a"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.pickerRange": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.pickerRange",
-      "start_line": 421,
-      "end_line": 454,
+      "start_line": 443,
+      "end_line": 476,
       "type": "CLASS",
       "content_hash": "9b85ddf1c10b837f"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.pickerRange.useMemo() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.pickerRange.useMemo() callback",
-      "start_line": 421,
-      "end_line": 454,
+      "start_line": 443,
+      "end_line": 476,
       "type": "FUNCTION",
       "content_hash": "9b85ddf1c10b837f"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.useEffect() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.useEffect() callback",
-      "start_line": 460,
-      "end_line": 462,
+      "start_line": 482,
+      "end_line": 484,
       "type": "FUNCTION",
       "content_hash": "3b7eba5d922e958e"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.CATEGORIES.map() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.CATEGORIES.map() callback",
-      "start_line": 583,
-      "end_line": 600,
+      "start_line": 605,
+      "end_line": 622,
       "type": "FUNCTION",
       "content_hash": "612089fe03850a7b"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.accounts.map() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.accounts.map() callback",
-      "start_line": 639,
-      "end_line": 661,
+      "start_line": 661,
+      "end_line": 683,
       "type": "FUNCTION",
       "content_hash": "18563ce5e30030d4"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.<function>": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.<function>",
-      "start_line": 672,
-      "end_line": 681,
+      "start_line": 694,
+      "end_line": 703,
       "type": "FUNCTION",
       "content_hash": "78bc83a8959fee1b"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback",
-      "start_line": 845,
-      "end_line": 957,
+      "start_line": 870,
+      "end_line": 982,
       "type": "FUNCTION",
       "content_hash": "a9f3253783d7510b"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback.<function>": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback.<function>",
-      "start_line": 897,
-      "end_line": 916,
+      "start_line": 922,
+      "end_line": 941,
       "type": "FUNCTION",
       "content_hash": "1f390b146c0fedbc"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback.<function>.<function>": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPageContent.paginatedTransactions.map() callback.<function>.<function>",
-      "start_line": 905,
-      "end_line": 913,
+      "start_line": 930,
+      "end_line": 938,
       "type": "FUNCTION",
       "content_hash": "0558d734ffa1ca02"
     },
     "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPage": {
       "file_path": "src/app/transactions/page.tsx",
       "qualified_name": "src.app.transactions.page.TransactionsPage",
-      "start_line": 995,
-      "end_line": 1007,
+      "start_line": 1020,
+      "end_line": 1032,
       "type": "FUNCTION",
       "content_hash": "834acef82a773ffb"
     },
@@ -13804,136 +13912,136 @@
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.TransactionFilters": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.TransactionFilters",
-      "start_line": 7,
-      "end_line": 16,
+      "start_line": 8,
+      "end_line": 17,
       "type": "INTERFACE",
       "content_hash": "becf1c9cb6b0b732"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.GetTransactionsOptions": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.GetTransactionsOptions",
-      "start_line": 18,
-      "end_line": 20,
+      "start_line": 19,
+      "end_line": 21,
       "type": "INTERFACE",
       "content_hash": "b2e488bdca9118af"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.extractRawMerchantText": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.extractRawMerchantText",
-      "start_line": 35,
-      "end_line": 60,
+      "start_line": 36,
+      "end_line": 61,
       "type": "FUNCTION",
       "content_hash": "cc720de6b7e24eb2"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.stripDiacritics": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.stripDiacritics",
-      "start_line": 65,
-      "end_line": 67,
+      "start_line": 66,
+      "end_line": 68,
       "type": "FUNCTION",
       "content_hash": "2fbbef9b8f54f94a"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.transliterateGerman": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.transliterateGerman",
-      "start_line": 78,
-      "end_line": 84,
+      "start_line": 79,
+      "end_line": 85,
       "type": "FUNCTION",
       "content_hash": "c8b7925c26d74b62"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.searchNormalizedVariants": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.searchNormalizedVariants",
-      "start_line": 92,
-      "end_line": 97,
+      "start_line": 93,
+      "end_line": 98,
       "type": "FUNCTION",
       "content_hash": "2cdc01b341665914"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions",
-      "start_line": 99,
-      "end_line": 199,
+      "start_line": 122,
+      "end_line": 218,
       "type": "FUNCTION",
-      "content_hash": "9e9c43aedc39c49b"
+      "content_hash": "5897105d64fe7572"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.transactions.filter() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.transactions.filter() callback",
-      "start_line": 109,
-      "end_line": 109,
+      "start_line": 132,
+      "end_line": 132,
       "type": "FUNCTION",
       "content_hash": "95edd5f2d911d57c"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.terms": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.terms",
-      "start_line": 162,
-      "end_line": 165,
+      "start_line": 185,
+      "end_line": 188,
       "type": "CLASS",
       "content_hash": "4ae172778f099327"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.terms.map() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.terms.map() callback",
-      "start_line": 164,
-      "end_line": 164,
+      "start_line": 187,
+      "end_line": 187,
       "type": "FUNCTION",
       "content_hash": "514a7c4ba4405842"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.terms.filter() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.terms.filter() callback",
-      "start_line": 165,
-      "end_line": 165,
+      "start_line": 188,
+      "end_line": 188,
       "type": "FUNCTION",
       "content_hash": "e02a2ae27b68b183"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.transactions.filter() callback.terms.some() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.transactions.filter() callback.terms.some() callback",
-      "start_line": 176,
-      "end_line": 181,
+      "start_line": 199,
+      "end_line": 204,
       "type": "FUNCTION",
       "content_hash": "b445ae718704530f"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.transactions.filter() callback.terms.some() callback.some() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.transactions.filter() callback.terms.some() callback.some() callback",
-      "start_line": 177,
-      "end_line": 180,
+      "start_line": 200,
+      "end_line": 203,
       "type": "FUNCTION",
       "content_hash": "70610bec0caa7b7d"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.transactions.filter() callback.terms.some() callback.some() callback.haystackVariants.some() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.transactions.filter() callback.terms.some() callback.some() callback.haystackVariants.some() callback",
-      "start_line": 178,
-      "end_line": 179,
+      "start_line": 201,
+      "end_line": 202,
       "type": "FUNCTION",
       "content_hash": "b759b1c0bc92cd27"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.transactions.filter() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.transactions.filter() callback",
-      "start_line": 190,
-      "end_line": 192,
+      "start_line": 212,
+      "end_line": 212,
       "type": "FUNCTION",
-      "content_hash": "471a3eb333d2c1a1"
+      "content_hash": "a93c29a82ed8dbe9"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions.transactions.sort() callback": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactions.transactions.sort() callback",
-      "start_line": 196,
-      "end_line": 197,
+      "start_line": 215,
+      "end_line": 216,
       "type": "FUNCTION",
       "content_hash": "8a964b1b7c15e6ae"
     },
     "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactionCount": {
       "file_path": "src/actions/transactions.actions.ts",
       "qualified_name": "src.actions.transactions.actions.getTransactionCount",
-      "start_line": 201,
-      "end_line": 207,
+      "start_line": 228,
+      "end_line": 234,
       "type": "FUNCTION",
       "content_hash": "a5dfa523bc95aa2d"
     }
@@ -13978,6 +14086,12 @@
           "reference_file": "src/components/dashboard/overview-cards.tsx",
           "reference_start_line": 248,
           "reference_end_line": 290
+        },
+        {
+          "qualified_name": "src.components.transactions.transaction-summary-strip.TransactionSummaryStrip",
+          "reference_file": "src/components/transactions/transaction-summary-strip.tsx",
+          "reference_start_line": 73,
+          "reference_end_line": 171
         }
       ],
       "source_cluster_ids": [
@@ -14626,6 +14740,15 @@
           "methods": [
             "src.components.theme-toggle.ThemeToggle",
             "src.components.theme-toggle.ThemeToggle.React.useEffect() callback"
+          ]
+        },
+        {
+          "file_path": "src/components/transactions/transaction-summary-strip.tsx",
+          "methods": [
+            "src.components.transactions.transaction-summary-strip.TransactionSummaryStripProps",
+            "src.components.transactions.transaction-summary-strip.StatCardProps",
+            "src.components.transactions.transaction-summary-strip.StatCard",
+            "src.components.transactions.transaction-summary-strip.TransactionSummaryStrip"
           ]
         },
         {
@@ -15628,7 +15751,7 @@
         },
         {
           "name": "App State and Control Contexts",
-          "description": "Context providers and header controls managing demo mode, theme toggling, and banking data synchronization state.",
+          "description": "Context providers, action toggles, and status widgets managing demo mode, theme switching, banking data synchronization state, and transaction summaries.",
           "key_entities": [
             {
               "qualified_name": "src.contexts.sync-context.useSync",
@@ -15653,6 +15776,12 @@
               "reference_file": "src/components/theme-toggle.tsx",
               "reference_start_line": 9,
               "reference_end_line": 39
+            },
+            {
+              "qualified_name": "src.components.transactions.transaction-summary-strip.TransactionSummaryStrip",
+              "reference_file": "src/components/transactions/transaction-summary-strip.tsx",
+              "reference_start_line": 73,
+              "reference_end_line": 171
             }
           ],
           "source_cluster_ids": [
@@ -15716,6 +15845,15 @@
               "methods": [
                 "src.components.theme-toggle.ThemeToggle",
                 "src.components.theme-toggle.ThemeToggle.React.useEffect() callback"
+              ]
+            },
+            {
+              "file_path": "src/components/transactions/transaction-summary-strip.tsx",
+              "methods": [
+                "src.components.transactions.transaction-summary-strip.TransactionSummaryStripProps",
+                "src.components.transactions.transaction-summary-strip.StatCardProps",
+                "src.components.transactions.transaction-summary-strip.StatCard",
+                "src.components.transactions.transaction-summary-strip.TransactionSummaryStrip"
               ]
             },
             {
@@ -16852,308 +16990,6 @@
         },
         {
           "relation": "renders with",
-          "src_name": "App State and Control Contexts",
-          "dst_name": "Core UI Primitives",
-          "evidence": "",
-          "key_edges": [
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialog",
-              "call_sites": [
-                {
-                  "line": 97,
-                  "column": 8
-                }
-              ],
-              "description": "DemoToggle displays confirmation alerts using base alert-dialog primitives"
-            }
-          ],
-          "src_id": "1.4",
-          "dst_id": "1.1",
-          "is_static": true,
-          "all_edges": [
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialog",
-              "call_sites": [
-                {
-                  "line": 97,
-                  "column": 8
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogAction",
-              "call_sites": [
-                {
-                  "line": 113,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogCancel",
-              "call_sites": [
-                {
-                  "line": 112,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogContent",
-              "call_sites": [
-                {
-                  "line": 98,
-                  "column": 10
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogDescription",
-              "call_sites": [
-                {
-                  "line": 105,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogFooter",
-              "call_sites": [
-                {
-                  "line": 111,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogHeader",
-              "call_sites": [
-                {
-                  "line": 99,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogTitle",
-              "call_sites": [
-                {
-                  "line": 100,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/badge.tsx|src.components.ui.badge.Badge",
-              "call_sites": [
-                {
-                  "line": 84,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "target": "src/components/ui/switch.tsx|src.components.ui.switch.Switch",
-              "call_sites": [
-                {
-                  "line": 36,
-                  "column": 10
-                },
-                {
-                  "line": 71,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
-              "call_sites": [
-                {
-                  "line": 71,
-                  "column": 14
-                },
-                {
-                  "line": 91,
-                  "column": 6
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/popover.tsx|src.components.ui.popover.Popover",
-              "call_sites": [
-                {
-                  "line": 111,
-                  "column": 8
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/popover.tsx|src.components.ui.popover.PopoverContent",
-              "call_sites": [
-                {
-                  "line": 113,
-                  "column": 10
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/popover.tsx|src.components.ui.popover.PopoverTrigger",
-              "call_sites": [
-                {
-                  "line": 112,
-                  "column": 10
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.Tooltip",
-              "call_sites": [
-                {
-                  "line": 69,
-                  "column": 10
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipContent",
-              "call_sites": [
-                {
-                  "line": 81,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipProvider",
-              "call_sites": [
-                {
-                  "line": 68,
-                  "column": 8
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipTrigger",
-              "call_sites": [
-                {
-                  "line": 70,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-error-details.tsx|src.components.sync-error-details.SyncErrorDetails",
-              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
-              "call_sites": [
-                {
-                  "line": 153,
-                  "column": 12
-                },
-                {
-                  "line": 169,
-                  "column": 10
-                },
-                {
-                  "line": 178,
-                  "column": 12
-                },
-                {
-                  "line": 186,
-                  "column": 12
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-error-showcase.tsx|src.components.sync-error-showcase.SyncErrorShowcase",
-              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
-              "call_sites": [
-                {
-                  "line": 99,
-                  "column": 14
-                },
-                {
-                  "line": 110,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/sync-error-showcase.tsx|src.components.sync-error-showcase.SyncErrorShowcase",
-              "target": "src/components/ui/card.tsx|src.components.ui.card.Card",
-              "call_sites": [
-                {
-                  "line": 90,
-                  "column": 12
-                },
-                {
-                  "line": 107,
-                  "column": 10
-                },
-                {
-                  "line": 131,
-                  "column": 8
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/theme-toggle.tsx|src.components.theme-toggle.ThemeToggle",
-              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
-              "call_sites": [
-                {
-                  "line": 20,
-                  "column": 8
-                },
-                {
-                  "line": 28,
-                  "column": 6
-                }
-              ],
-              "description": ""
-            }
-          ]
-        },
-        {
-          "relation": "renders with",
           "src_name": "Settings and Integrations Management",
           "dst_name": "Core UI Primitives",
           "evidence": "",
@@ -17992,41 +17828,6 @@
           ]
         },
         {
-          "relation": "refreshes sync status in",
-          "src_name": "Settings and Integrations Management",
-          "dst_name": "App State and Control Contexts",
-          "evidence": "",
-          "key_edges": [
-            {
-              "source": "src/components/settings/bank-connection-card.tsx|src.components.settings.bank-connection-card.BankConnectionCard",
-              "target": "src/contexts/sync-context.tsx|src.contexts.sync-context.useSync",
-              "call_sites": [
-                {
-                  "line": 196,
-                  "column": 33
-                }
-              ],
-              "description": "BankConnectionCard triggers refreshSyncStatus after updating credentials"
-            }
-          ],
-          "src_id": "1.5",
-          "dst_id": "1.4",
-          "is_static": true,
-          "all_edges": [
-            {
-              "source": "src/components/settings/bank-connection-card.tsx|src.components.settings.bank-connection-card.BankConnectionCard",
-              "target": "src/contexts/sync-context.tsx|src.contexts.sync-context.useSync",
-              "call_sites": [
-                {
-                  "line": 196,
-                  "column": 33
-                }
-              ],
-              "description": ""
-            }
-          ]
-        },
-        {
           "relation": "renders with",
           "src_name": "Application Layout Shell",
           "dst_name": "Core UI Primitives",
@@ -18055,94 +17856,6 @@
                 {
                   "line": 62,
                   "column": 12
-                }
-              ],
-              "description": ""
-            }
-          ]
-        },
-        {
-          "relation": "embeds controls from",
-          "src_name": "Application Layout Shell",
-          "dst_name": "App State and Control Contexts",
-          "evidence": "",
-          "key_edges": [
-            {
-              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-              "target": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "call_sites": [
-                {
-                  "line": 58,
-                  "column": 14
-                },
-                {
-                  "line": 98,
-                  "column": 16
-                }
-              ],
-              "description": "Header embeds demo and theme toggle controls alongside sync status buttons"
-            }
-          ],
-          "src_id": "1.6",
-          "dst_id": "1.4",
-          "is_static": true,
-          "all_edges": [
-            {
-              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-              "target": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
-              "call_sites": [
-                {
-                  "line": 58,
-                  "column": 14
-                },
-                {
-                  "line": 98,
-                  "column": 16
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-              "target": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
-              "call_sites": [
-                {
-                  "line": 56,
-                  "column": 14
-                },
-                {
-                  "line": 90,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-              "target": "src/components/sync-status.tsx|src.components.sync-status.SyncStatus",
-              "call_sites": [
-                {
-                  "line": 52,
-                  "column": 14
-                },
-                {
-                  "line": 89,
-                  "column": 14
-                }
-              ],
-              "description": ""
-            },
-            {
-              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-              "target": "src/components/theme-toggle.tsx|src.components.theme-toggle.ThemeToggle",
-              "call_sites": [
-                {
-                  "line": 59,
-                  "column": 14
-                },
-                {
-                  "line": 99,
-                  "column": 16
                 }
               ],
               "description": ""
@@ -18361,6 +18074,498 @@
               "description": ""
             }
           ]
+        },
+        {
+          "relation": "renders with",
+          "src_name": "App State and Control Contexts",
+          "dst_name": "Core UI Primitives",
+          "evidence": "",
+          "key_edges": [
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialog",
+              "call_sites": [
+                {
+                  "line": 97,
+                  "column": 8
+                }
+              ],
+              "description": "Renders confirmation dialogs using core alert dialog primitives"
+            }
+          ],
+          "src_id": "1.4",
+          "dst_id": "1.1",
+          "is_static": true,
+          "all_edges": [
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialog",
+              "call_sites": [
+                {
+                  "line": 97,
+                  "column": 8
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogAction",
+              "call_sites": [
+                {
+                  "line": 113,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogCancel",
+              "call_sites": [
+                {
+                  "line": 112,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogContent",
+              "call_sites": [
+                {
+                  "line": 98,
+                  "column": 10
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogDescription",
+              "call_sites": [
+                {
+                  "line": 105,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogFooter",
+              "call_sites": [
+                {
+                  "line": 111,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogHeader",
+              "call_sites": [
+                {
+                  "line": 99,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/alert-dialog.tsx|src.components.ui.alert-dialog.AlertDialogTitle",
+              "call_sites": [
+                {
+                  "line": 100,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/badge.tsx|src.components.ui.badge.Badge",
+              "call_sites": [
+                {
+                  "line": 84,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/ui/switch.tsx|src.components.ui.switch.Switch",
+              "call_sites": [
+                {
+                  "line": 36,
+                  "column": 10
+                },
+                {
+                  "line": 71,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
+              "call_sites": [
+                {
+                  "line": 71,
+                  "column": 14
+                },
+                {
+                  "line": 91,
+                  "column": 6
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/popover.tsx|src.components.ui.popover.Popover",
+              "call_sites": [
+                {
+                  "line": 111,
+                  "column": 8
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/popover.tsx|src.components.ui.popover.PopoverContent",
+              "call_sites": [
+                {
+                  "line": 113,
+                  "column": 10
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/popover.tsx|src.components.ui.popover.PopoverTrigger",
+              "call_sites": [
+                {
+                  "line": 112,
+                  "column": 10
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.Tooltip",
+              "call_sites": [
+                {
+                  "line": 69,
+                  "column": 10
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipContent",
+              "call_sites": [
+                {
+                  "line": 81,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipProvider",
+              "call_sites": [
+                {
+                  "line": 68,
+                  "column": 8
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipTrigger",
+              "call_sites": [
+                {
+                  "line": 70,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-error-details.tsx|src.components.sync-error-details.SyncErrorDetails",
+              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
+              "call_sites": [
+                {
+                  "line": 153,
+                  "column": 12
+                },
+                {
+                  "line": 169,
+                  "column": 10
+                },
+                {
+                  "line": 178,
+                  "column": 12
+                },
+                {
+                  "line": 186,
+                  "column": 12
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-error-showcase.tsx|src.components.sync-error-showcase.SyncErrorShowcase",
+              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
+              "call_sites": [
+                {
+                  "line": 99,
+                  "column": 14
+                },
+                {
+                  "line": 110,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/sync-error-showcase.tsx|src.components.sync-error-showcase.SyncErrorShowcase",
+              "target": "src/components/ui/card.tsx|src.components.ui.card.Card",
+              "call_sites": [
+                {
+                  "line": 90,
+                  "column": 12
+                },
+                {
+                  "line": 107,
+                  "column": 10
+                },
+                {
+                  "line": 131,
+                  "column": 8
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/theme-toggle.tsx|src.components.theme-toggle.ThemeToggle",
+              "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
+              "call_sites": [
+                {
+                  "line": 20,
+                  "column": 8
+                },
+                {
+                  "line": 28,
+                  "column": 6
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard",
+              "target": "src/components/ui/card.tsx|src.components.ui.card.Card",
+              "call_sites": [
+                {
+                  "line": 46,
+                  "column": 6
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard",
+              "target": "src/components/ui/card.tsx|src.components.ui.card.CardContent",
+              "call_sites": [
+                {
+                  "line": 53,
+                  "column": 8
+                }
+              ],
+              "description": ""
+            }
+          ]
+        },
+        {
+          "relation": "refreshes sync status in",
+          "src_name": "Settings and Integrations Management",
+          "dst_name": "App State and Control Contexts",
+          "evidence": "",
+          "key_edges": [
+            {
+              "source": "src/components/settings/bank-connection-card.tsx|src.components.settings.bank-connection-card.BankConnectionCard",
+              "target": "src/contexts/sync-context.tsx|src.contexts.sync-context.useSync",
+              "call_sites": [
+                {
+                  "line": 196,
+                  "column": 33
+                }
+              ],
+              "description": "Invokes sync state and actions from the synchronization context"
+            }
+          ],
+          "src_id": "1.5",
+          "dst_id": "1.4",
+          "is_static": true,
+          "all_edges": [
+            {
+              "source": "src/components/settings/bank-connection-card.tsx|src.components.settings.bank-connection-card.BankConnectionCard",
+              "target": "src/contexts/sync-context.tsx|src.contexts.sync-context.useSync",
+              "call_sites": [
+                {
+                  "line": 196,
+                  "column": 33
+                }
+              ],
+              "description": ""
+            }
+          ]
+        },
+        {
+          "relation": "embeds controls from",
+          "src_name": "Application Layout Shell",
+          "dst_name": "App State and Control Contexts",
+          "evidence": "",
+          "key_edges": [
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "call_sites": [
+                {
+                  "line": 58,
+                  "column": 14
+                },
+                {
+                  "line": 98,
+                  "column": 16
+                }
+              ],
+              "description": "Renders demo toggle switch within layout header"
+            },
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "call_sites": [
+                {
+                  "line": 56,
+                  "column": 14
+                },
+                {
+                  "line": 90,
+                  "column": 14
+                }
+              ],
+              "description": "Renders manual sync button in navigation header"
+            },
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/sync-status.tsx|src.components.sync-status.SyncStatus",
+              "call_sites": [
+                {
+                  "line": 52,
+                  "column": 14
+                },
+                {
+                  "line": 89,
+                  "column": 14
+                }
+              ],
+              "description": "Displays banking synchronization status indicator in header"
+            },
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/theme-toggle.tsx|src.components.theme-toggle.ThemeToggle",
+              "call_sites": [
+                {
+                  "line": 59,
+                  "column": 14
+                },
+                {
+                  "line": 99,
+                  "column": 16
+                }
+              ],
+              "description": "Renders theme toggle control in header"
+            }
+          ],
+          "src_id": "1.6",
+          "dst_id": "1.4",
+          "is_static": true,
+          "all_edges": [
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "call_sites": [
+                {
+                  "line": 58,
+                  "column": 14
+                },
+                {
+                  "line": 98,
+                  "column": 16
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+              "call_sites": [
+                {
+                  "line": 56,
+                  "column": 14
+                },
+                {
+                  "line": 90,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/sync-status.tsx|src.components.sync-status.SyncStatus",
+              "call_sites": [
+                {
+                  "line": 52,
+                  "column": 14
+                },
+                {
+                  "line": 89,
+                  "column": 14
+                }
+              ],
+              "description": ""
+            },
+            {
+              "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+              "target": "src/components/theme-toggle.tsx|src.components.theme-toggle.ThemeToggle",
+              "call_sites": [
+                {
+                  "line": 59,
+                  "column": 14
+                },
+                {
+                  "line": 99,
+                  "column": 16
+                }
+              ],
+              "description": ""
+            }
+          ]
         }
       ]
     },
@@ -18379,6 +18584,12 @@
           "reference_file": "src/lib/stats/calculations.ts",
           "reference_start_line": 560,
           "reference_end_line": 629
+        },
+        {
+          "qualified_name": "src.lib.stats.transaction-summary.computeTransactionSummary",
+          "reference_file": "src/lib/stats/transaction-summary.ts",
+          "reference_start_line": 57,
+          "reference_end_line": 91
         },
         {
           "qualified_name": "src.lib.ai.visualization-mapper.buildBarChartOption",
@@ -18788,6 +18999,12 @@
           ]
         },
         {
+          "file_path": "src/lib/banking/internal-transfer.ts",
+          "methods": [
+            "src.lib.banking.internal-transfer.isInternalTransfer"
+          ]
+        },
+        {
           "file_path": "src/lib/banking/pending-reconciliation.ts",
           "methods": [
             "src.lib.banking.pending-reconciliation.ReconcilePendingOptions",
@@ -19035,6 +19252,14 @@
             "src.lib.stats.sandbox-projector.computeOneTimeDelta",
             "src.lib.stats.sandbox-projector.calculateSandboxPrediction",
             "src.lib.stats.sandbox-projector.calculateSandboxPrediction.reason.monthlyCashFlow.filter() callback"
+          ]
+        },
+        {
+          "file_path": "src/lib/stats/transaction-summary.ts",
+          "methods": [
+            "src.lib.stats.transaction-summary.LargestExpenseSummary",
+            "src.lib.stats.transaction-summary.TransactionSummary",
+            "src.lib.stats.transaction-summary.computeTransactionSummary"
           ]
         },
         {
@@ -19404,13 +19629,19 @@
         },
         {
           "name": "Banking Integrations and Account Synchronization",
-          "description": "Implements bank adapter integrations, credentials management, pending transaction reconciliation, and sync routines.",
+          "description": "Implements bank adapter integrations, internal transfer detection, credentials management, pending transaction reconciliation, and sync routines.",
           "key_entities": [
             {
               "qualified_name": "src.lib.banking.sync.syncBank",
               "reference_file": "src/lib/banking/sync.ts",
               "reference_start_line": 13,
               "reference_end_line": 239
+            },
+            {
+              "qualified_name": "src.lib.banking.internal-transfer.isInternalTransfer",
+              "reference_file": "src/lib/banking/internal-transfer.ts",
+              "reference_start_line": 31,
+              "reference_end_line": 38
             },
             {
               "qualified_name": "src.lib.banking.types.BankAdapter",
@@ -19487,6 +19718,12 @@
                 "src.lib.banking.adapters.index.registerAdapter",
                 "src.lib.banking.adapters.index.getAdapter",
                 "src.lib.banking.adapters.index.listAdapters"
+              ]
+            },
+            {
+              "file_path": "src/lib/banking/internal-transfer.ts",
+              "methods": [
+                "src.lib.banking.internal-transfer.isInternalTransfer"
               ]
             },
             {
@@ -19611,7 +19848,7 @@
         },
         {
           "name": "Financial Analytics and Category Classification",
-          "description": "Calculates financial KPIs, metrics, spending trends, transaction classification, and sandbox projections.",
+          "description": "Calculates financial KPIs, metrics, transaction summaries, spending trends, category classification, and sandbox projections.",
           "key_entities": [
             {
               "qualified_name": "src.lib.stats.calculations.calculateMonthlyFlow",
@@ -19626,22 +19863,22 @@
               "reference_end_line": 186
             },
             {
-              "qualified_name": "src.lib.stats.calculations.calculateEmergencyFund",
-              "reference_file": "src/lib/stats/calculations.ts",
-              "reference_start_line": 192,
-              "reference_end_line": 220
-            },
-            {
-              "qualified_name": "src.lib.stats.calculations.calculateTopCategories",
-              "reference_file": "src/lib/stats/calculations.ts",
-              "reference_start_line": 291,
-              "reference_end_line": 331
+              "qualified_name": "src.lib.stats.transaction-summary.computeTransactionSummary",
+              "reference_file": "src/lib/stats/transaction-summary.ts",
+              "reference_start_line": 57,
+              "reference_end_line": 91
             },
             {
               "qualified_name": "src.lib.stats.categories.classifyTransaction",
               "reference_file": "src/lib/stats/categories.ts",
               "reference_start_line": 626,
               "reference_end_line": 643
+            },
+            {
+              "qualified_name": "src.lib.stats.calculations.calculateEmergencyFund",
+              "reference_file": "src/lib/stats/calculations.ts",
+              "reference_start_line": 192,
+              "reference_end_line": 220
             }
           ],
           "source_cluster_ids": [
@@ -19826,6 +20063,14 @@
                 "src.lib.stats.sandbox-projector.calculateSandboxPrediction",
                 "src.lib.stats.sandbox-projector.calculateSandboxPrediction.reason.monthlyCashFlow.filter() callback"
               ]
+            },
+            {
+              "file_path": "src/lib/stats/transaction-summary.ts",
+              "methods": [
+                "src.lib.stats.transaction-summary.LargestExpenseSummary",
+                "src.lib.stats.transaction-summary.TransactionSummary",
+                "src.lib.stats.transaction-summary.computeTransactionSummary"
+              ]
             }
           ],
           "component_id": "2.4",
@@ -19877,29 +20122,18 @@
                   "column": 23
                 }
               ],
-              "description": "Period comparison tool delegates metrics and category computation to statistics calculation functions"
-            },
-            {
-              "source": "src/lib/ai/tools/compare-periods.ts|src.lib.ai.tools.compare-periods.summarizePeriod",
-              "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateTopCategories",
-              "call_sites": [
-                {
-                  "line": 70,
-                  "column": 25
-                }
-              ],
-              "description": "Period comparison tool computes top category breakdowns"
+              "description": "AI tools evaluate financial statistics and period metrics using calculation routines."
             },
             {
               "source": "src/lib/ai/tools/get-balance-prediction.ts|src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool.execute",
-              "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateBalancePrediction",
+              "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateMonthlyFlow",
               "call_sites": [
                 {
-                  "line": 60,
-                  "column": 20
+                  "line": 58,
+                  "column": 29
                 }
               ],
-              "description": "Balance prediction tool computes projected balances and monthly flow trends"
+              "description": "AI tools calculate monthly flow and balance forecasts for conversational queries."
             }
           ],
           "src_id": "2.1",
@@ -20081,17 +20315,6 @@
           "key_edges": [
             {
               "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
-              "target": "src/lib/db/backup.ts|src.lib.db.backup.createBackup",
-              "call_sites": [
-                {
-                  "line": 18,
-                  "column": 30
-                }
-              ],
-              "description": "Bank synchronization creates database backups and persists updated accounts and transactions"
-            },
-            {
-              "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
               "target": "src/lib/db/index.ts|src.lib.db.index.getDb",
               "call_sites": [
                 {
@@ -20099,7 +20322,7 @@
                   "column": 20
                 }
               ],
-              "description": "Bank synchronization retrieves database instance and invalidates cached data on update"
+              "description": "Bank synchronization routines create backups, load database storage, and invalidate cache entries."
             }
           ],
           "src_id": "2.2",
@@ -20160,7 +20383,7 @@
                   "column": 11
                 }
               ],
-              "description": "Database seeding generates deterministic transaction IDs via banking utility helpers"
+              "description": "Database seeding generates deterministic transaction IDs using banking utility functions."
             }
           ],
           "src_id": "2.3",
@@ -20195,7 +20418,7 @@
                   "column": 15
                 }
               ],
-              "description": "Database seeding classifies generated transactions into standard expense categories"
+              "description": "Database seeding classifies mock transactions into financial categories."
             }
           ],
           "src_id": "2.3",
@@ -20209,6 +20432,41 @@
                 {
                   "line": 329,
                   "column": 15
+                }
+              ],
+              "description": ""
+            }
+          ]
+        },
+        {
+          "relation": "identifies internal transfers via",
+          "src_name": "Financial Analytics and Category Classification",
+          "dst_name": "Banking Integrations and Account Synchronization",
+          "evidence": "",
+          "key_edges": [
+            {
+              "source": "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary",
+              "target": "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer",
+              "call_sites": [
+                {
+                  "line": 65,
+                  "column": 9
+                }
+              ],
+              "description": "Transaction summary aggregation identifies and filters out internal transfers between accounts."
+            }
+          ],
+          "src_id": "2.4",
+          "dst_id": "2.2",
+          "is_static": true,
+          "all_edges": [
+            {
+              "source": "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary",
+              "target": "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer",
+              "call_sites": [
+                {
+                  "line": 65,
+                  "column": 9
                 }
               ],
               "description": ""
@@ -20526,6 +20784,8 @@
             "src.app.transactions.page.TransactionsPageContent.filteredTransactions",
             "src.app.transactions.page.filteredTransactions.useMemo() callback.filtered.filter() callback",
             "src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback.filtered.filter() callback",
+            "src.app.transactions.page.TransactionsPageContent.summary",
+            "src.app.transactions.page.TransactionsPageContent.summary.useMemo() callback",
             "src.app.transactions.page.TransactionsPageContent.sortedTransactions",
             "src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback",
             "src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback.sorted.sort() callback",
@@ -20722,7 +20982,7 @@
       "components": [
         {
           "name": "App Router Pages and API Endpoints",
-          "description": "Renders dashboard views and user interfaces while serving backend API route handlers for chat and sync operations.",
+          "description": "Renders dashboard views, transaction analytics, and settings while serving backend API route handlers for chat streaming and bank sync.",
           "key_entities": [
             {
               "qualified_name": "src.app.(dashboard).assistant.page.AssistantPage",
@@ -20753,6 +21013,12 @@
               "reference_file": "src/app/page.tsx",
               "reference_start_line": 31,
               "reference_end_line": 422
+            },
+            {
+              "qualified_name": "src.app.transactions.page.TransactionsPage",
+              "reference_file": "src/app/transactions/page.tsx",
+              "reference_start_line": 1020,
+              "reference_end_line": 1032
             }
           ],
           "source_cluster_ids": [
@@ -21024,6 +21290,8 @@
                 "src.app.transactions.page.TransactionsPageContent.filteredTransactions",
                 "src.app.transactions.page.filteredTransactions.useMemo() callback.filtered.filter() callback",
                 "src.app.transactions.page.TransactionsPageContent.filteredTransactions.useMemo() callback.filtered.filter() callback",
+                "src.app.transactions.page.TransactionsPageContent.summary",
+                "src.app.transactions.page.TransactionsPageContent.summary.useMemo() callback",
                 "src.app.transactions.page.TransactionsPageContent.sortedTransactions",
                 "src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback",
                 "src.app.transactions.page.TransactionsPageContent.sortedTransactions.useMemo() callback.sorted.sort() callback",
@@ -21312,7 +21580,7 @@
                   "column": 7
                 }
               ],
-              "description": "Assistant page binds chat history state and caps outgoing message limits through chat persistence hooks."
+              "description": "AssistantPage uses useChatPersistence to persist and restore message history"
             },
             {
               "source": "src/app/(dashboard)/sandbox/page.tsx|src.app.(dashboard).sandbox.page.SandboxPage",
@@ -21323,7 +21591,7 @@
                   "column": 7
                 }
               ],
-              "description": "Sandbox dashboard initializes and modifies simulation scenario states via the scenarios hook."
+              "description": "SandboxPage binds financial scenarios to client state hook"
             },
             {
               "source": "src/app/page.tsx|src.app.page.Home",
@@ -21334,7 +21602,7 @@
                   "column": 7
                 }
               ],
-              "description": "Home dashboard binds filtering and timeline selection using date range management hooks."
+              "description": "Home manages dashboard active date intervals using useDateRange"
             }
           ],
           "src_id": "3.1",
@@ -21402,7 +21670,7 @@
                   "column": 7
                 }
               ],
-              "description": "Chat route retrieves active AI configuration profiles to parameterize language model generation."
+              "description": "Chat route handler loads active model configuration"
             },
             {
               "source": "src/app/api/sync/route.ts|src.app.api.sync.route.POST",
@@ -21413,7 +21681,7 @@
                   "column": 20
                 }
               ],
-              "description": "Sync route loads external service credentials to authenticate and process sync requests."
+              "description": "Bank sync route retrieves integration credentials"
             }
           ],
           "src_id": "3.1",
@@ -21488,8 +21756,8 @@
         {
           "qualified_name": "src.actions.transactions.actions.getTransactions",
           "reference_file": "src/actions/transactions.actions.ts",
-          "reference_start_line": 99,
-          "reference_end_line": 199
+          "reference_start_line": 122,
+          "reference_end_line": 218
         },
         {
           "qualified_name": "src.actions.stats.actions.getDashboardStats",
@@ -23966,7 +24234,7 @@
               "column": 8
             }
           ],
-          "description": "DemoToggle displays confirmation alerts using base alert-dialog primitives"
+          "description": "Renders confirmation dialogs using core alert dialog primitives"
         }
       ],
       "src_id": "1.4",
@@ -24250,11 +24518,33 @@
             }
           ],
           "description": ""
+        },
+        {
+          "source": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard",
+          "target": "src/components/ui/card.tsx|src.components.ui.card.Card",
+          "call_sites": [
+            {
+              "line": 46,
+              "column": 6
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard",
+          "target": "src/components/ui/card.tsx|src.components.ui.card.CardContent",
+          "call_sites": [
+            {
+              "line": 53,
+              "column": 8
+            }
+          ],
+          "description": ""
         }
       ]
     },
     {
-      "relation": "formats data and applies styles via",
+      "relation": "uses utility, visualization, and calculation helpers from",
       "src_name": "App State and Control Contexts",
       "dst_name": "UI Class Utilities",
       "evidence": "",
@@ -24308,6 +24598,44 @@
             {
               "line": 218,
               "column": 32
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.StatCard",
+          "target": "src/lib/utils.ts|src.lib.utils.cn",
+          "call_sites": [
+            {
+              "line": 46,
+              "column": 22
+            },
+            {
+              "line": 48,
+              "column": 20
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.TransactionSummaryStrip",
+          "target": "src/lib/utils.ts|src.lib.utils.cn",
+          "call_sites": [
+            {
+              "line": 92,
+              "column": 22
+            },
+            {
+              "line": 108,
+              "column": 22
+            },
+            {
+              "line": 124,
+              "column": 22
+            },
+            {
+              "line": 146,
+              "column": 26
             }
           ],
           "description": ""
@@ -25531,6 +25859,51 @@
             }
           ],
           "description": "Header embeds demo and theme toggle controls alongside sync status buttons"
+        },
+        {
+          "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+          "target": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
+          "call_sites": [
+            {
+              "line": 56,
+              "column": 14
+            },
+            {
+              "line": 90,
+              "column": 14
+            }
+          ],
+          "description": "Renders manual sync button in navigation header"
+        },
+        {
+          "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+          "target": "src/components/sync-status.tsx|src.components.sync-status.SyncStatus",
+          "call_sites": [
+            {
+              "line": 52,
+              "column": 14
+            },
+            {
+              "line": 89,
+              "column": 14
+            }
+          ],
+          "description": "Displays banking synchronization status indicator in header"
+        },
+        {
+          "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
+          "target": "src/components/theme-toggle.tsx|src.components.theme-toggle.ThemeToggle",
+          "call_sites": [
+            {
+              "line": 59,
+              "column": 14
+            },
+            {
+              "line": 99,
+              "column": 16
+            }
+          ],
+          "description": "Renders theme toggle control in header"
         }
       ],
       "src_id": "1.6",
@@ -25902,6 +26275,17 @@
           "description": "Period comparison tool delegates metrics and category computation to statistics calculation functions"
         },
         {
+          "source": "src/lib/ai/tools/get-balance-prediction.ts|src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool.execute",
+          "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateMonthlyFlow",
+          "call_sites": [
+            {
+              "line": 58,
+              "column": 29
+            }
+          ],
+          "description": "AI tools calculate monthly flow and balance forecasts for conversational queries."
+        },
+        {
           "source": "src/lib/ai/tools/compare-periods.ts|src.lib.ai.tools.compare-periods.summarizePeriod",
           "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateTopCategories",
           "call_sites": [
@@ -26133,21 +26517,6 @@
       "is_static": true,
       "all_edges": [
         {
-          "source": "src/lib/ai/tools/compare-periods.ts|src.lib.ai.tools.compare-periods.comparePeriodsTool.execute",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
-          "call_sites": [
-            {
-              "line": 104,
-              "column": 7
-            },
-            {
-              "line": 108,
-              "column": 7
-            }
-          ],
-          "description": ""
-        },
-        {
           "source": "src/lib/ai/tools/get-accounts.ts|src.lib.ai.tools.get-accounts.getAccountsTool.execute",
           "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getAccounts",
           "call_sites": [
@@ -26192,6 +26561,43 @@
           "description": ""
         },
         {
+          "source": "src/lib/ai/tools/get-emergency-fund.ts|src.lib.ai.tools.get-emergency-fund.getEmergencyFundTool.execute",
+          "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getTotalBalance",
+          "call_sites": [
+            {
+              "line": 24,
+              "column": 7
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/lib/ai/tools/get-total-balance.ts|src.lib.ai.tools.get-total-balance.getTotalBalanceTool.execute",
+          "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getTotalBalance",
+          "call_sites": [
+            {
+              "line": 20,
+              "column": 32
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/lib/ai/tools/compare-periods.ts|src.lib.ai.tools.compare-periods.comparePeriodsTool.execute",
+          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "call_sites": [
+            {
+              "line": 104,
+              "column": 7
+            },
+            {
+              "line": 108,
+              "column": 7
+            }
+          ],
+          "description": ""
+        },
+        {
           "source": "src/lib/ai/tools/get-balance-prediction.ts|src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool.execute",
           "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
           "call_sites": [
@@ -26220,17 +26626,6 @@
             {
               "line": 47,
               "column": 32
-            }
-          ],
-          "description": ""
-        },
-        {
-          "source": "src/lib/ai/tools/get-emergency-fund.ts|src.lib.ai.tools.get-emergency-fund.getEmergencyFundTool.execute",
-          "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getTotalBalance",
-          "call_sites": [
-            {
-              "line": 24,
-              "column": 7
             }
           ],
           "description": ""
@@ -26324,17 +26719,6 @@
           "description": ""
         },
         {
-          "source": "src/lib/ai/tools/get-total-balance.ts|src.lib.ai.tools.get-total-balance.getTotalBalanceTool.execute",
-          "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getTotalBalance",
-          "call_sites": [
-            {
-              "line": 20,
-              "column": 32
-            }
-          ],
-          "description": ""
-        },
-        {
           "source": "src/lib/ai/tools/search-transactions.ts|src.lib.ai.tools.search-transactions.searchTransactionsTool.execute",
           "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
           "call_sites": [
@@ -26355,17 +26739,6 @@
       "key_edges": [
         {
           "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
-          "target": "src/lib/db/backup.ts|src.lib.db.backup.createBackup",
-          "call_sites": [
-            {
-              "line": 18,
-              "column": 30
-            }
-          ],
-          "description": "Bank synchronization creates database backups and persists updated accounts and transactions"
-        },
-        {
-          "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
           "target": "src/lib/db/index.ts|src.lib.db.index.getDb",
           "call_sites": [
             {
@@ -26374,6 +26747,17 @@
             }
           ],
           "description": "Bank synchronization retrieves database instance and invalidates cached data on update"
+        },
+        {
+          "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
+          "target": "src/lib/db/backup.ts|src.lib.db.backup.createBackup",
+          "call_sites": [
+            {
+              "line": 18,
+              "column": 30
+            }
+          ],
+          "description": "Bank synchronization creates database backups and persists updated accounts and transactions"
         }
       ],
       "src_id": "2.2",
@@ -26483,6 +26867,41 @@
             {
               "line": 329,
               "column": 15
+            }
+          ],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "relation": "identifies internal transfers via",
+      "src_name": "Financial Analytics and Category Classification",
+      "dst_name": "Banking Integrations and Account Synchronization",
+      "evidence": "",
+      "key_edges": [
+        {
+          "source": "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary",
+          "target": "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer",
+          "call_sites": [
+            {
+              "line": 65,
+              "column": 9
+            }
+          ],
+          "description": "Transaction summary aggregation identifies and filters out internal transfers between accounts."
+        }
+      ],
+      "src_id": "2.4",
+      "dst_id": "2.2",
+      "is_static": true,
+      "all_edges": [
+        {
+          "source": "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary",
+          "target": "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer",
+          "call_sites": [
+            {
+              "line": 65,
+              "column": 9
             }
           ],
           "description": ""
@@ -27164,19 +27583,19 @@
           "target": "src/components/ui/badge.tsx|src.components.ui.badge.Badge",
           "call_sites": [
             {
-              "line": 565,
+              "line": 587,
               "column": 24
             },
             {
-              "line": 621,
+              "line": 643,
               "column": 24
             },
             {
-              "line": 702,
+              "line": 724,
               "column": 24
             },
             {
-              "line": 770,
+              "line": 792,
               "column": 20
             }
           ],
@@ -27187,35 +27606,35 @@
           "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
           "call_sites": [
             {
-              "line": 552,
+              "line": 574,
               "column": 20
             },
             {
-              "line": 608,
+              "line": 630,
               "column": 20
             },
             {
-              "line": 688,
+              "line": 710,
               "column": 20
             },
             {
-              "line": 750,
+              "line": 772,
               "column": 22
             },
             {
-              "line": 763,
+              "line": 785,
               "column": 18
             },
             {
-              "line": 808,
+              "line": 833,
               "column": 18
             },
             {
-              "line": 968,
+              "line": 993,
               "column": 12
             },
             {
-              "line": 979,
+              "line": 1004,
               "column": 12
             }
           ],
@@ -27226,11 +27645,11 @@
           "target": "src/components/ui/card.tsx|src.components.ui.card.Card",
           "call_sites": [
             {
-              "line": 532,
+              "line": 554,
               "column": 8
             },
             {
-              "line": 781,
+              "line": 806,
               "column": 8
             }
           ],
@@ -27241,11 +27660,11 @@
           "target": "src/components/ui/card.tsx|src.components.ui.card.CardContent",
           "call_sites": [
             {
-              "line": 533,
+              "line": 555,
               "column": 10
             },
             {
-              "line": 795,
+              "line": 820,
               "column": 10
             }
           ],
@@ -27256,7 +27675,7 @@
           "target": "src/components/ui/card.tsx|src.components.ui.card.CardHeader",
           "call_sites": [
             {
-              "line": 782,
+              "line": 807,
               "column": 10
             }
           ],
@@ -27267,7 +27686,7 @@
           "target": "src/components/ui/card.tsx|src.components.ui.card.CardTitle",
           "call_sites": [
             {
-              "line": 783,
+              "line": 808,
               "column": 12
             }
           ],
@@ -27278,11 +27697,11 @@
           "target": "src/components/ui/checkbox.tsx|src.components.ui.checkbox.Checkbox",
           "call_sites": [
             {
-              "line": 588,
+              "line": 610,
               "column": 26
             },
             {
-              "line": 644,
+              "line": 666,
               "column": 26
             }
           ],
@@ -27293,15 +27712,15 @@
           "target": "src/components/ui/input.tsx|src.components.ui.input.Input",
           "call_sites": [
             {
-              "line": 538,
+              "line": 560,
               "column": 16
             },
             {
-              "line": 727,
+              "line": 749,
               "column": 26
             },
             {
-              "line": 740,
+              "line": 762,
               "column": 26
             }
           ],
@@ -27312,15 +27731,15 @@
           "target": "src/components/ui/popover.tsx|src.components.ui.popover.Popover",
           "call_sites": [
             {
-              "line": 550,
+              "line": 572,
               "column": 16
             },
             {
-              "line": 606,
+              "line": 628,
               "column": 16
             },
             {
-              "line": 686,
+              "line": 708,
               "column": 16
             }
           ],
@@ -27331,15 +27750,15 @@
           "target": "src/components/ui/popover.tsx|src.components.ui.popover.PopoverContent",
           "call_sites": [
             {
-              "line": 571,
+              "line": 593,
               "column": 18
             },
             {
-              "line": 627,
+              "line": 649,
               "column": 18
             },
             {
-              "line": 710,
+              "line": 732,
               "column": 18
             }
           ],
@@ -27350,15 +27769,15 @@
           "target": "src/components/ui/popover.tsx|src.components.ui.popover.PopoverTrigger",
           "call_sites": [
             {
-              "line": 551,
+              "line": 573,
               "column": 18
             },
             {
-              "line": 607,
+              "line": 629,
               "column": 18
             },
             {
-              "line": 687,
+              "line": 709,
               "column": 18
             }
           ],
@@ -27369,7 +27788,7 @@
           "target": "src/components/ui/table.tsx|src.components.ui.table.Table",
           "call_sites": [
             {
-              "line": 815,
+              "line": 840,
               "column": 16
             }
           ],
@@ -27380,7 +27799,7 @@
           "target": "src/components/ui/table.tsx|src.components.ui.table.TableBody",
           "call_sites": [
             {
-              "line": 844,
+              "line": 869,
               "column": 18
             }
           ],
@@ -27391,19 +27810,19 @@
           "target": "src/components/ui/table.tsx|src.components.ui.table.TableCell",
           "call_sites": [
             {
-              "line": 853,
+              "line": 878,
               "column": 26
             },
             {
-              "line": 893,
+              "line": 918,
               "column": 26
             },
             {
-              "line": 940,
+              "line": 965,
               "column": 26
             },
             {
-              "line": 950,
+              "line": 975,
               "column": 26
             }
           ],
@@ -27414,19 +27833,19 @@
           "target": "src/components/ui/table.tsx|src.components.ui.table.TableHead",
           "call_sites": [
             {
-              "line": 818,
+              "line": 843,
               "column": 22
             },
             {
-              "line": 824,
+              "line": 849,
               "column": 22
             },
             {
-              "line": 830,
+              "line": 855,
               "column": 22
             },
             {
-              "line": 836,
+              "line": 861,
               "column": 22
             }
           ],
@@ -27437,7 +27856,7 @@
           "target": "src/components/ui/table.tsx|src.components.ui.table.TableHeader",
           "call_sites": [
             {
-              "line": 816,
+              "line": 841,
               "column": 18
             }
           ],
@@ -27448,11 +27867,11 @@
           "target": "src/components/ui/table.tsx|src.components.ui.table.TableRow",
           "call_sites": [
             {
-              "line": 817,
+              "line": 842,
               "column": 20
             },
             {
-              "line": 849,
+              "line": 874,
               "column": 24
             }
           ],
@@ -27463,7 +27882,7 @@
           "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.Tooltip",
           "call_sites": [
             {
-              "line": 855,
+              "line": 880,
               "column": 30
             }
           ],
@@ -27474,7 +27893,7 @@
           "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipContent",
           "call_sites": [
             {
-              "line": 864,
+              "line": 889,
               "column": 32
             }
           ],
@@ -27485,7 +27904,7 @@
           "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipProvider",
           "call_sites": [
             {
-              "line": 854,
+              "line": 879,
               "column": 28
             }
           ],
@@ -27496,7 +27915,7 @@
           "target": "src/components/ui/tooltip.tsx|src.components.ui.tooltip.TooltipTrigger",
           "call_sites": [
             {
-              "line": 856,
+              "line": 881,
               "column": 32
             }
           ],
@@ -27746,7 +28165,7 @@
           "target": "src/components/dashboard/date-range-picker.tsx|src.components.dashboard.date-range-picker.DateRangePicker",
           "call_sites": [
             {
-              "line": 668,
+              "line": 690,
               "column": 18
             }
           ],
@@ -27755,7 +28174,7 @@
       ]
     },
     {
-      "relation": "renders views and widgets from",
+      "relation": "renders UI views and layout components from",
       "src_name": "App Router Pages and API Endpoints",
       "dst_name": "App State and Control Contexts",
       "evidence": "",
@@ -27793,6 +28212,17 @@
             {
               "line": 45,
               "column": 14
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent",
+          "target": "src/components/transactions/transaction-summary-strip.tsx|src.components.transactions.transaction-summary-strip.TransactionSummaryStrip",
+          "call_sites": [
+            {
+              "line": 803,
+              "column": 21
             }
           ],
           "description": ""
@@ -28025,7 +28455,7 @@
       ]
     },
     {
-      "relation": "computes statistics using",
+      "relation": "computes financial analytics and routes AI requests through",
       "src_name": "App Router Pages and API Endpoints",
       "dst_name": "Financial Analytics and Category Classification",
       "evidence": "",
@@ -28039,7 +28469,7 @@
               "column": 7
             }
           ],
-          "description": "Insights route calculates financial metrics such as balance prediction and budget splits"
+          "description": "Pages calculate predictions and financial metrics using domain calculations."
         }
       ],
       "src_id": "3.1",
@@ -28165,20 +28595,31 @@
           "target": "src/lib/stats/categories.ts|src.lib.stats.categories.categorizeTransaction",
           "call_sites": [
             {
-              "line": 180,
+              "line": 196,
               "column": 26
             },
             {
-              "line": 242,
+              "line": 264,
               "column": 20
             },
             {
-              "line": 243,
+              "line": 265,
               "column": 20
             },
             {
-              "line": 846,
+              "line": 871,
               "column": 38
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/transactions/page.tsx|src.app.transactions.page.TransactionsPageContent",
+          "target": "src/lib/stats/transaction-summary.ts|src.lib.stats.transaction-summary.computeTransactionSummary",
+          "call_sites": [
+            {
+              "line": 238,
+              "column": 11
             }
           ],
           "description": ""
@@ -28233,27 +28674,27 @@
           "target": "src/lib/utils.ts|src.lib.utils.cn",
           "call_sites": [
             {
-              "line": 554,
+              "line": 576,
               "column": 32
             },
             {
-              "line": 572,
+              "line": 594,
               "column": 30
             },
             {
-              "line": 610,
+              "line": 632,
               "column": 32
             },
             {
-              "line": 628,
+              "line": 650,
               "column": 30
             },
             {
-              "line": 690,
+              "line": 712,
               "column": 32
             },
             {
-              "line": 711,
+              "line": 733,
               "column": 30
             }
           ],
@@ -28464,33 +28905,11 @@
           "description": ""
         },
         {
-          "source": "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage.useEffect() callback.load",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactionCount",
-          "call_sites": [
-            {
-              "line": 268,
-              "column": 11
-            }
-          ],
-          "description": ""
-        },
-        {
           "source": "src/app/(dashboard)/insights/page.tsx|src.app.(dashboard).insights.page.InsightsPage.useEffect() callback.loadData",
           "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getTotalBalance",
           "call_sites": [
             {
               "line": 73,
-              "column": 11
-            }
-          ],
-          "description": ""
-        },
-        {
-          "source": "src/app/(dashboard)/insights/page.tsx|src.app.(dashboard).insights.page.InsightsPage.useEffect() callback.loadData",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
-          "call_sites": [
-            {
-              "line": 72,
               "column": 11
             }
           ],
@@ -28508,44 +28927,11 @@
           "description": ""
         },
         {
-          "source": "src/app/(dashboard)/sandbox/page.tsx|src.app.(dashboard).sandbox.page.SandboxPage.useEffect() callback.loadData",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
-          "call_sites": [
-            {
-              "line": 476,
-              "column": 11
-            }
-          ],
-          "description": ""
-        },
-        {
-          "source": "src/app/api/chat/route.ts|src.app.api.chat.route.getDataCoverage",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
-          "call_sites": [
-            {
-              "line": 408,
-              "column": 30
-            }
-          ],
-          "description": ""
-        },
-        {
           "source": "src/app/page.tsx|src.app.page.Home",
           "target": "src/actions/stats.actions.ts|src.actions.stats.actions.getDashboardStats",
           "call_sites": [
             {
               "line": 98,
-              "column": 9
-            }
-          ],
-          "description": ""
-        },
-        {
-          "source": "src/app/page.tsx|src.app.page.Home",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
-          "call_sites": [
-            {
-              "line": 97,
               "column": 9
             }
           ],
@@ -28600,7 +28986,7 @@
           "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getAccounts",
           "call_sites": [
             {
-              "line": 143,
+              "line": 159,
               "column": 11
             }
           ],
@@ -28611,8 +28997,63 @@
           "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
           "call_sites": [
             {
-              "line": 142,
+              "line": 158,
               "column": 11
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage.useEffect() callback.load",
+          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactionCount",
+          "call_sites": [
+            {
+              "line": 268,
+              "column": 11
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/(dashboard)/insights/page.tsx|src.app.(dashboard).insights.page.InsightsPage.useEffect() callback.loadData",
+          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "call_sites": [
+            {
+              "line": 72,
+              "column": 11
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/(dashboard)/sandbox/page.tsx|src.app.(dashboard).sandbox.page.SandboxPage.useEffect() callback.loadData",
+          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "call_sites": [
+            {
+              "line": 476,
+              "column": 11
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/api/chat/route.ts|src.app.api.chat.route.getDataCoverage",
+          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "call_sites": [
+            {
+              "line": 408,
+              "column": 30
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/app/page.tsx|src.app.page.Home",
+          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "call_sites": [
+            {
+              "line": 97,
+              "column": 9
             }
           ],
           "description": ""
@@ -28654,7 +29095,7 @@
       ]
     },
     {
-      "relation": "persists and queries data via",
+      "relation": "queries database and executes banking synchronization using",
       "src_name": "Server Actions",
       "dst_name": "Banking Integrations and Account Synchronization",
       "evidence": "",
@@ -28703,6 +29144,17 @@
             {
               "line": 75,
               "column": 24
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "target": "src/lib/banking/internal-transfer.ts|src.lib.banking.internal-transfer.isInternalTransfer",
+          "call_sites": [
+            {
+              "line": 212,
+              "column": 48
             }
           ],
           "description": ""
@@ -28997,7 +29449,7 @@
           "target": "src/lib/db/index.ts|src.lib.db.index.getDb",
           "call_sites": [
             {
-              "line": 103,
+              "line": 126,
               "column": 20
             }
           ],
@@ -29119,7 +29571,7 @@
           "target": "src/lib/stats/categories.ts|src.lib.stats.categories.classifyTransaction",
           "call_sites": [
             {
-              "line": 137,
+              "line": 160,
               "column": 25
             }
           ],
@@ -29133,6 +29585,17 @@
       "dst_name": "Configuration and Credentials",
       "evidence": "",
       "key_edges": [
+        {
+          "source": "src/actions/ai.actions.ts|src.actions.ai.actions.getAiProfilesStatus",
+          "target": "src/config/ai.ts|src.config.ai.getActiveAiProfile",
+          "call_sites": [
+            {
+              "line": 117,
+              "column": 27
+            }
+          ],
+          "description": "Server actions query and mutate AI profile configuration settings."
+        },
         {
           "source": "src/actions/ai.actions.ts|src.actions.ai.actions.getAiProfilesStatus",
           "target": "src/config/ai.ts|src.config.ai.getAiProfiles",
