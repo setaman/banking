@@ -23,6 +23,12 @@
 
 - Client reviews the PR; it also serves as the first live test of the CodeBoarding PR architecture review.
 
+**PR #42 review follow-up (dedupe):**
+
+- Extracted the shared `isInternalTransfer` helper into `src/lib/banking/internal-transfer.ts` (new), replacing the duplicated predicate.
+- It is now used by `src/lib/stats/transaction-summary.ts` and the `excludeInternal` filter in `getTransactions` (`src/actions/transactions.actions.ts`); the sync marker in `src/lib/banking/sync.ts` is unchanged.
+- Behavior is unchanged; `npm run lint` problems go from 36 to 35 (one `no-explicit-any` removed).
+
 ---
 
 ## This session changes (2026-10-07) — CodeBoarding sync now delivers via a rolling PR

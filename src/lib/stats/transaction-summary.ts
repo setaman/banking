@@ -6,9 +6,10 @@
  * `getDashboardStats` in `src/actions/stats.actions.ts` so the strip agrees
  * with the dashboard KPIs:
  *
- * - Internal transfers (`category === "internal-transfer"` or the sync flag
- *   `raw.__internalTransfer`) are excluded, exactly like the dashboard's
- *   `excludeInternal` option.
+ * - Internal transfers (detected by the shared `isInternalTransfer` helper in
+ *   `src/lib/banking/internal-transfer.ts`: `category === "internal-transfer"`
+ *   or the sync flag `raw.__internalTransfer`) are excluded, exactly like the
+ *   dashboard's `excludeInternal` option.
  * - Income = sum of `amount` for `direction === "credit"`.
  * - Expenses = sum of `Math.abs(amount)` for `direction === "debit"`
  *   (reported as a positive number).
@@ -16,6 +17,7 @@
  * - Largest single expense (PRD §5.3 K11) reuses `findLargestExpense`.
  */
 
+import { isInternalTransfer } from "@/lib/banking/internal-transfer";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { findLargestExpense } from "@/lib/stats/calculations";
 
@@ -43,16 +45,6 @@ export interface TransactionSummary {
   readonly largestExpense: LargestExpenseSummary | null;
   /** Number of transactions passed in (including internal transfers). */
   readonly transactionCount: number;
-}
-
-/** Whether a transaction is an internal transfer (mirrors `excludeInternal`). */
-function isInternalTransfer(tx: UnifiedTransaction): boolean {
-  return (
-    tx.category === "internal-transfer" ||
-    Boolean(
-      tx.raw && (tx.raw as { __internalTransfer?: unknown }).__internalTransfer
-    )
-  );
 }
 
 /**

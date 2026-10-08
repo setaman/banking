@@ -1,6 +1,7 @@
 "use server";
 
 import { getDb } from "@/lib/db";
+import { isInternalTransfer } from "@/lib/banking/internal-transfer";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { classifyTransaction } from "@/lib/stats/categories";
 
@@ -186,11 +187,7 @@ export async function getTransactions(
   }
 
   if (options?.excludeInternal) {
-    transactions = transactions.filter(
-      (t) =>
-        t.category !== "internal-transfer" &&
-        !(t.raw && (t.raw as any).__internalTransfer)
-    );
+    transactions = transactions.filter((t) => !isInternalTransfer(t));
   }
 
   return transactions.sort((a, b) =>
