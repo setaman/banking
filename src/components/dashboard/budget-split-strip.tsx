@@ -15,18 +15,11 @@ import { Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { BudgetSplitResult } from "@/lib/stats/calculations";
+import { formatCurrency } from "@/lib/format";
 
 interface BudgetSplitStripProps {
   result: BudgetSplitResult;
 }
-
-const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
 
 /** Returns a short coaching note comparing actuals to the 50/30/20 ideal. */
 function coachingNote(result: BudgetSplitResult): string {

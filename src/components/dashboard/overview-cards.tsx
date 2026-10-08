@@ -25,6 +25,7 @@ import type { DashboardStats } from "@/actions/stats.actions";
 import { getAccounts, getActiveAccountIds } from "@/actions/accounts.actions";
 import type { TransactionFilters } from "@/actions/transactions.actions";
 import type { DateRangePreset } from "@/hooks/use-date-range";
+import { formatCurrency, formatPercent } from "@/lib/format";
 
 const MotionCard = motion.create(Card);
 
@@ -45,20 +46,6 @@ interface OverviewCardsProps {
   preset?: DateRangePreset;
   stats?: DashboardStats | null;
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-};
-
-const formatPercentage = (value: number): string => {
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(1)}%`;
-};
 
 /** Returns the human-readable comparison label for the given preset. */
 function getTrendLabel(preset: DateRangePreset | undefined): string | null {
@@ -111,7 +98,7 @@ function buildCardData(
       return { change: "—", trend: "neutral" };
     }
     return {
-      change: formatPercentage(pct),
+      change: formatPercent(pct, { sign: true }),
       trend: pct > 0 ? "up" : pct < 0 ? "down" : "neutral",
     };
   };

@@ -1,7 +1,14 @@
 "use server";
 
-import { getDb, setDbMode, getDbMode, invalidateDbCache } from "@/lib/db";
-import { generateDemoData } from "@/lib/db/seed";
+import {
+  clearMissingBudgets,
+  getDb,
+  getDbMode,
+  hadMissingBudgets,
+  invalidateDbCache,
+  setDbMode,
+} from "@/lib/db";
+import { generateDemoBudgets, generateDemoData } from "@/lib/db/seed";
 import { revalidatePath } from "next/cache";
 
 export async function enableDemoMode(): Promise<{
@@ -18,12 +25,19 @@ export async function enableDemoMode(): Promise<{
     const demoData = generateDemoData();
     db.data = demoData;
     await db.write();
+  } else if (hadMissingBudgets(db)) {
+    // Demo DB created before budgets existed (field absent): seed once.
+    // An explicit [] (user deleted all budgets) is preserved.
+    db.data.budgets = generateDemoBudgets();
+    clearMissingBudgets(db);
+    await db.write();
   }
 
   invalidateDbCache();
   revalidatePath("/");
   revalidatePath("/transactions");
   revalidatePath("/insights");
+  revalidatePath("/budgets");
 
   return {
     success: true,
@@ -38,6 +52,7 @@ export async function disableDemoMode(): Promise<{ success: boolean }> {
   revalidatePath("/");
   revalidatePath("/transactions");
   revalidatePath("/insights");
+  revalidatePath("/budgets");
 
   return { success: true };
 }

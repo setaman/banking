@@ -8,6 +8,7 @@ import { MonthlyAverageCards } from "@/components/dashboard/monthly-average-card
 import { BalanceHistoryChart } from "@/components/dashboard/balance-history-chart";
 import { IncomeExpensesChart } from "@/components/dashboard/income-expenses-chart";
 import { CategoryBreakdownChart } from "@/components/dashboard/category-breakdown-chart";
+import { BudgetWidget } from "@/components/dashboard/budget-widget";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { useDateRange } from "@/hooks/use-date-range";
 import { getTransactions } from "@/actions/transactions.actions";
@@ -358,6 +359,15 @@ export default function Home() {
           />
         </MotionDiv>
       </div>
+
+      {/* Budgets widget (current calendar month) */}
+      <MotionDiv
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.33 }}
+      >
+        <BudgetWidget />
+      </MotionDiv>
 
       {/* Income vs Expenses Chart - Full Width */}
       <MotionDiv

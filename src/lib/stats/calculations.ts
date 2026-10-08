@@ -8,6 +8,7 @@
 import { differenceInDays, parseISO, isWithinInterval, format } from "date-fns";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { classifyTransaction, type Category } from "./categories";
+import { formatCurrency } from "@/lib/format";
 
 // --- Type Definitions ---
 
@@ -89,17 +90,6 @@ export interface LargestExpense {
 }
 
 // --- Utility Functions ---
-
-const eurFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-function formatEUR(amount: number): string {
-  return eurFormatter.format(amount);
-}
 
 function calculateStandardDeviation(values: number[]): number {
   if (values.length === 0) return 0;
@@ -248,7 +238,7 @@ export function calculateExpenseVolatility(
     standardDeviation,
     mean,
     coefficient,
-    formatted: formatEUR(standardDeviation),
+    formatted: formatCurrency(standardDeviation),
   };
 }
 
@@ -280,7 +270,7 @@ export function calculateIncomeStability(
     standardDeviation,
     mean,
     coefficient,
-    formatted: formatEUR(standardDeviation),
+    formatted: formatCurrency(standardDeviation),
   };
 }
 
@@ -322,7 +312,7 @@ export function calculateTopCategories(
       amount,
       count,
       percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
-      formatted: formatEUR(amount),
+      formatted: formatCurrency(amount),
     }))
     .sort((a, b) => b.amount - a.amount)
     .slice(0, limit);
@@ -974,7 +964,7 @@ export function calculateDailyAverage(
     average,
     totalExpenses,
     days,
-    formatted: `${formatEUR(average)}/day`,
+    formatted: `${formatCurrency(average)}/day`,
   };
 }
 
@@ -991,7 +981,7 @@ export function findLargestExpense(
     return {
       transaction: null,
       amount: 0,
-      formatted: formatEUR(0),
+      formatted: formatCurrency(0),
     };
   }
 
@@ -1004,6 +994,6 @@ export function findLargestExpense(
   return {
     transaction: largest,
     amount,
-    formatted: formatEUR(amount),
+    formatted: formatCurrency(amount),
   };
 }

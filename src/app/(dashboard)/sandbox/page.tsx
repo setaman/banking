@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { FlaskConical, Plus, Shield, Pencil, Save, Trash2, ChevronDown } from "lucide-react";
+import {
+  FlaskConical,
+  Plus,
+  Shield,
+  Pencil,
+  Save,
+  Trash2,
+  ChevronDown,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,20 +45,13 @@ import { RuleCard } from "@/components/sandbox/rule-card";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import type { RecurringTransactionGroup } from "@/lib/stats/categories";
 import type { ScenarioRule } from "@/lib/stats/sandbox-projector";
+import { formatCurrency } from "@/lib/format";
 
 const MotionCard = motion.create(Card);
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
 
 function deltaClass(value: number): string {
   if (value > 0) return "text-emerald-400";
@@ -86,7 +87,7 @@ function DeltaWidget({ points }: DeltaWidgetProps): React.JSX.Element {
         return (
           <div
             key={label}
-            className="bg-card flex flex-col items-center gap-1 rounded-xl border border-border p-3 text-center dark:bg-card/80"
+            className="bg-card border-border dark:bg-card/80 flex flex-col items-center gap-1 rounded-xl border p-3 text-center"
           >
             <p className="text-muted-foreground text-xs font-medium">{label}</p>
             {delta !== null ? (
@@ -133,7 +134,7 @@ function SafetyNetBadge({
   const diff = scenarioFund.months - baselineFund.months;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-emerald-500/5 p-3 dark:border-emerald-500/20">
+    <div className="border-border flex items-center gap-3 rounded-xl border bg-emerald-500/5 p-3 dark:border-emerald-500/20">
       <Shield className="h-5 w-5 shrink-0 text-emerald-400" />
       <div className="min-w-0 flex-1 text-sm">
         <p className="text-foreground font-semibold">Safety Net</p>
@@ -143,9 +144,7 @@ function SafetyNetBadge({
             {baselineFund.months.toFixed(1)} mo
           </span>{" "}
           to{" "}
-          <span
-            className={cn("font-medium", deltaClass(diff))}
-          >
+          <span className={cn("font-medium", deltaClass(diff))}>
             {scenarioFund.months.toFixed(1)} mo
           </span>
         </p>
@@ -268,8 +267,8 @@ function ScenarioPanel({
   return (
     <div className="flex flex-col gap-4">
       {/* Scenario selector */}
-      <div className="bg-card rounded-xl border border-border p-4 backdrop-blur-xl dark:bg-card/80">
-        <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+      <div className="bg-card border-border dark:bg-card/80 rounded-xl border p-4 backdrop-blur-xl">
+        <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
           Active Scenario
         </p>
 
@@ -278,7 +277,7 @@ function ScenarioPanel({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="w-full min-w-0 justify-between bg-card/50 border-white/10 backdrop-blur-xl dark:border-white/5 hover:bg-card/70 hover:border-primary/20 transition-all duration-200"
+              className="bg-card/50 hover:bg-card/70 hover:border-primary/20 w-full min-w-0 justify-between border-white/10 backdrop-blur-xl transition-all duration-200 dark:border-white/5"
             >
               <span className="min-w-0 truncate">
                 {activeScenario?.name ?? "Default"}
@@ -286,14 +285,12 @@ function ScenarioPanel({
               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-card/95 border-white/10 backdrop-blur-xl dark:border-white/5 shadow-primary/5 shadow-xl">
+          <DropdownMenuContent className="bg-card/95 shadow-primary/5 w-56 border-white/10 shadow-xl backdrop-blur-xl dark:border-white/5">
             {scenarioList.map((s) => (
               <DropdownMenuItem
                 key={s.id}
                 onClick={() => setActiveScenarioId(s.id)}
-                className={cn(
-                  s.id === activeScenarioId && "bg-accent"
-                )}
+                className={cn(s.id === activeScenarioId && "bg-accent")}
               >
                 {s.name}
               </DropdownMenuItem>
@@ -375,15 +372,15 @@ function ScenarioPanel({
       </div>
 
       {/* Add rule buttons */}
-      <div className="bg-card rounded-xl border border-border p-4 backdrop-blur-xl dark:bg-card/80">
-        <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
+      <div className="bg-card border-border dark:bg-card/80 rounded-xl border p-4 backdrop-blur-xl">
+        <p className="text-muted-foreground mb-3 text-xs font-medium tracking-wide uppercase">
           Add Rule
         </p>
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/15 gap-1.5"
+            className="gap-1.5 border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/15"
             onClick={handleAddRecurring}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -392,7 +389,7 @@ function ScenarioPanel({
           <Button
             variant="outline"
             size="sm"
-            className="border-amber-500/30 bg-amber-500/5 text-amber-400 hover:bg-amber-500/15 gap-1.5"
+            className="gap-1.5 border-amber-500/30 bg-amber-500/5 text-amber-400 hover:bg-amber-500/15"
             onClick={handleAddOnetime}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -401,7 +398,7 @@ function ScenarioPanel({
           <Button
             variant="outline"
             size="sm"
-            className="border-emerald-500/30 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15 gap-1.5"
+            className="gap-1.5 border-emerald-500/30 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15"
             onClick={handleAddSubscription}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -410,7 +407,7 @@ function ScenarioPanel({
           <Button
             variant="outline"
             size="sm"
-            className="border-violet-500/30 bg-violet-500/5 text-violet-400 hover:bg-violet-500/15 gap-1.5"
+            className="gap-1.5 border-violet-500/30 bg-violet-500/5 text-violet-400 hover:bg-violet-500/15"
             onClick={handleAddInvestment}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -433,7 +430,7 @@ function ScenarioPanel({
           ))}
         </div>
       ) : (
-        <div className="bg-muted/30 flex flex-col items-center justify-center gap-2 rounded-xl border border-border py-10 text-center dark:bg-card/20">
+        <div className="bg-muted/30 border-border dark:bg-card/20 flex flex-col items-center justify-center gap-2 rounded-xl border py-10 text-center">
           <FlaskConical className="text-muted-foreground/40 h-8 w-8" />
           <p className="text-muted-foreground text-sm">No rules yet</p>
           <p className="text-muted-foreground/60 text-xs">
@@ -480,9 +477,7 @@ export default function SandboxPage(): React.JSX.Element {
         setTotalBalance(balanceData);
       } catch (err) {
         console.error("Failed to load sandbox data:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load data"
-        );
+        setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -530,8 +525,7 @@ export default function SandboxPage(): React.JSX.Element {
 
   // Sandbox prediction (memoized)
   const sandboxResult = useMemo(
-    () =>
-      calculateSandboxPrediction(totalBalance, monthlyCashFlow, rules),
+    () => calculateSandboxPrediction(totalBalance, monthlyCashFlow, rules),
     [totalBalance, monthlyCashFlow, rules]
   );
 

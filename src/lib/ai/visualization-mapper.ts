@@ -21,6 +21,7 @@
 import type { EChartsOption } from "echarts";
 
 import type { VisualizationSpec } from "@/lib/ai/visualization";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Per-type spec aliases (derived from the Zod-inferred discriminated union —
@@ -93,22 +94,8 @@ function getTooltipTextColor(isDark: boolean): string {
 // (see `visualization.ts`) and are rendered as-is by their own components.
 // ---------------------------------------------------------------------------
 
-export function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function formatEurCompact(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1000) {
-    return `€${(value / 1000).toFixed(1)}k`;
-  }
-  return `€${value.toFixed(0)}`;
-}
+/** @deprecated Alias of the shared `formatCurrency`; kept for existing imports. */
+export const formatEur = formatCurrency;
 
 /**
  * Escapes a string for safe interpolation into an ECharts HTML tooltip
@@ -255,7 +242,7 @@ export function buildBarChartOption(
       axisLabel: {
         color: textColor,
         fontSize: 11,
-        formatter: (value: number) => formatEurCompact(value),
+        formatter: (value: number) => formatCurrencyCompact(value),
       },
       splitLine: { lineStyle: { color: gridColor, type: "dashed" } },
     },
@@ -351,7 +338,7 @@ export function buildLineChartOption(
       axisLabel: {
         color: textColor,
         fontSize: 11,
-        formatter: (value: number) => formatEurCompact(value),
+        formatter: (value: number) => formatCurrencyCompact(value),
       },
       splitLine: { lineStyle: { color: gridColor, type: "dashed" } },
     },

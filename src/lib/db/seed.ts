@@ -6,7 +6,7 @@ import type {
 } from "@/lib/banking/types";
 import { classifyTransaction } from "@/lib/stats/categories";
 import { createTransactionId } from "@/lib/banking/utils";
-import type { Database } from "./schema";
+import type { Budget, Database } from "./schema";
 import { getDb } from "./index";
 
 const DEMO_ACCOUNTS: UnifiedAccount[] = [
@@ -204,6 +204,33 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+/** Demo budgets: [category, monthlyLimit]. Category ids match `CATEGORIES`. */
+const DEMO_BUDGETS: ReadonlyArray<readonly [Budget["category"], number]> = [
+  ["Groceries", 400],
+  ["Dining", 200],
+  ["Shopping", 300],
+  ["Transport", 120],
+  ["Entertainment", 150],
+  ["Healthcare", 80],
+];
+
+/**
+ * Builds the demo budgets (6 categories that occur in the demo transactions).
+ *
+ * @param now - Timestamp used for createdAt/updatedAt.
+ * @returns Demo budgets with deterministic ids.
+ */
+export function generateDemoBudgets(now: Date = new Date()): Budget[] {
+  const ts = now.toISOString();
+  return DEMO_BUDGETS.map(([category, monthlyLimit]) => ({
+    id: `demo_budget_${category.toLowerCase()}`,
+    category,
+    monthlyLimit,
+    createdAt: ts,
+    updatedAt: ts,
+  }));
+}
+
 /**
  * Generates 6 months of realistic demo transaction data.
  */
@@ -291,6 +318,7 @@ export function generateDemoData(): Database {
     accounts: DEMO_ACCOUNTS,
     transactions,
     balances,
+    budgets: generateDemoBudgets(now),
     syncHistory: [
       {
         institutionId: "demo",

@@ -10,18 +10,13 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import type { TransactionSummary } from "@/lib/stats/transaction-summary";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 
 /** Props for {@link TransactionSummaryStrip}. */
 export interface TransactionSummaryStripProps {
   /** Aggregated figures for the currently visible transactions. */
   summary: TransactionSummary;
 }
-
-/** Formats numbers as EUR currency using German (de-DE) conventions. */
-const eurFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-});
 
 const POSITIVE_COLOR = "text-green-500 dark:text-green-400";
 const NEGATIVE_COLOR = "text-red-500 dark:text-red-400";
@@ -94,7 +89,7 @@ export function TransactionSummaryStrip({
             POSITIVE_COLOR
           )}
         >
-          {eurFormatter.format(totalIncome)}
+          {formatCurrency(totalIncome)}
         </p>
       </StatCard>
 
@@ -110,7 +105,7 @@ export function TransactionSummaryStrip({
             NEGATIVE_COLOR
           )}
         >
-          {eurFormatter.format(totalExpenses)}
+          {formatCurrency(totalExpenses)}
         </p>
       </StatCard>
 
@@ -130,7 +125,7 @@ export function TransactionSummaryStrip({
                 : "text-foreground"
           )}
         >
-          {eurFormatter.format(netCashFlow)}
+          {formatCurrency(netCashFlow)}
         </p>
       </StatCard>
 
@@ -148,7 +143,7 @@ export function TransactionSummaryStrip({
                 NEGATIVE_COLOR
               )}
             >
-              {eurFormatter.format(largestExpense.amount)}
+              {formatCurrency(largestExpense.amount)}
             </p>
             <p
               className="text-muted-foreground truncate text-xs"

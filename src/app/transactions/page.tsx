@@ -64,6 +64,7 @@ import { computeTransactionSummary } from "@/lib/stats/transaction-summary";
 import type { UnifiedTransaction, UnifiedAccount } from "@/lib/banking/types";
 import { cn } from "@/lib/utils";
 import type { DateRangePreset } from "@/hooks/use-date-range";
+import { formatCurrency } from "@/lib/format";
 
 type SortField =
   | "date"
@@ -392,13 +393,6 @@ function TransactionsPageContent() {
     ) : (
       <ChevronDown className="ml-1 inline-block h-4 w-4" />
     );
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
   };
 
   const getAmountColor = (amount: number) => {

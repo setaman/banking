@@ -36,6 +36,7 @@ import {
 import { BudgetSplitStrip } from "@/components/dashboard/budget-split-strip";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { format, parseISO, getDay } from "date-fns";
+import { formatCurrency } from "@/lib/format";
 
 const MotionCard = motion.create(Card);
 
@@ -47,15 +48,6 @@ interface WeekendVsWeekdayData {
   weekdayDays: number;
   weekendDays: number;
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-};
 
 export default function InsightsPage() {
   const [transactions, setTransactions] = useState<UnifiedTransaction[]>([]);
