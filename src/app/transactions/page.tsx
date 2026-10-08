@@ -74,6 +74,20 @@ type SortField =
   | "account";
 type SortDirection = "asc" | "desc";
 
+/**
+ * Transactions page body: loads all transactions and accounts once, then
+ * filters, sorts and paginates them client-side.
+ *
+ * Filter, sort and page state lives in the URL query string (`search`,
+ * `categories`, `accounts`, `minAmount`, `maxAmount`, `dateFrom`, `dateTo`,
+ * `sort`, `dir`, `page`). Filtering (search on description/counterparty,
+ * derived category, account, absolute amount range, booking date range)
+ * produces the filtered set; that set is sorted (default: date, descending)
+ * and then sliced into pages of 50. The summary strip is computed from the
+ * whole filtered set, not just the current page.
+ *
+ * Wrapped in `Suspense` by the default export because it reads search params.
+ */
 function TransactionsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();

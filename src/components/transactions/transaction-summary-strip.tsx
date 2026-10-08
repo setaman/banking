@@ -17,6 +17,7 @@ export interface TransactionSummaryStripProps {
   summary: TransactionSummary;
 }
 
+/** Formats numbers as EUR currency using German (de-DE) conventions. */
 const eurFormatter = new Intl.NumberFormat("de-DE", {
   style: "currency",
   currency: "EUR",
