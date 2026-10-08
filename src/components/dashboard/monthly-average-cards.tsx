@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/actions/stats.actions";
 import type { DashboardStats, MonthlyAverages } from "@/actions/stats.actions";
 import type { TransactionFilters } from "@/actions/transactions.actions";
+import { formatCurrency } from "@/lib/format";
 
 const MotionCard = motion.create(Card);
 
@@ -15,15 +16,6 @@ interface MonthlyAverageCardsProps {
   filters?: TransactionFilters;
   stats?: DashboardStats | null;
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-};
 
 /**
  * Inner component that handles the self-fetch path (no stats prop provided).

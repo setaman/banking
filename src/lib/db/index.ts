@@ -20,6 +20,9 @@ export async function getDb(): Promise<Low<Database>> {
     await db.write();
   }
 
+  // Older db files predate `budgets`; default it without a migration step.
+  db.data.budgets ??= [];
+
   dbInstance = db;
   return db;
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { getDb, setDbMode, getDbMode, invalidateDbCache } from "@/lib/db";
-import { generateDemoData } from "@/lib/db/seed";
+import { generateDemoBudgets, generateDemoData } from "@/lib/db/seed";
 import { revalidatePath } from "next/cache";
 
 export async function enableDemoMode(): Promise<{
@@ -18,12 +18,17 @@ export async function enableDemoMode(): Promise<{
     const demoData = generateDemoData();
     db.data = demoData;
     await db.write();
+  } else if (db.data.budgets.length === 0) {
+    // Demo DB created before budgets existed: add the demo budgets.
+    db.data.budgets = generateDemoBudgets();
+    await db.write();
   }
 
   invalidateDbCache();
   revalidatePath("/");
   revalidatePath("/transactions");
   revalidatePath("/insights");
+  revalidatePath("/budgets");
 
   return {
     success: true,
@@ -38,6 +43,7 @@ export async function disableDemoMode(): Promise<{ success: boolean }> {
   revalidatePath("/");
   revalidatePath("/transactions");
   revalidatePath("/insights");
+  revalidatePath("/budgets");
 
   return { success: true };
 }
