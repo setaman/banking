@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getBalanceHistory, getAccounts } from "@/actions/accounts.actions";
 import type { UnifiedBalance, UnifiedAccount } from "@/lib/banking/types";
 import { format, parseISO } from "date-fns";
+import { formatCurrency } from "@/lib/format";
 
 const MotionCard = motion.create(Card);
 
@@ -299,11 +300,7 @@ export function BalanceHistoryChart({
 
           // Show Total Balance first (if present) with prominence
           if (totalParam) {
-            const value = new Intl.NumberFormat("de-DE", {
-              style: "currency",
-              currency: "EUR",
-              minimumFractionDigits: 2,
-            }).format(totalParam.value[1]);
+            const value = formatCurrency(totalParam.value[1]);
 
             html += `
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid ${isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"};">
@@ -316,11 +313,7 @@ export function BalanceHistoryChart({
 
           // Show individual accounts
           accountParams.forEach((param: any) => {
-            const value = new Intl.NumberFormat("de-DE", {
-              style: "currency",
-              currency: "EUR",
-              minimumFractionDigits: 2,
-            }).format(param.value[1]);
+            const value = formatCurrency(param.value[1]);
 
             html += `
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">

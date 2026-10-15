@@ -7,18 +7,11 @@ import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 
 import type { SandboxPoint } from "@/lib/stats/sandbox-projector";
+import { formatCurrencyWhole } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
 
 // ---------------------------------------------------------------------------
 // Props
@@ -32,7 +25,9 @@ interface ComparisonChartProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Element {
+export function ComparisonChart({
+  points,
+}: ComparisonChartProps): React.JSX.Element {
   const { resolvedTheme } = useTheme();
   const chartRef = useRef<ReactECharts | null>(null);
 
@@ -56,7 +51,10 @@ export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Ele
     // Simpler: use yearly category x-axis, sample points at yearly marks + month 0 anchor.
 
     // Collect yearly marks (month 0 = now, month 12 = Yr 1, …)
-    const yearlyIndices = [0, ...Array.from({ length: maxYear }, (_, i) => i + 1)];
+    const yearlyIndices = [
+      0,
+      ...Array.from({ length: maxYear }, (_, i) => i + 1),
+    ];
 
     // Build arrays anchored at month=0 (current balance = points[0].baseline - meanNet)
     // We use points directly for years 1..N (month 12, 24, …)
@@ -86,7 +84,8 @@ export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Ele
       if (v >= 0) return v;
       // Keep the last positive point and first negative point visible so the
       // crossing is drawn — use null to break the line in the negative region.
-      if ((prev !== null && prev >= 0) || (next !== null && next >= 0)) return v;
+      if ((prev !== null && prev >= 0) || (next !== null && next >= 0))
+        return v;
       return null;
     });
     const scenarioCrimson = scenarioLine.map((v, i) => {
@@ -155,9 +154,7 @@ export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Ele
         backgroundColor: isDark
           ? "rgba(30,41,59,0.95)"
           : "rgba(255,255,255,0.95)",
-        borderColor: isDark
-          ? "rgba(255,255,255,0.15)"
-          : "rgba(0,0,0,0.1)",
+        borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)",
         borderWidth: 1,
         textStyle: {
           color: isDark ? "rgba(241,245,249,1)" : "rgba(30,41,59,1)",
@@ -170,8 +167,12 @@ export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Ele
           const label = xLabels[idx];
 
           // find the visible series values (skip underscore helpers)
-          const baselineParam = params.find((p: any) => p.seriesName === "Baseline");
-          const scenarioParam = params.find((p: any) => p.seriesName === "Scenario");
+          const baselineParam = params.find(
+            (p: any) => p.seriesName === "Baseline"
+          );
+          const scenarioParam = params.find(
+            (p: any) => p.seriesName === "Scenario"
+          );
 
           return `<div style="padding:4px 0;">
             <div style="font-weight:600;margin-bottom:6px;">${label}</div>
@@ -180,7 +181,7 @@ export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Ele
                 ? `<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
                 <span style="display:inline-block;width:20px;height:2px;border-top:2px dotted rgba(156,163,175,0.7);flex-shrink:0;"></span>
                 <span style="flex:1;">Baseline:</span>
-                <span style="font-weight:600;">${formatCurrency(baselineParam.value as number)}</span>
+                <span style="font-weight:600;">${formatCurrencyWhole(baselineParam.value as number)}</span>
               </div>`
                 : ""
             }
@@ -189,7 +190,7 @@ export function ComparisonChart({ points }: ComparisonChartProps): React.JSX.Ele
                 ? `<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(139,92,246,1);flex-shrink:0;"></span>
                 <span style="flex:1;">Scenario:</span>
-                <span style="font-weight:600;">${formatCurrency(scenarioParam.value as number)}</span>
+                <span style="font-weight:600;">${formatCurrencyWhole(scenarioParam.value as number)}</span>
               </div>`
                 : ""
             }

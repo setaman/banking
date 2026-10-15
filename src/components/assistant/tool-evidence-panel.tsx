@@ -15,20 +15,10 @@ import type {
   TransactionEvidence,
 } from "@/lib/ai/parse-tool-evidence";
 import { cn } from "@/lib/utils";
+import { formatCurrency, formatCurrencySigned } from "@/lib/format";
 
 const INITIAL_VISIBLE_ROWS = 8;
 const DESCRIPTION_TRUNCATE_LENGTH = 60;
-
-const currencyFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-});
-
-const signedCurrencyFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-  signDisplay: "always",
-});
 
 // ---------------------------------------------------------------------------
 // Provenance derivation — all computed purely from the returned rows (no
@@ -77,7 +67,7 @@ function buildDateRangeText(rows: readonly TransactionEntry[]): string | null {
  * returned rows and labels the figure by what kind of rows they are —
  * "total" for an all-expense result (the common case: "how much did I
  * spend on X"), "income" when all rows are credits. A mixed result shows
- * the *signed* net (via `signedCurrencyFormatter`) rather than an absolute
+ * the *signed* net (via `formatCurrencySigned`) rather than an absolute
  * value, so an inflow and an outflow of the same size stay distinguishable
  * instead of both collapsing to the same unsigned number.
  *
@@ -101,15 +91,15 @@ function buildAmountSegment(evidence: TransactionEvidence): string | null {
   const scope = evidence.truncated ? " of rows shown" : "";
 
   if (allExpenses) {
-    return `${currencyFormatter.format(Math.abs(sum))} total${scope}`;
+    return `${formatCurrency(Math.abs(sum))} total${scope}`;
   }
   if (allIncome) {
-    return `${currencyFormatter.format(sum)} income${scope}`;
+    return `${formatCurrency(sum)} income${scope}`;
   }
   // Mixed credits and debits — preserve direction instead of Math.abs-ing
   // it away, since a net inflow and a net outflow of the same magnitude
   // must not read the same.
-  return `${signedCurrencyFormatter.format(sum)} net${scope}`;
+  return `${formatCurrencySigned(sum)} net${scope}`;
 }
 
 function buildCountText(evidence: TransactionEvidence): string {
@@ -160,11 +150,11 @@ function buildAppliedFiltersText(
 
   const minText =
     filters.minAmount !== null && filters.minAmount !== undefined
-      ? currencyFormatter.format(filters.minAmount)
+      ? formatCurrency(filters.minAmount)
       : null;
   const maxText =
     filters.maxAmount !== null && filters.maxAmount !== undefined
-      ? currencyFormatter.format(filters.maxAmount)
+      ? formatCurrency(filters.maxAmount)
       : null;
   if (minText && maxText) parts.push(`${minText}–${maxText}`);
   else if (minText) parts.push(`≥ ${minText}`);
@@ -237,7 +227,7 @@ function buildTableRows(
           : "text-foreground"
       )}
     >
-      {signedCurrencyFormatter.format(row.amount)}
+      {formatCurrencySigned(row.amount)}
     </span>,
   ]);
 }

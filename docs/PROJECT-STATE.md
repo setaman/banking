@@ -7,6 +7,14 @@
 
 ---
 
+## This session changes (2026-10-15) — Shared currency formatters refactor
+
+**Summary:** Introduced `src/lib/format.ts` (shared currency/percent formatters) and migrated 15 files to it. Output is unchanged (parity-checked). The monthly budgets feature that was prototyped in the same PR was removed at the client's request (it served as a CodeBoarding large-PR test).
+
+**Next action:** Client merges PR #44.
+
+---
+
 ## This session changes (2026-10-07) — Transaction summary strip on the Transactions page
 
 **Summary:** Added a strip of 4 compact stat cards above the transactions table, computed live from the currently filtered transactions (all pages, not just the visible page): Total income, Total expenses, Net cash flow, Largest single expense (counterparty/description, amount, date). Covers PRD §5.3 KPI K11 (Largest Single Expense). Income/expense logic mirrors `getDashboardStats`: internal transfers are excluded, income sums credits, expenses sum absolute debits, largest expense reuses `findLargestExpense`. The strip hides when there are no transactions and shows "No expenses" when none are expenses.

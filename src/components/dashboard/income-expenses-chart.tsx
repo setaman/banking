@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { calculateMonthlyFlow } from "@/lib/stats/calculations";
 import type { UnifiedTransaction } from "@/lib/banking/types";
 import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
+import { formatCurrency } from "@/lib/format";
 
 const MotionCard = motion.create(Card);
 
@@ -109,32 +110,24 @@ export function IncomeExpensesChart({
           const expenses = expensesData[monthIndex];
           const net = netData[monthIndex];
 
-          const formatEUR = (value: number) =>
-            new Intl.NumberFormat("de-DE", {
-              style: "currency",
-              currency: "EUR",
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(value);
-
           return `
             <div style="padding: 4px 0;">
               <div style="font-weight: 600; margin-bottom: 6px;">${formattedMonth}</div>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                 <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: ${incomeColor};"></span>
                 <span style="flex: 1;">Income:</span>
-                <span style="font-weight: 600; color: ${incomeColor};">${formatEUR(income)}</span>
+                <span style="font-weight: 600; color: ${incomeColor};">${formatCurrency(income)}</span>
               </div>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                 <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: ${expensesColor};"></span>
                 <span style="flex: 1;">Expenses:</span>
-                <span style="font-weight: 600; color: ${expensesColor};">${formatEUR(expenses)}</span>
+                <span style="font-weight: 600; color: ${expensesColor};">${formatCurrency(expenses)}</span>
               </div>
               <div style="border-top: 1px solid ${isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}; margin-top: 4px; padding-top: 4px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="display: inline-block; width: 10px; height: 2px; background: ${netColor};"></span>
                   <span style="flex: 1;">Net:</span>
-                  <span style="font-weight: 600; color: ${net >= 0 ? incomeColor : expensesColor};">${formatEUR(net)}</span>
+                  <span style="font-weight: 600; color: ${net >= 0 ? incomeColor : expensesColor};">${formatCurrency(net)}</span>
                 </div>
               </div>
             </div>

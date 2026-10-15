@@ -17,18 +17,11 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { ScenarioRule } from "@/lib/stats/sandbox-projector";
 import type { RecurringTransactionGroup } from "@/lib/stats/categories";
+import { formatCurrencyWhole } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
 
 // ---------------------------------------------------------------------------
 // Props
@@ -47,14 +40,11 @@ interface RuleCardProps {
 // ---------------------------------------------------------------------------
 
 const TYPE_STYLES: Record<ScenarioRule["type"], string> = {
-  recurring:
-    "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-  onetime:
-    "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+  recurring: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+  onetime: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
   subscription:
     "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-  investment:
-    "bg-violet-500/15 text-violet-400 border border-violet-500/30",
+  investment: "bg-violet-500/15 text-violet-400 border border-violet-500/30",
 };
 
 const TYPE_LABELS: Record<ScenarioRule["type"], string> = {
@@ -85,7 +75,7 @@ export function RuleCard({
   return (
     <div
       className={cn(
-        "bg-card relative rounded-xl border border-border p-4 backdrop-blur-xl transition-all duration-200 dark:bg-card/80",
+        "bg-card border-border dark:bg-card/80 relative rounded-xl border p-4 backdrop-blur-xl transition-all duration-200",
         !rule.enabled && "opacity-50"
       )}
     >
@@ -150,7 +140,10 @@ interface ControlsProps {
   onUpdate: (id: string, patch: Partial<Omit<ScenarioRule, "id">>) => void;
 }
 
-function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element {
+function RecurringControls({
+  rule,
+  onUpdate,
+}: ControlsProps): React.JSX.Element {
   const amount = rule.amount;
   const startMonth = rule.startMonthOffset;
 
@@ -159,9 +152,7 @@ function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element
       {/* Amount slider: -5000 to +5000, step 50 */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-muted-foreground text-xs">
-            Monthly delta
-          </Label>
+          <Label className="text-muted-foreground text-xs">Monthly delta</Label>
           <span
             className={cn(
               "text-xs font-semibold tabular-nums",
@@ -169,7 +160,7 @@ function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element
             )}
           >
             {amount >= 0 ? "+" : ""}
-            {formatCurrency(amount)} / mo
+            {formatCurrencyWhole(amount)} / mo
           </span>
         </div>
         <Slider
@@ -189,9 +180,7 @@ function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element
       {/* Start month offset */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-muted-foreground text-xs">
-            Starts after
-          </Label>
+          <Label className="text-muted-foreground text-xs">Starts after</Label>
           <span className="text-xs font-semibold tabular-nums">
             {startMonth === 0 ? "now" : `month ${startMonth}`}
           </span>
@@ -201,9 +190,7 @@ function RecurringControls({ rule, onUpdate }: ControlsProps): React.JSX.Element
           max={12}
           step={1}
           value={[startMonth]}
-          onValueChange={([v]) =>
-            onUpdate(rule.id, { startMonthOffset: v })
-          }
+          onValueChange={([v]) => onUpdate(rule.id, { startMonthOffset: v })}
           className="w-full"
         />
         <div className="text-muted-foreground/60 flex justify-between text-xs">
@@ -250,9 +237,7 @@ function OneTimeControls({ rule, onUpdate }: ControlsProps): React.JSX.Element {
       {/* Target year slider */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-muted-foreground text-xs">
-            Applies in
-          </Label>
+          <Label className="text-muted-foreground text-xs">Applies in</Label>
           <span className="text-xs font-semibold tabular-nums">
             Year {targetYear}
           </span>
@@ -314,10 +299,7 @@ function SubscriptionControls({
           <Label className="text-muted-foreground text-xs">
             Merchant to cancel
           </Label>
-          <Select
-            value={selectedName}
-            onValueChange={handleSelect}
-          >
+          <Select value={selectedName} onValueChange={handleSelect}>
             <SelectTrigger className="h-8 w-full min-w-0 text-sm">
               <SelectValue placeholder="Select merchant…" />
             </SelectTrigger>
@@ -327,7 +309,7 @@ function SubscriptionControls({
                   <span className="flex w-full min-w-0 items-center justify-between gap-2">
                     <span className="min-w-0 truncate">{g.counterparty}</span>
                     <span className="text-muted-foreground shrink-0 text-xs">
-                      {formatCurrency(Math.abs(g.averageAmount))}/mo
+                      {formatCurrencyWhole(Math.abs(g.averageAmount))}/mo
                     </span>
                   </span>
                 </SelectItem>
@@ -338,9 +320,11 @@ function SubscriptionControls({
       )}
 
       {monthlyCost > 0 && (
-        <p className="text-emerald-400 text-xs">
+        <p className="text-xs text-emerald-400">
           Cancelling saves{" "}
-          <span className="font-semibold">{formatCurrency(monthlyCost)}</span>{" "}
+          <span className="font-semibold">
+            {formatCurrencyWhole(monthlyCost)}
+          </span>{" "}
           / month
         </p>
       )}
@@ -352,7 +336,10 @@ function SubscriptionControls({
 // Investment controls
 // ---------------------------------------------------------------------------
 
-function InvestmentControls({ rule, onUpdate }: ControlsProps): React.JSX.Element {
+function InvestmentControls({
+  rule,
+  onUpdate,
+}: ControlsProps): React.JSX.Element {
   const annualRate = (rule.annualRate ?? 0) * 100; // stored as 0..0.12, display as %
 
   return (
@@ -363,9 +350,9 @@ function InvestmentControls({ rule, onUpdate }: ControlsProps): React.JSX.Elemen
           <Label className="text-muted-foreground text-xs">
             Monthly contribution
           </Label>
-          <span className="text-emerald-400 text-xs font-semibold tabular-nums">
+          <span className="text-xs font-semibold text-emerald-400 tabular-nums">
             {rule.amount >= 0 ? "+" : ""}
-            {formatCurrency(rule.amount)} / mo
+            {formatCurrencyWhole(rule.amount)} / mo
           </span>
         </div>
         <Slider
@@ -385,10 +372,8 @@ function InvestmentControls({ rule, onUpdate }: ControlsProps): React.JSX.Elemen
       {/* Annual yield slider */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-muted-foreground text-xs">
-            Annual yield
-          </Label>
-          <span className="text-violet-400 text-xs font-semibold tabular-nums">
+          <Label className="text-muted-foreground text-xs">Annual yield</Label>
+          <span className="text-xs font-semibold text-violet-400 tabular-nums">
             {annualRate.toFixed(1)}%
           </span>
         </div>
@@ -397,9 +382,7 @@ function InvestmentControls({ rule, onUpdate }: ControlsProps): React.JSX.Elemen
           max={12}
           step={0.5}
           value={[annualRate]}
-          onValueChange={([v]) =>
-            onUpdate(rule.id, { annualRate: v / 100 })
-          }
+          onValueChange={([v]) => onUpdate(rule.id, { annualRate: v / 100 })}
           className="w-full"
         />
         <div className="text-muted-foreground/60 flex justify-between text-xs">
