@@ -3,4 +3,3 @@ export { DashboardShell } from "./dashboard-shell";
 export { OverviewCards } from "./overview-cards";
 export { SpendingChart } from "./spending-chart";
 export { TransactionList } from "./transaction-list";
-export { BudgetWidget } from "./budget-widget";
