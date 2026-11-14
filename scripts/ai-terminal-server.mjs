@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { WebSocketServer } from "ws";
 import * as pty from "node-pty";
+import { resolveClaude } from "./resolve-claude.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.env.AI_TERMINAL_PORT || 6101);
@@ -12,6 +13,8 @@ const ORIGIN_RE = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 const MAX_BUF = 300 * 1024;
 
 let term = null;
+let lastSpawnAt = 0;
+let loggedPath = null;
 let buffer = "";
 const clients = new Set();
 
@@ -26,10 +29,26 @@ function spawnPty() {
   const args = [];
   if (existsSync(rulesPath)) args.push("--append-system-prompt", readFileSync(rulesPath, "utf8"));
   if (process.env.AI_TERMINAL_MODEL) args.push("--model", process.env.AI_TERMINAL_MODEL);
-  const cmd = process.platform === "win32" ? "claude.cmd" : "claude";
+  const now = Date.now();
+  if (now - lastSpawnAt < 3000) return null;
+  lastSpawnAt = now;
+  const bin = resolveClaude();
+  if (!bin) {
+    const msg =
+      "\r\n\x1b[31mCould not find the Claude Code CLI. Install it (https://docs.claude.com/claude-code) or set CLAUDE_BIN to its full path, then press Restart.\x1b[0m\r\n";
+    buffer += msg;
+    broadcast({ type: "output", data: msg });
+    broadcast({ type: "exit", exitCode: -1 });
+    return null;
+  }
+  if (loggedPath !== bin.file) {
+    console.log(`claude resolved to ${bin.file}${bin.viaShell ? " (via cmd.exe)" : ""}`);
+    loggedPath = bin.file;
+  }
+  const [cmd, cmdArgs] = bin.viaShell ? ["cmd.exe", ["/d", "/s", "/c", bin.file, ...args]] : [bin.file, args];
   let p;
   try {
-    p = pty.spawn(cmd, args, {
+    p = pty.spawn(cmd, cmdArgs, {
       name: "xterm-256color",
       cols: 100,
       rows: 30,
@@ -108,6 +127,7 @@ server.on("upgrade", (req, socket, head) => {
         } catch {}
       } else if (m.type === "restart") {
         killPty();
+        lastSpawnAt = 0;
         buffer = "";
         broadcast({ type: "output", data: "\x1bc" });
         ensure();

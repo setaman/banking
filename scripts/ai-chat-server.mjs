@@ -4,6 +4,7 @@ import { spawn, execFile } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { resolveClaude } from "./resolve-claude.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.env.AI_CHAT_PORT || 6100);
@@ -85,12 +86,22 @@ async function chat(req, res) {
     Connection: "keep-alive",
   });
   const send = (o) => !res.writableEnded && res.write(`data: ${JSON.stringify(o)}\n\n`);
+  const bin = resolveClaude();
+  if (!bin) {
+    send({
+      type: "error",
+      message:
+        "Could not find the Claude Code CLI. Install it (https://docs.claude.com/claude-code) or set CLAUDE_BIN to its full path, then restart the AI servers.",
+    });
+    send({ type: "done" });
+    return res.end();
+  }
 
   const rulesPath = path.join(ROOT, ".storybook/ai-chat/AGENT_RULES.md");
   const flow = typeof body.flow === "string" ? readFlows().find((f) => f.id === body.flow) : null;
   const flowPrefix = flow ? `[Flow: ${flow.label}]\n${flow.instructions}\n\n` : "";
   const args = [
-    "-p", flowPrefix + buildPrompt(body.message, body.context),
+    "-p",
     "--output-format", "stream-json",
     "--verbose",
     "--permission-mode", "acceptEdits",
@@ -102,8 +113,15 @@ async function chat(req, res) {
   if (body.sessionId) args.push("--resume", body.sessionId);
   if (body.model) args.push("--model", body.model);
 
-  const p = spawn("claude", args, { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
+  // The prompt goes through stdin (not argv): avoids shell injection and Windows argv limits.
+  const prompt = flowPrefix + buildPrompt(body.message, body.context);
+  const quote = (a) => `"${String(a).replace(/"/g, '\\"')}"`;
+  const p = bin.viaShell
+    ? spawn(quote(bin.file), args.map(quote), { cwd: ROOT, shell: true, stdio: ["pipe", "pipe", "pipe"] })
+    : spawn(bin.file, args, { cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] });
   child = p;
+  p.stdin.on("error", () => {});
+  p.stdin.end(prompt);
   let err = "";
   let buf = "";
   let gotResult = false;
