@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // One-time QA scripts and screenshots (gitignored, not part of the app):
     "qa/**",
+    "storybook-static/**",
   ]),
 ]);
 

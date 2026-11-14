@@ -75,3 +75,6 @@ logs/security/
 /.last-run.json
 /.tmp-qa/
 /qa/
+
+# storybook
+storybook-static
