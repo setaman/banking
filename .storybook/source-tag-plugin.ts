@@ -31,7 +31,13 @@ export function sourceTagPlugin(): Plugin {
             visitor: {
               JSXOpeningElement(p) {
                 const name = p.node.name;
-                if (name.type !== "JSXIdentifier" || !/^[a-z]/.test(name.name)) return;
+                const forwards =
+                  (name.type === "JSXIdentifier" &&
+                    (/^[a-z]/.test(name.name) || name.name === "Comp" || name.name === "Slot")) ||
+                  (name.type === "JSXMemberExpression" &&
+                    name.object.type === "JSXIdentifier" &&
+                    name.object.name.endsWith("Primitive"));
+                if (!forwards) return;
                 const has = p.node.attributes.some(
                   (a) => a.type === "JSXAttribute" && a.name.type === "JSXIdentifier" && a.name.name === "data-sb-source"
                 );
