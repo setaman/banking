@@ -19,5 +19,13 @@ addons.register("ai-chat", (api) => {
     if (new URLSearchParams(window.location.search).has("addonPanel")) return;
     api.setSelectedPanel("ai-chat/panel");
   };
-  api.once("storyRendered", select);
+  api.once("storyRendered", () => {
+    select();
+    // Wider panel for the terminal (best effort).
+    try {
+      api.setSizes({ rightPanelWidth: Math.min(640, Math.round(window.innerWidth * 0.45)) });
+    } catch {
+      /* ignore */
+    }
+  });
 });
