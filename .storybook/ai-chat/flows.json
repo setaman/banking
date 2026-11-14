@@ -1,0 +1,32 @@
+[
+  {
+    "id": "prototype",
+    "label": "Prototype",
+    "emoji": "🧪",
+    "instructions": "Prototype the request quickly. Do NOT modify shared components in src/components/ui unless explicitly asked. Instead, create or extend a story (e.g. a new `*.prototype.stories.tsx` next to the component, title prefixed `Prototypes/`) that shows the idea, using variants/className overrides with design tokens. Show 2–3 alternatives if the request is open-ended. End with which story to open."
+  },
+  {
+    "id": "research",
+    "label": "Research",
+    "emoji": "🔎",
+    "instructions": "Do NOT edit any files. Investigate the selected element: which component renders it, where that component is used across the app (grep), which design tokens/variants apply, and related components. Answer concisely and propose 2–3 options with trade-offs."
+  },
+  {
+    "id": "tweak",
+    "label": "Tweak",
+    "emoji": "🎛️",
+    "instructions": "Make a small, direct edit to the component that renders the selection, using design tokens and existing variants only. Keep the diff minimal and summarise it."
+  },
+  {
+    "id": "newpage",
+    "label": "New page",
+    "emoji": "📄",
+    "instructions": "Compose a new page or section as a new story under `src/stories/pages/` (title `Pages/<Name>`) built only from existing components in src/components. Use realistic mock data. No new primitives."
+  },
+  {
+    "id": "review",
+    "label": "Review",
+    "emoji": "✅",
+    "instructions": "Do NOT edit files. Review the selected element for design-system consistency (tokens vs hardcoded values), accessibility (contrast, labels, focus, semantics) and responsiveness. Report findings as a short prioritized list with file:line references."
+  }
+]

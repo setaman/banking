@@ -59,7 +59,16 @@ function buildPrompt(message, c) {
   return `${L.join("\n")}\n\nUser request:\n${message}`;
 }
 
-const summarize = (i = {}) =>
+function readFlows() {
+  try {
+    const f = JSON.parse(readFileSync(path.join(ROOT, ".storybook/ai-chat/flows.json"), "utf8"));
+    return Array.isArray(f) ? f : [];
+  } catch {
+    return [];
+  }
+}
+
+const summarize =(i = {}) =>
   String(i.file_path ?? i.pattern ?? i.command ?? i.path ?? "").slice(0, 120);
 
 async function chat(req, res) {
@@ -78,8 +87,10 @@ async function chat(req, res) {
   const send = (o) => !res.writableEnded && res.write(`data: ${JSON.stringify(o)}\n\n`);
 
   const rulesPath = path.join(ROOT, ".storybook/ai-chat/AGENT_RULES.md");
+  const flow = typeof body.flow === "string" ? readFlows().find((f) => f.id === body.flow) : null;
+  const flowPrefix = flow ? `[Flow: ${flow.label}]\n${flow.instructions}\n\n` : "";
   const args = [
-    "-p", buildPrompt(body.message, body.context),
+    "-p", flowPrefix + buildPrompt(body.message, body.context),
     "--output-format", "stream-json",
     "--verbose",
     "--permission-mode", "acceptEdits",
@@ -174,6 +185,7 @@ http
         { id: "sonnet", label: "Sonnet" },
         { id: "haiku", label: "Haiku" },
       ]);
+    if (req.method === "GET" && url === "/flows") return json(res, 200, readFlows());
     if (req.method === "POST" && url === "/chat") return chat(req, res);
     if (req.method === "POST" && url === "/stop") {
       const stopped = !!child;

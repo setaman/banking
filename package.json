@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "storybook": "concurrently -k -n sb,ai -c magenta,cyan \"storybook dev -p 6006 --no-open\" \"node scripts/ai-chat-server.mjs\"",
+    "storybook": "concurrently -k -n sb,ai,term -c magenta,cyan,yellow \"storybook dev -p 6006 --no-open\" \"node scripts/ai-chat-server.mjs\" \"node scripts/ai-terminal-server.mjs\"",
     "storybook:only": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build"
   },
