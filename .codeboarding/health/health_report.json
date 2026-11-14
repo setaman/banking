@@ -1,6 +1,6 @@
 {
   "repository_name": ".codeboarding-target",
-  "timestamp": "2026-10-15T11:37:41.606239+00:00",
+  "timestamp": "2026-11-14T18:48:58.501095+00:00",
   "overall_score": 0.9672391017173052,
   "check_summaries": [
     {
@@ -196,8 +196,8 @@
       "languages": [],
       "check_type": "circular_dependencies",
       "cycles": [
+        "src.lib.stats -> src.lib.banking -> src.lib.db -> src.lib.stats",
         "src.lib.db -> src.lib.banking -> src.lib.db",
-        "src.lib.db -> src.lib.stats -> src.lib.banking -> src.lib.db",
         "src.lib.banking -> src.lib.banking.adapters.dkb -> src.lib.banking"
       ],
       "packages_checked": 33,

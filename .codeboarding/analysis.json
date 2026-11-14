@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generated_at": "2026-10-15T11:38:32.107623+00:00",
-    "source_tree_hash": "831f38d661dc2dc178a17db45aea7fdb42eb37ca0fedd5d94aefd5ec26fd312d",
+    "generated_at": "2026-11-14T18:50:00.864999+00:00",
+    "source_tree_hash": "9d62f4f702207df032a85683ec1cccc0b4860a3d0c22c90b05ead742d7613b56",
     "repo_name": ".codeboarding-target",
     "depth_level": 2,
     "depth_cap": 2,
@@ -1093,7 +1093,7 @@
       }
     }
   },
-  "description": "Personal finance tracking and AI assistant application providing bank synchronization, financial analytics, sandbox simulation, and conversational financial assistance. Next.js App Router pages and client components render UI views and dispatch server actions, which orchestrate database persistence, banking adapters, statistical calculations, and AI assistant tools.",
+  "description": "This scope implements a full-stack personal finance and banking web application built with Next.js. Page routes host user interfaces for dashboard analytics, AI assistance, transaction auditing, and settings, backed by server actions and domain logic that handle database persistence, banking data synchronization, and statistical modeling.",
   "files": {
     "src/components/assistant/charts/bar-chart-view.tsx": {
       "method_keys": [
@@ -1177,8 +1177,8 @@
         "src/components/assistant/chat-input.tsx|src.components.assistant.chat-input.ChatInput.ChatInput",
         "src/components/assistant/chat-input.tsx|src.components.assistant.chat-input.ChatInput.ChatInput.useEffect() callback"
       ],
-      "content_hash": "ece625614e04b9e0",
-      "module_hash": "5aaeaee67c657a27"
+      "content_hash": "16102f5d19b964f2",
+      "module_hash": "5696eca80341a195"
     },
     "src/components/assistant/chat-message.tsx": {
       "method_keys": [
@@ -2714,7 +2714,7 @@
         "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage.handleDismissError.useCallback() callback",
         "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage.chatMessages.map() callback"
       ],
-      "content_hash": "3d0231e2ee7f341e",
+      "content_hash": "8b1540d44bae7c91",
       "module_hash": "8e6e1f455764f4a1"
     },
     "src/app/(dashboard)/insights/page.tsx": {
@@ -3520,32 +3520,32 @@
     "src/components/assistant/chat-input.tsx|src.components.assistant.chat-input.ChatInputProps": {
       "file_path": "src/components/assistant/chat-input.tsx",
       "qualified_name": "src.components.assistant.chat-input.ChatInputProps",
-      "start_line": 34,
-      "end_line": 39,
+      "start_line": 35,
+      "end_line": 40,
       "type": "INTERFACE",
       "content_hash": "85ac745a77e03c44"
     },
     "src/components/assistant/chat-input.tsx|src.components.assistant.chat-input.ChatInput": {
       "file_path": "src/components/assistant/chat-input.tsx",
       "qualified_name": "src.components.assistant.chat-input.ChatInput",
-      "start_line": 41,
-      "end_line": 139,
+      "start_line": 42,
+      "end_line": 164,
       "type": "CLASS",
-      "content_hash": "d80318cb1de11cf9"
+      "content_hash": "2fd781a441a5eaeb"
     },
     "src/components/assistant/chat-input.tsx|src.components.assistant.chat-input.ChatInput.ChatInput": {
       "file_path": "src/components/assistant/chat-input.tsx",
       "qualified_name": "src.components.assistant.chat-input.ChatInput.ChatInput",
-      "start_line": 42,
-      "end_line": 138,
+      "start_line": 43,
+      "end_line": 163,
       "type": "FUNCTION",
-      "content_hash": "202c75eebdb81f3b"
+      "content_hash": "3647150dc245e9bd"
     },
     "src/components/assistant/chat-input.tsx|src.components.assistant.chat-input.ChatInput.ChatInput.useEffect() callback": {
       "file_path": "src/components/assistant/chat-input.tsx",
       "qualified_name": "src.components.assistant.chat-input.ChatInput.ChatInput.useEffect() callback",
-      "start_line": 55,
-      "end_line": 60,
+      "start_line": 56,
+      "end_line": 61,
       "type": "FUNCTION",
       "content_hash": "bbc1b202b0d0b37e"
     },
@@ -10539,7 +10539,7 @@
       "start_line": 190,
       "end_line": 633,
       "type": "FUNCTION",
-      "content_hash": "c4d0b739a05d1676"
+      "content_hash": "06dfa9e39ae2577b"
     },
     "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage.transport": {
       "file_path": "src/app/(dashboard)/assistant/page.tsx",
@@ -14072,26 +14072,14 @@
   },
   "components": [
     {
-      "name": "User Interface Components and Contexts",
-      "description": "React presentation components, charting visualizations, settings cards, design system widgets, and state contexts for the application interface.",
+      "name": "User Interface Components",
+      "description": "Renders interactive dashboard views, AI assistant chat interfaces, financial charts, and UI primitives.",
       "key_entities": [
-        {
-          "qualified_name": "src.components.assistant.chat-input.ChatInput",
-          "reference_file": "src/components/assistant/chat-input.tsx",
-          "reference_start_line": 41,
-          "reference_end_line": 139
-        },
         {
           "qualified_name": "src.components.assistant.chat-message.ChatMessageBubble",
           "reference_file": "src/components/assistant/chat-message.tsx",
           "reference_start_line": 794,
           "reference_end_line": 804
-        },
-        {
-          "qualified_name": "src.components.dashboard.balance-history-chart.BalanceHistoryChart",
-          "reference_file": "src/components/dashboard/balance-history-chart.tsx",
-          "reference_start_line": 21,
-          "reference_end_line": 451
         },
         {
           "qualified_name": "src.components.dashboard.overview-cards.OverviewCards",
@@ -14100,10 +14088,16 @@
           "reference_end_line": 277
         },
         {
-          "qualified_name": "src.components.assistant.profile-switcher.ProfileSwitcher",
-          "reference_file": "src/components/assistant/profile-switcher.tsx",
-          "reference_start_line": 33,
-          "reference_end_line": 121
+          "qualified_name": "src.components.assistant.charts.bar-chart-view.BarChartView",
+          "reference_file": "src/components/assistant/charts/bar-chart-view.tsx",
+          "reference_start_line": 16,
+          "reference_end_line": 52
+        },
+        {
+          "qualified_name": "src.components.dashboard.balance-history-chart.BalanceHistoryChart",
+          "reference_file": "src/components/dashboard/balance-history-chart.tsx",
+          "reference_start_line": 21,
+          "reference_end_line": 451
         }
       ],
       "source_cluster_ids": [
@@ -15027,8 +15021,8 @@
       "can_expand": true,
       "components": [
         {
-          "name": "UI Component Library",
-          "description": "Provides reusable baseline UI elements and atomic design system components.",
+          "name": "Base UI Primitives",
+          "description": "Provides foundational design system primitives and atomic UI components including buttons, dialogs, cards, and form inputs.",
           "key_entities": [
             {
               "qualified_name": "src.components.ui.button.Button",
@@ -15043,16 +15037,16 @@
               "reference_end_line": 16
             },
             {
-              "qualified_name": "src.components.ui.table.Table",
-              "reference_file": "src/components/ui/table.tsx",
-              "reference_start_line": 7,
-              "reference_end_line": 20
-            },
-            {
               "qualified_name": "src.components.ui.alert-dialog.AlertDialog",
               "reference_file": "src/components/ui/alert-dialog.tsx",
               "reference_start_line": 9,
               "reference_end_line": 13
+            },
+            {
+              "qualified_name": "src.components.ui.table.Table",
+              "reference_file": "src/components/ui/table.tsx",
+              "reference_start_line": 7,
+              "reference_end_line": 20
             }
           ],
           "source_cluster_ids": [
@@ -15313,8 +15307,8 @@
           "components_relations": []
         },
         {
-          "name": "Assistant Chat Interface",
-          "description": "Renders conversational AI chat interactions, tool execution evidence, and dynamic chart visualizations.",
+          "name": "AI Assistant Interface",
+          "description": "Renders the conversational AI assistant chat interface, message histories, and dynamic data visualization charts.",
           "key_entities": [
             {
               "qualified_name": "src.components.assistant.charts.data-table.DataTable",
@@ -15325,8 +15319,14 @@
             {
               "qualified_name": "src.components.assistant.chat-input.ChatInput",
               "reference_file": "src/components/assistant/chat-input.tsx",
-              "reference_start_line": 41,
-              "reference_end_line": 139
+              "reference_start_line": 42,
+              "reference_end_line": 164
+            },
+            {
+              "qualified_name": "src.components.assistant.visualization-renderer.VisualizationRenderer",
+              "reference_file": "src/components/assistant/visualization-renderer.tsx",
+              "reference_start_line": 285,
+              "reference_end_line": 299
             }
           ],
           "source_cluster_ids": [
@@ -15571,7 +15571,7 @@
         },
         {
           "name": "Financial Dashboard Views",
-          "description": "Displays financial metrics, spending charts, transaction tables, and budget breakdowns.",
+          "description": "Presents financial dashboard views, metric overview cards, spending analytics, and transaction lists.",
           "key_entities": [
             {
               "qualified_name": "src.components.dashboard.balance-history-chart.BalanceHistoryChart",
@@ -15584,6 +15584,12 @@
               "reference_file": "src/components/dashboard/budget-split-strip.tsx",
               "reference_start_line": 67,
               "reference_end_line": 217
+            },
+            {
+              "qualified_name": "src.components.dashboard.dashboard-shell.DashboardShell",
+              "reference_file": "src/components/dashboard/dashboard-shell.tsx",
+              "reference_start_line": 5,
+              "reference_end_line": 18
             }
           ],
           "source_cluster_ids": [
@@ -15763,15 +15769,9 @@
           "components_relations": []
         },
         {
-          "name": "App State Providers and Controls",
-          "description": "Manages application synchronization state, theme configuration, demo mode, and global utility controls.",
+          "name": "Application State and Status Controls",
+          "description": "Manages application-wide synchronization, demo mode, and theme contexts along with their interactive header controls.",
           "key_entities": [
-            {
-              "qualified_name": "src.contexts.sync-context.useSync",
-              "reference_file": "src/contexts/sync-context.tsx",
-              "reference_start_line": 121,
-              "reference_end_line": 127
-            },
             {
               "qualified_name": "src.components.demo-toggle.DemoToggle",
               "reference_file": "src/components/demo-toggle.tsx",
@@ -15785,16 +15785,10 @@
               "reference_end_line": 128
             },
             {
-              "qualified_name": "src.components.sync-status.SyncStatus",
-              "reference_file": "src/components/sync-status.tsx",
-              "reference_start_line": 9,
-              "reference_end_line": 50
-            },
-            {
-              "qualified_name": "src.components.theme-toggle.ThemeToggle",
-              "reference_file": "src/components/theme-toggle.tsx",
-              "reference_start_line": 9,
-              "reference_end_line": 39
+              "qualified_name": "src.contexts.sync-context.useSync",
+              "reference_file": "src/contexts/sync-context.tsx",
+              "reference_start_line": 121,
+              "reference_end_line": 127
             }
           ],
           "source_cluster_ids": [
@@ -15910,8 +15904,8 @@
           "components_relations": []
         },
         {
-          "name": "Settings and Integration Management",
-          "description": "Manages bank connection linking, account settings, and AI provider profiles and credentials.",
+          "name": "Settings and Profile Configuration",
+          "description": "Provides management interfaces for user bank accounts, institution connections, and AI provider model profiles.",
           "key_entities": [
             {
               "qualified_name": "src.components.settings.account-management-card.AccountManagementCard",
@@ -15924,6 +15918,12 @@
               "reference_file": "src/components/settings/bank-connection-card.tsx",
               "reference_start_line": 195,
               "reference_end_line": 551
+            },
+            {
+              "qualified_name": "src.components.settings.ai-provider-card.AiProviderCard",
+              "reference_file": "src/components/settings/ai-provider-card.tsx",
+              "reference_start_line": 68,
+              "reference_end_line": 417
             }
           ],
           "source_cluster_ids": [
@@ -16019,14 +16019,26 @@
           "components_relations": []
         },
         {
-          "name": "Application Layout Structure",
-          "description": "Provides top-level page headers, navigation links, and footer structures.",
+          "name": "Application Layout and Navigation",
+          "description": "Defines top-level navigation, header status bars, and footer layout structures for the application.",
           "key_entities": [
             {
               "qualified_name": "src.components.layout.Header.Header",
               "reference_file": "src/components/layout/Header.tsx",
               "reference_start_line": 15,
               "reference_end_line": 106
+            },
+            {
+              "qualified_name": "src.components.layout.footer.Footer",
+              "reference_file": "src/components/layout/footer.tsx",
+              "reference_start_line": 1,
+              "reference_end_line": 11
+            },
+            {
+              "qualified_name": "src.components.layout.nav.Nav",
+              "reference_file": "src/components/layout/nav.tsx",
+              "reference_start_line": 7,
+              "reference_end_line": 35
             }
           ],
           "source_cluster_ids": [
@@ -16061,8 +16073,8 @@
           "components_relations": []
         },
         {
-          "name": "Sandbox Simulation Tools",
-          "description": "Renders interactive simulation rule controls and comparison charts for hypothetical financial scenarios.",
+          "name": "Financial Sandbox Simulation",
+          "description": "Provides interactive simulation rule cards and comparison charts for scenario modeling.",
           "key_entities": [
             {
               "qualified_name": "src.components.sandbox.rule-card.InvestmentControls",
@@ -16075,6 +16087,12 @@
               "reference_file": "src/components/sandbox/rule-card.tsx",
               "reference_start_line": 209,
               "reference_end_line": 260
+            },
+            {
+              "qualified_name": "src.components.sandbox.comparison-chart.ComparisonChart",
+              "reference_file": "src/components/sandbox/comparison-chart.tsx",
+              "reference_start_line": 28,
+              "reference_end_line": 367
             }
           ],
           "source_cluster_ids": [
@@ -16148,9 +16166,9 @@
       ],
       "components_relations": [
         {
-          "relation": "renders via UI primitives",
-          "src_name": "Assistant Chat Interface",
-          "dst_name": "UI Component Library",
+          "relation": "renders using UI primitives",
+          "src_name": "AI Assistant Interface",
+          "dst_name": "Base UI Primitives",
           "evidence": "",
           "key_edges": [
             {
@@ -16162,7 +16180,7 @@
                   "column": 10
                 }
               ],
-              "description": "Assistant data tables render UI table components"
+              "description": "Renders tabular assistant data using base table components"
             }
           ],
           "src_id": "1.2",
@@ -16255,8 +16273,8 @@
               "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
               "call_sites": [
                 {
-                  "line": 98,
-                  "column": 12
+                  "line": 117,
+                  "column": 8
                 }
               ],
               "description": ""
@@ -16266,8 +16284,8 @@
               "target": "src/components/ui/textarea.tsx|src.components.ui.textarea.Textarea",
               "call_sites": [
                 {
-                  "line": 81,
-                  "column": 12
+                  "line": 94,
+                  "column": 8
                 }
               ],
               "description": ""
@@ -16397,21 +16415,21 @@
           ]
         },
         {
-          "relation": "renders via UI primitives",
+          "relation": "renders using UI primitives",
           "src_name": "Financial Dashboard Views",
-          "dst_name": "UI Component Library",
+          "dst_name": "Base UI Primitives",
           "evidence": "",
           "key_edges": [
             {
               "source": "src/components/dashboard/balance-history-chart.tsx|src.components.dashboard.balance-history-chart.BalanceHistoryChart",
-              "target": "src/components/ui/card.tsx|src.components.ui.card.CardContent",
+              "target": "src/components/ui/card.tsx|src.components.ui.card.CardHeader",
               "call_sites": [
                 {
-                  "line": 424,
+                  "line": 413,
                   "column": 8
                 }
               ],
-              "description": "Dashboard charts render UI card wrappers and headers"
+              "description": "Wraps financial charts and overview cards with base card components"
             }
           ],
           "src_id": "1.3",
@@ -17003,9 +17021,9 @@
           ]
         },
         {
-          "relation": "renders via UI primitives",
-          "src_name": "App State Providers and Controls",
-          "dst_name": "UI Component Library",
+          "relation": "renders using UI primitives",
+          "src_name": "Application State and Status Controls",
+          "dst_name": "Base UI Primitives",
           "evidence": "",
           "key_edges": [
             {
@@ -17017,7 +17035,7 @@
                   "column": 8
                 }
               ],
-              "description": "Demo toggle renders alert dialog confirmation dialogs"
+              "description": "Constructs confirmation dialogs using base alert dialog components"
             }
           ],
           "src_id": "1.4",
@@ -17327,9 +17345,9 @@
           ]
         },
         {
-          "relation": "renders via UI primitives",
-          "src_name": "Settings and Integration Management",
-          "dst_name": "UI Component Library",
+          "relation": "renders using UI primitives",
+          "src_name": "Settings and Profile Configuration",
+          "dst_name": "Base UI Primitives",
           "evidence": "",
           "key_edges": [
             {
@@ -17345,7 +17363,7 @@
                   "column": 10
                 }
               ],
-              "description": "Settings cards render UI alert dialogs and form elements"
+              "description": "Prompts for account actions using base alert dialogs"
             }
           ],
           "src_id": "1.5",
@@ -18166,9 +18184,9 @@
           ]
         },
         {
-          "relation": "triggers synchronization via",
-          "src_name": "Settings and Integration Management",
-          "dst_name": "App State Providers and Controls",
+          "relation": "triggers synchronization via context",
+          "src_name": "Settings and Profile Configuration",
+          "dst_name": "Application State and Status Controls",
           "evidence": "",
           "key_edges": [
             {
@@ -18180,7 +18198,7 @@
                   "column": 33
                 }
               ],
-              "description": "Bank connection card reads and initiates account synchronization"
+              "description": "Accesses synchronization state and triggers data sync operations"
             }
           ],
           "src_id": "1.5",
@@ -18201,9 +18219,9 @@
           ]
         },
         {
-          "relation": "renders via UI primitives",
-          "src_name": "Application Layout Structure",
-          "dst_name": "UI Component Library",
+          "relation": "renders using UI primitives",
+          "src_name": "Application Layout and Navigation",
+          "dst_name": "Base UI Primitives",
           "evidence": "",
           "key_edges": [
             {
@@ -18215,7 +18233,7 @@
                   "column": 12
                 }
               ],
-              "description": "Header renders baseline buttons"
+              "description": "Renders navigation action buttons using base button primitives"
             }
           ],
           "src_id": "1.6",
@@ -18236,25 +18254,25 @@
           ]
         },
         {
-          "relation": "hosts app controls and toggles",
-          "src_name": "Application Layout Structure",
-          "dst_name": "App State Providers and Controls",
+          "relation": "embeds header status controls",
+          "src_name": "Application Layout and Navigation",
+          "dst_name": "Application State and Status Controls",
           "evidence": "",
           "key_edges": [
             {
               "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-              "target": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+              "target": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
               "call_sites": [
                 {
-                  "line": 58,
+                  "line": 56,
                   "column": 14
                 },
                 {
-                  "line": 98,
-                  "column": 16
+                  "line": 90,
+                  "column": 14
                 }
               ],
-              "description": "Header embeds demo mode toggles and sync control buttons"
+              "description": "Embeds sync, demo, and theme toggle controls in the navigation header"
             }
           ],
           "src_id": "1.6",
@@ -18324,9 +18342,9 @@
           ]
         },
         {
-          "relation": "renders via UI primitives",
-          "src_name": "Sandbox Simulation Tools",
-          "dst_name": "UI Component Library",
+          "relation": "renders using UI primitives",
+          "src_name": "Financial Sandbox Simulation",
+          "dst_name": "Base UI Primitives",
           "evidence": "",
           "key_edges": [
             {
@@ -18342,7 +18360,7 @@
                   "column": 10
                 }
               ],
-              "description": "Sandbox simulation rule controls render UI sliders and inputs"
+              "description": "Builds scenario adjustment inputs with base slider and label primitives"
             }
           ],
           "src_id": "1.7",
@@ -18540,25 +18558,13 @@
     },
     {
       "name": "Domain Services and Utilities",
-      "description": "Core domain logic including banking sync adapters, database persistence, financial analytics calculations, formatting utilities, and AI tool definitions.",
+      "description": "Provides database access, banking integrations, AI agent tool execution, and financial statistics calculations.",
       "key_entities": [
         {
           "qualified_name": "src.lib.db.index.getDb",
           "reference_file": "src/lib/db/index.ts",
           "reference_start_line": 9,
           "reference_end_line": 25
-        },
-        {
-          "qualified_name": "src.lib.ai.tools.compare-periods.comparePeriodsTool",
-          "reference_file": "src/lib/ai/tools/compare-periods.ts",
-          "reference_start_line": 93,
-          "reference_end_line": 128
-        },
-        {
-          "qualified_name": "src.lib.ai.tools.get-accounts.getAccountsTool",
-          "reference_file": "src/lib/ai/tools/get-accounts.ts",
-          "reference_start_line": 33,
-          "reference_end_line": 61
         },
         {
           "qualified_name": "src.lib.stats.calculations.calculateBalancePrediction",
@@ -19240,8 +19246,8 @@
       "can_expand": true,
       "components": [
         {
-          "name": "AI Assistant Tools",
-          "description": "Provides AI models, system prompts, visualization builders, and analytical tools for financial assistance.",
+          "name": "Financial AI Assistant",
+          "description": "Executes AI model queries, tools for financial summaries and predictions, and maps results to charts.",
           "key_entities": [
             {
               "qualified_name": "src.lib.ai.tools.compare-periods.summarizePeriod",
@@ -19250,10 +19256,16 @@
               "reference_end_line": 86
             },
             {
-              "qualified_name": "src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool",
+              "qualified_name": "src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool.execute",
               "reference_file": "src/lib/ai/tools/get-balance-prediction.ts",
-              "reference_start_line": 48,
-              "reference_end_line": 86
+              "reference_start_line": 52,
+              "reference_end_line": 85
+            },
+            {
+              "qualified_name": "src.lib.ai.visualization-mapper.buildBarChartOption.tooltip.formatter",
+              "reference_file": "src/lib/ai/visualization-mapper.ts",
+              "reference_start_line": 204,
+              "reference_end_line": 221
             }
           ],
           "source_cluster_ids": [
@@ -19575,8 +19587,8 @@
           "components_relations": []
         },
         {
-          "name": "Banking Integration",
-          "description": "Integrates banking data providers, sync workflows, account utilities, and internal transfer detection.",
+          "name": "Banking Integration and Sync",
+          "description": "Manages external bank adapters, transaction synchronization, internal transfers, and reconciliation.",
           "key_entities": [
             {
               "qualified_name": "src.lib.banking.sync.syncBank",
@@ -19721,7 +19733,7 @@
         },
         {
           "name": "Financial Statistics and Analytics",
-          "description": "Computes financial metrics, categories, cash flow summaries, and sandbox projections.",
+          "description": "Computes financial metrics, expense volatility, budget splits, and transaction categorization.",
           "key_entities": [
             {
               "qualified_name": "src.lib.stats.calculations.calculateSavingsRate",
@@ -19730,22 +19742,16 @@
               "reference_end_line": 176
             },
             {
-              "qualified_name": "src.lib.stats.calculations.calculateBalancePrediction",
-              "reference_file": "src/lib/stats/calculations.ts",
-              "reference_start_line": 550,
-              "reference_end_line": 619
+              "qualified_name": "src.lib.stats.transaction-summary.computeTransactionSummary",
+              "reference_file": "src/lib/stats/transaction-summary.ts",
+              "reference_start_line": 57,
+              "reference_end_line": 91
             },
             {
               "qualified_name": "src.lib.stats.categories.classifyTransaction",
               "reference_file": "src/lib/stats/categories.ts",
               "reference_start_line": 626,
               "reference_end_line": 643
-            },
-            {
-              "qualified_name": "src.lib.stats.transaction-summary.computeTransactionSummary",
-              "reference_file": "src/lib/stats/transaction-summary.ts",
-              "reference_start_line": 57,
-              "reference_end_line": 91
             }
           ],
           "source_cluster_ids": [
@@ -19946,8 +19952,8 @@
           "components_relations": []
         },
         {
-          "name": "Database Management",
-          "description": "Manages database connectivity, backups, and transaction seeding.",
+          "name": "Database Access and Maintenance",
+          "description": "Provides SQLite database connectivity, backup routines, and database seeding operations.",
           "key_entities": [
             {
               "qualified_name": "src.lib.db.index.getDb",
@@ -20009,8 +20015,8 @@
           "components_relations": []
         },
         {
-          "name": "Shared Formatting Utilities",
-          "description": "Provides shared formatting helpers for currency, numbers, and UI class utilities.",
+          "name": "Formatting and Core Utilities",
+          "description": "Provides currency formatting, compact representations, and shared utility functions.",
           "key_entities": [
             {
               "qualified_name": "src.lib.format.formatCurrency",
@@ -20023,12 +20029,6 @@
               "reference_file": "src/lib/format.ts",
               "reference_start_line": 69,
               "reference_end_line": 74
-            },
-            {
-              "qualified_name": "src.lib.format.formatPercent",
-              "reference_file": "src/lib/format.ts",
-              "reference_start_line": 83,
-              "reference_end_line": 86
             }
           ],
           "source_cluster_ids": [
@@ -20061,8 +20061,8 @@
       ],
       "components_relations": [
         {
-          "relation": "queries metrics from",
-          "src_name": "AI Assistant Tools",
+          "relation": "queries financial statistics",
+          "src_name": "Financial AI Assistant",
           "dst_name": "Financial Statistics and Analytics",
           "evidence": "",
           "key_edges": [
@@ -20075,18 +20075,7 @@
                   "column": 23
                 }
               ],
-              "description": "AI period comparison tool delegates metric computations to statistics calculations"
-            },
-            {
-              "source": "src/lib/ai/tools/get-balance-prediction.ts|src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool.execute",
-              "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateBalancePrediction",
-              "call_sites": [
-                {
-                  "line": 60,
-                  "column": 20
-                }
-              ],
-              "description": "AI balance prediction tool requests future balance predictions from calculations"
+              "description": "AI tools invoke analytical statistics functions to calculate metrics for LLM responses"
             }
           ],
           "src_id": "2.1",
@@ -20261,9 +20250,9 @@
           ]
         },
         {
-          "relation": "formats chart values using",
-          "src_name": "AI Assistant Tools",
-          "dst_name": "Shared Formatting Utilities",
+          "relation": "formats visualization values",
+          "src_name": "Financial AI Assistant",
+          "dst_name": "Formatting and Core Utilities",
           "evidence": "",
           "key_edges": [
             {
@@ -20275,7 +20264,7 @@
                   "column": 48
                 }
               ],
-              "description": "AI visualization mapper formats currency values for charts"
+              "description": "Visualization mapper formats currency values for charts"
             }
           ],
           "src_id": "2.1",
@@ -20340,21 +20329,21 @@
           ]
         },
         {
-          "relation": "persists and backs up via",
-          "src_name": "Banking Integration",
-          "dst_name": "Database Management",
+          "relation": "persists banking data",
+          "src_name": "Banking Integration and Sync",
+          "dst_name": "Database Access and Maintenance",
           "evidence": "",
           "key_edges": [
             {
               "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
-              "target": "src/lib/db/backup.ts|src.lib.db.backup.createBackup",
+              "target": "src/lib/db/index.ts|src.lib.db.index.getDb",
               "call_sites": [
                 {
-                  "line": 18,
-                  "column": 30
+                  "line": 26,
+                  "column": 20
                 }
               ],
-              "description": "Banking sync triggers database backups and retrieves the database instance"
+              "description": "Bank synchronizer creates backups and persists accounts and transactions"
             }
           ],
           "src_id": "2.2",
@@ -20401,9 +20390,9 @@
           ]
         },
         {
-          "relation": "filters transfers using",
+          "relation": "evaluates internal transfers",
           "src_name": "Financial Statistics and Analytics",
-          "dst_name": "Banking Integration",
+          "dst_name": "Banking Integration and Sync",
           "evidence": "",
           "key_edges": [
             {
@@ -20415,7 +20404,7 @@
                   "column": 9
                 }
               ],
-              "description": "Transaction summary verifies whether transactions are internal account transfers"
+              "description": "Summary calculations inspect transfer flags to exclude internal transfers"
             }
           ],
           "src_id": "2.3",
@@ -20436,21 +20425,21 @@
           ]
         },
         {
-          "relation": "formats amounts with",
+          "relation": "formats calculated amounts",
           "src_name": "Financial Statistics and Analytics",
-          "dst_name": "Shared Formatting Utilities",
+          "dst_name": "Formatting and Core Utilities",
           "evidence": "",
           "key_edges": [
             {
-              "source": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateTopCategories",
+              "source": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateDailyAverage",
               "target": "src/lib/format.ts|src.lib.format.formatCurrency",
               "call_sites": [
                 {
-                  "line": 315,
-                  "column": 18
+                  "line": 967,
+                  "column": 19
                 }
               ],
-              "description": "Statistics calculations format currency representations for metrics output"
+              "description": "Statistical calculations format currency amounts for display"
             }
           ],
           "src_id": "2.3",
@@ -20519,9 +20508,9 @@
           ]
         },
         {
-          "relation": "generates identifiers via",
-          "src_name": "Database Management",
-          "dst_name": "Banking Integration",
+          "relation": "generates transaction keys",
+          "src_name": "Database Access and Maintenance",
+          "dst_name": "Banking Integration and Sync",
           "evidence": "",
           "key_edges": [
             {
@@ -20533,7 +20522,7 @@
                   "column": 11
                 }
               ],
-              "description": "Database seeder generates unique banking transaction IDs"
+              "description": "Database seeding generates transaction identifiers"
             }
           ],
           "src_id": "2.4",
@@ -20554,8 +20543,8 @@
           ]
         },
         {
-          "relation": "classifies data using",
-          "src_name": "Database Management",
+          "relation": "classifies seeded transactions",
+          "src_name": "Database Access and Maintenance",
           "dst_name": "Financial Statistics and Analytics",
           "evidence": "",
           "key_edges": [
@@ -20568,7 +20557,7 @@
                   "column": 15
                 }
               ],
-              "description": "Database seeder classifies transactions into categories"
+              "description": "Database seeding classifies synthetic transactions"
             }
           ],
           "src_id": "2.4",
@@ -20591,8 +20580,8 @@
       ]
     },
     {
-      "name": "Application Pages and Configuration",
-      "description": "Next.js App Router pages, API endpoints, AI/credentials configuration handlers, and reusable client interaction hooks.",
+      "name": "Application Routes and Hooks",
+      "description": "Defines Next.js dashboard pages, API route endpoints, client state hooks, and runtime configurations.",
       "key_entities": [
         {
           "qualified_name": "src.app.(dashboard).assistant.page.AssistantPage",
@@ -20607,22 +20596,16 @@
           "reference_end_line": 1207
         },
         {
-          "qualified_name": "src.hooks.use-date-range.useDateRange",
-          "reference_file": "src/hooks/use-date-range.ts",
-          "reference_start_line": 244,
-          "reference_end_line": 362
-        },
-        {
-          "qualified_name": "src.config.ai.getAiProfiles",
-          "reference_file": "src/config/ai.ts",
-          "reference_start_line": 240,
-          "reference_end_line": 242
-        },
-        {
           "qualified_name": "src.config.ai.getActiveAiProfile",
           "reference_file": "src/config/ai.ts",
           "reference_start_line": 250,
           "reference_end_line": 260
+        },
+        {
+          "qualified_name": "src.hooks.use-date-range.useDateRange",
+          "reference_file": "src/hooks/use-date-range.ts",
+          "reference_start_line": 244,
+          "reference_end_line": 362
         }
       ],
       "source_cluster_ids": [
@@ -21096,8 +21079,8 @@
       "can_expand": true,
       "components": [
         {
-          "name": "UI Pages and API Routes",
-          "description": "Renders dashboard views and serves backend API endpoints for assistant chat and data synchronization.",
+          "name": "Application Pages and Endpoints",
+          "description": "Next.js App Router pages and backend API route handlers managing dashboard views, chat interactions, and data synchronization.",
           "key_entities": [
             {
               "qualified_name": "src.app.page.Home",
@@ -21110,6 +21093,12 @@
               "reference_file": "src/app/(dashboard)/assistant/page.tsx",
               "reference_start_line": 190,
               "reference_end_line": 633
+            },
+            {
+              "qualified_name": "src.app.(dashboard).sandbox.page.SandboxPage",
+              "reference_file": "src/app/(dashboard)/sandbox/page.tsx",
+              "reference_start_line": 449,
+              "reference_end_line": 728
             },
             {
               "qualified_name": "src.app.api.chat.route.POST",
@@ -21425,8 +21414,8 @@
           "components_relations": []
         },
         {
-          "name": "Client State Hooks",
-          "description": "Provides reusable React hooks for managing chat persistence, date range filters, and financial scenarios.",
+          "name": "Client State Management Hooks",
+          "description": "Custom React hooks providing stateful logic for chat message persistence, date filtering, and sandbox scenario modeling.",
           "key_entities": [
             {
               "qualified_name": "src.hooks.use-chat-persistence.useChatPersistence",
@@ -21445,6 +21434,12 @@
               "reference_file": "src/hooks/use-scenarios.ts",
               "reference_start_line": 132,
               "reference_end_line": 266
+            },
+            {
+              "qualified_name": "src.hooks.use-chat-persistence.capMessageCount",
+              "reference_file": "src/hooks/use-chat-persistence.ts",
+              "reference_start_line": 433,
+              "reference_end_line": 446
             }
           ],
           "source_cluster_ids": [
@@ -21585,8 +21580,8 @@
           "components_relations": []
         },
         {
-          "name": "AI and Credential Configuration",
-          "description": "Manages AI profile definitions and credentials configuration for external services.",
+          "name": "Service Configuration and Credentials",
+          "description": "Configuration providers that manage AI profile settings and securely load external service credentials.",
           "key_entities": [
             {
               "qualified_name": "src.config.ai.getActiveAiProfile",
@@ -21663,9 +21658,9 @@
       ],
       "components_relations": [
         {
-          "relation": "manages client state with",
-          "src_name": "UI Pages and API Routes",
-          "dst_name": "Client State Hooks",
+          "relation": "consumes client state hooks",
+          "src_name": "Application Pages and Endpoints",
+          "dst_name": "Client State Management Hooks",
           "evidence": "",
           "key_edges": [
             {
@@ -21677,7 +21672,7 @@
                   "column": 7
                 }
               ],
-              "description": "Assistant page initializes chat history and persistence management"
+              "description": "Manages persisted chat state and message history across assistant sessions."
             },
             {
               "source": "src/app/(dashboard)/sandbox/page.tsx|src.app.(dashboard).sandbox.page.SandboxPage",
@@ -21688,7 +21683,7 @@
                   "column": 7
                 }
               ],
-              "description": "Sandbox page manages scenario modeling state"
+              "description": "Drives interactive financial scenario simulation state."
             },
             {
               "source": "src/app/page.tsx|src.app.page.Home",
@@ -21699,7 +21694,7 @@
                   "column": 7
                 }
               ],
-              "description": "Home page manages date range filtering state"
+              "description": "Filters dashboard metrics based on selected date ranges."
             }
           ],
           "src_id": "3.1",
@@ -21753,9 +21748,9 @@
           ]
         },
         {
-          "relation": "retrieves runtime configuration from",
-          "src_name": "UI Pages and API Routes",
-          "dst_name": "AI and Credential Configuration",
+          "relation": "loads runtime configurations",
+          "src_name": "Application Pages and Endpoints",
+          "dst_name": "Service Configuration and Credentials",
           "evidence": "",
           "key_edges": [
             {
@@ -21767,7 +21762,7 @@
                   "column": 7
                 }
               ],
-              "description": "Chat API endpoint loads active AI profile configurations"
+              "description": "Retrieves active AI model profiles to handle chat requests."
             },
             {
               "source": "src/app/api/sync/route.ts|src.app.api.sync.route.POST",
@@ -21778,7 +21773,7 @@
                   "column": 20
                 }
               ],
-              "description": "Sync API endpoint retrieves external service credentials"
+              "description": "Loads credentials required to authenticate external sync operations."
             }
           ],
           "src_id": "3.1",
@@ -21823,8 +21818,8 @@
       ]
     },
     {
-      "name": "Server Actions",
-      "description": "Next.js server actions handling backend operations for account management, transaction queries, AI profile configuration, banking sync, and stats generation.",
+      "name": "Server Action Handlers",
+      "description": "Executes server-side operations and data mutations for accounts, transactions, AI configurations, and bank syncing.",
       "key_entities": [
         {
           "qualified_name": "src.actions.accounts.actions.getAccounts",
@@ -21833,28 +21828,22 @@
           "reference_end_line": 39
         },
         {
-          "qualified_name": "src.actions.accounts.actions.getBalanceHistory",
-          "reference_file": "src/actions/accounts.actions.ts",
-          "reference_start_line": 100,
-          "reference_end_line": 109
-        },
-        {
           "qualified_name": "src.actions.ai.actions.getAiProfilesStatus",
           "reference_file": "src/actions/ai.actions.ts",
           "reference_start_line": 115,
           "reference_end_line": 123
         },
         {
-          "qualified_name": "src.actions.ai.actions.setActiveAiProfile",
-          "reference_file": "src/actions/ai.actions.ts",
-          "reference_start_line": 225,
-          "reference_end_line": 232
-        },
-        {
           "qualified_name": "src.actions.transactions.actions.getTransactions",
           "reference_file": "src/actions/transactions.actions.ts",
           "reference_start_line": 122,
           "reference_end_line": 218
+        },
+        {
+          "qualified_name": "src.actions.stats.actions.getDashboardStats",
+          "reference_file": "src/actions/stats.actions.ts",
+          "reference_start_line": 71,
+          "reference_end_line": 150
         }
       ],
       "source_cluster_ids": [
@@ -21991,9 +21980,9 @@
   ],
   "components_relations": [
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "UI Component Library",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats display data with",
+      "src_name": "Base UI Primitives",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.1",
@@ -23036,9 +23025,9 @@
       ]
     },
     {
-      "relation": "renders via UI primitives",
-      "src_name": "Assistant Chat Interface",
-      "dst_name": "UI Component Library",
+      "relation": "renders using UI primitives",
+      "src_name": "AI Assistant Interface",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [
         {
@@ -23050,7 +23039,7 @@
               "column": 10
             }
           ],
-          "description": "Assistant data tables render UI table components"
+          "description": "Renders tabular assistant data using base table components"
         }
       ],
       "src_id": "1.2",
@@ -23143,8 +23132,8 @@
           "target": "src/components/ui/button.tsx|src.components.ui.button.Button",
           "call_sites": [
             {
-              "line": 98,
-              "column": 12
+              "line": 117,
+              "column": 8
             }
           ],
           "description": ""
@@ -23154,8 +23143,8 @@
           "target": "src/components/ui/textarea.tsx|src.components.ui.textarea.Textarea",
           "call_sites": [
             {
-              "line": 81,
-              "column": 12
+              "line": 94,
+              "column": 8
             }
           ],
           "description": ""
@@ -23285,9 +23274,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "Assistant Chat Interface",
-      "dst_name": "AI Assistant Tools",
+      "relation": "formats display data with",
+      "src_name": "AI Assistant Interface",
+      "dst_name": "Financial AI Assistant",
       "evidence": "",
       "key_edges": [
         {
@@ -23299,7 +23288,7 @@
               "column": 18
             }
           ],
-          "description": "Generates chart visual configurations from domain data"
+          "description": "Prepares chart formatting options using visualization mapping utilities."
         }
       ],
       "src_id": "1.2",
@@ -23364,9 +23353,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "Assistant Chat Interface",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats display data with",
+      "src_name": "AI Assistant Interface",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.2",
@@ -23408,12 +23397,20 @@
           "target": "src/lib/utils.ts|src.lib.utils.cn",
           "call_sites": [
             {
-              "line": 103,
-              "column": 24
+              "line": 82,
+              "column": 20
             },
             {
-              "line": 125,
-              "column": 26
+              "line": 109,
+              "column": 20
+            },
+            {
+              "line": 122,
+              "column": 20
+            },
+            {
+              "line": 145,
+              "column": 22
             }
           ],
           "description": ""
@@ -23517,23 +23514,11 @@
       ]
     },
     {
-      "relation": "invokes server operations via",
-      "src_name": "Assistant Chat Interface",
-      "dst_name": "Server Actions",
+      "relation": "requests data from",
+      "src_name": "AI Assistant Interface",
+      "dst_name": "Server Action Handlers",
       "evidence": "",
-      "key_edges": [
-        {
-          "source": "src/components/assistant/profile-switcher.tsx|src.components.assistant.profile-switcher.ProfileSwitcher",
-          "target": "src/actions/ai.actions.ts|src.actions.ai.actions.setActiveAiProfile",
-          "call_sites": [
-            {
-              "line": 55,
-              "column": 28
-            }
-          ],
-          "description": "Updates active AI profile configuration"
-        }
-      ],
+      "key_edges": [],
       "src_id": "1.2",
       "dst_id": "4",
       "is_static": true,
@@ -23552,21 +23537,21 @@
       ]
     },
     {
-      "relation": "renders via UI primitives",
+      "relation": "renders using UI primitives",
       "src_name": "Financial Dashboard Views",
-      "dst_name": "UI Component Library",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [
         {
           "source": "src/components/dashboard/balance-history-chart.tsx|src.components.dashboard.balance-history-chart.BalanceHistoryChart",
-          "target": "src/components/ui/card.tsx|src.components.ui.card.CardContent",
+          "target": "src/components/ui/card.tsx|src.components.ui.card.CardHeader",
           "call_sites": [
             {
-              "line": 424,
+              "line": 413,
               "column": 8
             }
           ],
-          "description": "Dashboard charts render UI card wrappers and headers"
+          "description": "Wraps financial charts and overview cards with base card components"
         }
       ],
       "src_id": "1.3",
@@ -24158,7 +24143,7 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
+      "relation": "formats display data with",
       "src_name": "Financial Dashboard Views",
       "dst_name": "Financial Statistics and Analytics",
       "evidence": "",
@@ -24192,9 +24177,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
+      "relation": "formats display data with",
       "src_name": "Financial Dashboard Views",
-      "dst_name": "Shared Formatting Utilities",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.3",
@@ -24359,9 +24344,9 @@
       ]
     },
     {
-      "relation": "consumes date range state from",
+      "relation": "consumes state from",
       "src_name": "Financial Dashboard Views",
-      "dst_name": "Client State Hooks",
+      "dst_name": "Client State Management Hooks",
       "evidence": "",
       "key_edges": [
         {
@@ -24373,7 +24358,7 @@
               "column": 56
             }
           ],
-          "description": "Retrieves date range filter state"
+          "description": "Consumes date range state via application hook."
         }
       ],
       "src_id": "1.3",
@@ -24394,9 +24379,9 @@
       ]
     },
     {
-      "relation": "invokes server operations via",
+      "relation": "requests data from",
       "src_name": "Financial Dashboard Views",
-      "dst_name": "Server Actions",
+      "dst_name": "Server Action Handlers",
       "evidence": "",
       "key_edges": [
         {
@@ -24408,7 +24393,7 @@
               "column": 11
             }
           ],
-          "description": "Fetches balance history records for visualization"
+          "description": "Fetches historical balance data directly from account server actions."
         }
       ],
       "src_id": "1.3",
@@ -24484,9 +24469,9 @@
       ]
     },
     {
-      "relation": "renders via UI primitives",
-      "src_name": "App State Providers and Controls",
-      "dst_name": "UI Component Library",
+      "relation": "renders using UI primitives",
+      "src_name": "Application State and Status Controls",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [
         {
@@ -24498,7 +24483,7 @@
               "column": 8
             }
           ],
-          "description": "Demo toggle renders alert dialog confirmation dialogs"
+          "description": "Constructs confirmation dialogs using base alert dialog components"
         }
       ],
       "src_id": "1.4",
@@ -24808,9 +24793,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "App State Providers and Controls",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats display data with",
+      "src_name": "Application State and Status Controls",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.4",
@@ -24930,9 +24915,9 @@
       ]
     },
     {
-      "relation": "invokes server operations via",
-      "src_name": "App State Providers and Controls",
-      "dst_name": "Server Actions",
+      "relation": "requests data from",
+      "src_name": "Application State and Status Controls",
+      "dst_name": "Server Action Handlers",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.4",
@@ -24997,9 +24982,9 @@
       ]
     },
     {
-      "relation": "renders via UI primitives",
-      "src_name": "Settings and Integration Management",
-      "dst_name": "UI Component Library",
+      "relation": "renders using UI primitives",
+      "src_name": "Settings and Profile Configuration",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [
         {
@@ -25015,7 +25000,7 @@
               "column": 10
             }
           ],
-          "description": "Settings cards render UI alert dialogs and form elements"
+          "description": "Prompts for account actions using base alert dialogs"
         }
       ],
       "src_id": "1.5",
@@ -25836,9 +25821,9 @@
       ]
     },
     {
-      "relation": "triggers synchronization via",
-      "src_name": "Settings and Integration Management",
-      "dst_name": "App State Providers and Controls",
+      "relation": "triggers synchronization via context",
+      "src_name": "Settings and Profile Configuration",
+      "dst_name": "Application State and Status Controls",
       "evidence": "",
       "key_edges": [
         {
@@ -25850,7 +25835,7 @@
               "column": 33
             }
           ],
-          "description": "Bank connection card reads and initiates account synchronization"
+          "description": "Accesses synchronization state and triggers data sync operations"
         }
       ],
       "src_id": "1.5",
@@ -25871,9 +25856,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "Settings and Integration Management",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats display data with",
+      "src_name": "Settings and Profile Configuration",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.5",
@@ -25940,9 +25925,9 @@
       ]
     },
     {
-      "relation": "invokes server operations via",
-      "src_name": "Settings and Integration Management",
-      "dst_name": "Server Actions",
+      "relation": "requests data from",
+      "src_name": "Settings and Profile Configuration",
+      "dst_name": "Server Action Handlers",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.5",
@@ -26092,9 +26077,9 @@
       ]
     },
     {
-      "relation": "renders via UI primitives",
-      "src_name": "Application Layout Structure",
-      "dst_name": "UI Component Library",
+      "relation": "renders using UI primitives",
+      "src_name": "Application Layout and Navigation",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [
         {
@@ -26106,7 +26091,7 @@
               "column": 12
             }
           ],
-          "description": "Header renders baseline buttons"
+          "description": "Renders navigation action buttons using base button primitives"
         }
       ],
       "src_id": "1.6",
@@ -26127,25 +26112,25 @@
       ]
     },
     {
-      "relation": "hosts app controls and toggles",
-      "src_name": "Application Layout Structure",
-      "dst_name": "App State Providers and Controls",
+      "relation": "embeds header status controls",
+      "src_name": "Application Layout and Navigation",
+      "dst_name": "Application State and Status Controls",
       "evidence": "",
       "key_edges": [
         {
           "source": "src/components/layout/Header.tsx|src.components.layout.Header.Header",
-          "target": "src/components/demo-toggle.tsx|src.components.demo-toggle.DemoToggle",
+          "target": "src/components/sync-button.tsx|src.components.sync-button.SyncButton",
           "call_sites": [
             {
-              "line": 58,
+              "line": 56,
               "column": 14
             },
             {
-              "line": 98,
-              "column": 16
+              "line": 90,
+              "column": 14
             }
           ],
-          "description": "Header embeds demo mode toggles and sync control buttons"
+          "description": "Embeds sync, demo, and theme toggle controls in the navigation header"
         }
       ],
       "src_id": "1.6",
@@ -26215,9 +26200,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "Application Layout Structure",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats display data with",
+      "src_name": "Application Layout and Navigation",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.6",
@@ -26249,9 +26234,9 @@
       ]
     },
     {
-      "relation": "renders via UI primitives",
-      "src_name": "Sandbox Simulation Tools",
-      "dst_name": "UI Component Library",
+      "relation": "renders using UI primitives",
+      "src_name": "Financial Sandbox Simulation",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [
         {
@@ -26267,7 +26252,7 @@
               "column": 10
             }
           ],
-          "description": "Sandbox simulation rule controls render UI sliders and inputs"
+          "description": "Builds scenario adjustment inputs with base slider and label primitives"
         }
       ],
       "src_id": "1.7",
@@ -26462,9 +26447,9 @@
       ]
     },
     {
-      "relation": "formats data and visualizations using",
-      "src_name": "Sandbox Simulation Tools",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats display data with",
+      "src_name": "Financial Sandbox Simulation",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [],
       "src_id": "1.7",
@@ -26552,8 +26537,8 @@
       ]
     },
     {
-      "relation": "queries metrics from",
-      "src_name": "AI Assistant Tools",
+      "relation": "queries financial statistics",
+      "src_name": "Financial AI Assistant",
       "dst_name": "Financial Statistics and Analytics",
       "evidence": "",
       "key_edges": [
@@ -26566,18 +26551,7 @@
               "column": 23
             }
           ],
-          "description": "AI period comparison tool delegates metric computations to statistics calculations"
-        },
-        {
-          "source": "src/lib/ai/tools/get-balance-prediction.ts|src.lib.ai.tools.get-balance-prediction.getBalancePredictionTool.execute",
-          "target": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateBalancePrediction",
-          "call_sites": [
-            {
-              "line": 60,
-              "column": 20
-            }
-          ],
-          "description": "AI balance prediction tool requests future balance predictions from calculations"
+          "description": "AI tools invoke analytical statistics functions to calculate metrics for LLM responses"
         }
       ],
       "src_id": "2.1",
@@ -26752,9 +26726,9 @@
       ]
     },
     {
-      "relation": "formats chart values using",
-      "src_name": "AI Assistant Tools",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "formats visualization values",
+      "src_name": "Financial AI Assistant",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [
         {
@@ -26766,7 +26740,7 @@
               "column": 48
             }
           ],
-          "description": "AI visualization mapper formats currency values for charts"
+          "description": "Visualization mapper formats currency values for charts"
         }
       ],
       "src_id": "2.1",
@@ -26831,26 +26805,11 @@
       ]
     },
     {
-      "relation": "queries domain data via",
-      "src_name": "AI Assistant Tools",
-      "dst_name": "Server Actions",
+      "relation": "invokes operations in",
+      "src_name": "Financial AI Assistant",
+      "dst_name": "Server Action Handlers",
       "evidence": "",
       "key_edges": [
-        {
-          "source": "src/lib/ai/tools/compare-periods.ts|src.lib.ai.tools.compare-periods.comparePeriodsTool.execute",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
-          "call_sites": [
-            {
-              "line": 104,
-              "column": 7
-            },
-            {
-              "line": 108,
-              "column": 7
-            }
-          ],
-          "description": "Queries transaction datasets for AI tool execution"
-        },
         {
           "source": "src/lib/ai/tools/get-accounts.ts|src.lib.ai.tools.get-accounts.getAccountsTool.execute",
           "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getAccounts",
@@ -26860,7 +26819,7 @@
               "column": 7
             }
           ],
-          "description": "Queries account list for AI tool context"
+          "description": "Queries account records through server actions during AI tool execution."
         }
       ],
       "src_id": "2.1",
@@ -27083,21 +27042,21 @@
       ]
     },
     {
-      "relation": "persists and backs up via",
-      "src_name": "Banking Integration",
-      "dst_name": "Database Management",
+      "relation": "persists banking data",
+      "src_name": "Banking Integration and Sync",
+      "dst_name": "Database Access and Maintenance",
       "evidence": "",
       "key_edges": [
         {
           "source": "src/lib/banking/sync.ts|src.lib.banking.sync.syncBank",
-          "target": "src/lib/db/backup.ts|src.lib.db.backup.createBackup",
+          "target": "src/lib/db/index.ts|src.lib.db.index.getDb",
           "call_sites": [
             {
-              "line": 18,
-              "column": 30
+              "line": 26,
+              "column": 20
             }
           ],
-          "description": "Banking sync triggers database backups and retrieves the database instance"
+          "description": "Bank synchronizer creates backups and persists accounts and transactions"
         }
       ],
       "src_id": "2.2",
@@ -27144,9 +27103,9 @@
       ]
     },
     {
-      "relation": "filters transfers using",
+      "relation": "evaluates internal transfers",
       "src_name": "Financial Statistics and Analytics",
-      "dst_name": "Banking Integration",
+      "dst_name": "Banking Integration and Sync",
       "evidence": "",
       "key_edges": [
         {
@@ -27158,7 +27117,7 @@
               "column": 9
             }
           ],
-          "description": "Transaction summary verifies whether transactions are internal account transfers"
+          "description": "Summary calculations inspect transfer flags to exclude internal transfers"
         }
       ],
       "src_id": "2.3",
@@ -27179,21 +27138,21 @@
       ]
     },
     {
-      "relation": "formats amounts with",
+      "relation": "formats calculated amounts",
       "src_name": "Financial Statistics and Analytics",
-      "dst_name": "Shared Formatting Utilities",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
       "key_edges": [
         {
-          "source": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateTopCategories",
+          "source": "src/lib/stats/calculations.ts|src.lib.stats.calculations.calculateDailyAverage",
           "target": "src/lib/format.ts|src.lib.format.formatCurrency",
           "call_sites": [
             {
-              "line": 315,
-              "column": 18
+              "line": 967,
+              "column": 19
             }
           ],
-          "description": "Statistics calculations format currency representations for metrics output"
+          "description": "Statistical calculations format currency amounts for display"
         }
       ],
       "src_id": "2.3",
@@ -27262,9 +27221,9 @@
       ]
     },
     {
-      "relation": "generates identifiers via",
-      "src_name": "Database Management",
-      "dst_name": "Banking Integration",
+      "relation": "generates transaction keys",
+      "src_name": "Database Access and Maintenance",
+      "dst_name": "Banking Integration and Sync",
       "evidence": "",
       "key_edges": [
         {
@@ -27276,7 +27235,7 @@
               "column": 11
             }
           ],
-          "description": "Database seeder generates unique banking transaction IDs"
+          "description": "Database seeding generates transaction identifiers"
         }
       ],
       "src_id": "2.4",
@@ -27297,8 +27256,8 @@
       ]
     },
     {
-      "relation": "classifies data using",
-      "src_name": "Database Management",
+      "relation": "classifies seeded transactions",
+      "src_name": "Database Access and Maintenance",
       "dst_name": "Financial Statistics and Analytics",
       "evidence": "",
       "key_edges": [
@@ -27311,7 +27270,7 @@
               "column": 15
             }
           ],
-          "description": "Database seeder classifies transactions into categories"
+          "description": "Database seeding classifies synthetic transactions"
         }
       ],
       "src_id": "2.4",
@@ -27332,9 +27291,9 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "UI Component Library",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Base UI Primitives",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28347,9 +28306,9 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Assistant Chat Interface",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "AI Assistant Interface",
       "evidence": "",
       "key_edges": [
         {
@@ -28361,22 +28320,7 @@
               "column": 12
             }
           ],
-          "description": "Mounts chat input form in assistant interface"
-        },
-        {
-          "source": "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage",
-          "target": "src/components/assistant/chat-message.tsx|src.components.assistant.chat-message.ChatMessageBubble",
-          "call_sites": [
-            {
-              "line": 601,
-              "column": 18
-            },
-            {
-              "line": 604,
-              "column": 18
-            }
-          ],
-          "description": "Renders assistant message bubbles"
+          "description": "Renders chat interfaces and assistant message components on the assistant page."
         }
       ],
       "src_id": "3.1",
@@ -28478,8 +28422,8 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
       "dst_name": "Financial Dashboard Views",
       "evidence": "",
       "key_edges": [],
@@ -28597,9 +28541,9 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "App State Providers and Controls",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Application State and Status Controls",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28653,9 +28597,9 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Settings and Integration Management",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Settings and Profile Configuration",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28698,9 +28642,9 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Application Layout Structure",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Application Layout and Navigation",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28732,9 +28676,9 @@
       ]
     },
     {
-      "relation": "renders UI views and components",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Sandbox Simulation Tools",
+      "relation": "renders components from",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Financial Sandbox Simulation",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28766,9 +28710,9 @@
       ]
     },
     {
-      "relation": "calculates metrics and formats values using",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "AI Assistant Tools",
+      "relation": "calculates metrics using",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Financial AI Assistant",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28844,9 +28788,9 @@
       ]
     },
     {
-      "relation": "calculates metrics and formats values using",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Banking Integration",
+      "relation": "calculates metrics using",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Banking Integration and Sync",
       "evidence": "",
       "key_edges": [],
       "src_id": "3.1",
@@ -28878,8 +28822,8 @@
       ]
     },
     {
-      "relation": "calculates metrics and formats values using",
-      "src_name": "UI Pages and API Routes",
+      "relation": "calculates metrics using",
+      "src_name": "Application Pages and Endpoints",
       "dst_name": "Financial Statistics and Analytics",
       "evidence": "",
       "key_edges": [
@@ -28892,7 +28836,7 @@
               "column": 7
             }
           ],
-          "description": "Computes balance projection metrics"
+          "description": "Computes balance predictions and financial health metrics for insights display."
         }
       ],
       "src_id": "3.1",
@@ -29050,55 +28994,11 @@
       ]
     },
     {
-      "relation": "calculates metrics and formats values using",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Shared Formatting Utilities",
+      "relation": "calculates metrics using",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Formatting and Core Utilities",
       "evidence": "",
-      "key_edges": [
-        {
-          "source": "src/app/(dashboard)/insights/page.tsx|src.app.(dashboard).insights.page.InsightsPage",
-          "target": "src/lib/format.ts|src.lib.format.formatCurrency",
-          "call_sites": [
-            {
-              "line": 808,
-              "column": 24
-            },
-            {
-              "line": 824,
-              "column": 24
-            },
-            {
-              "line": 830,
-              "column": 24
-            },
-            {
-              "line": 930,
-              "column": 24
-            },
-            {
-              "line": 939,
-              "column": 24
-            },
-            {
-              "line": 1010,
-              "column": 41
-            },
-            {
-              "line": 1014,
-              "column": 24
-            },
-            {
-              "line": 1109,
-              "column": 32
-            },
-            {
-              "line": 1160,
-              "column": 24
-            }
-          ],
-          "description": "Formats monetary amounts for page presentation"
-        }
-      ],
+      "key_edges": [],
       "src_id": "3.1",
       "dst_id": "2.5",
       "is_static": true,
@@ -29306,9 +29206,9 @@
       ]
     },
     {
-      "relation": "manages client state with",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Client State Hooks",
+      "relation": "consumes client state hooks",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Client State Management Hooks",
       "evidence": "",
       "key_edges": [
         {
@@ -29320,7 +29220,7 @@
               "column": 7
             }
           ],
-          "description": "Assistant page initializes chat history and persistence management"
+          "description": "Manages persisted chat state and message history across assistant sessions."
         },
         {
           "source": "src/app/(dashboard)/sandbox/page.tsx|src.app.(dashboard).sandbox.page.SandboxPage",
@@ -29331,7 +29231,7 @@
               "column": 7
             }
           ],
-          "description": "Sandbox page manages scenario modeling state"
+          "description": "Drives interactive financial scenario simulation state."
         },
         {
           "source": "src/app/page.tsx|src.app.page.Home",
@@ -29342,7 +29242,7 @@
               "column": 7
             }
           ],
-          "description": "Home page manages date range filtering state"
+          "description": "Filters dashboard metrics based on selected date ranges."
         }
       ],
       "src_id": "3.1",
@@ -29396,9 +29296,9 @@
       ]
     },
     {
-      "relation": "retrieves runtime configuration from",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "AI and Credential Configuration",
+      "relation": "loads runtime configurations",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Service Configuration and Credentials",
       "evidence": "",
       "key_edges": [
         {
@@ -29410,7 +29310,7 @@
               "column": 7
             }
           ],
-          "description": "Chat API endpoint loads active AI profile configurations"
+          "description": "Retrieves active AI model profiles to handle chat requests."
         },
         {
           "source": "src/app/api/sync/route.ts|src.app.api.sync.route.POST",
@@ -29421,7 +29321,7 @@
               "column": 20
             }
           ],
-          "description": "Sync API endpoint retrieves external service credentials"
+          "description": "Loads credentials required to authenticate external sync operations."
         }
       ],
       "src_id": "3.1",
@@ -29464,32 +29364,21 @@
       ]
     },
     {
-      "relation": "dispatches server requests via",
-      "src_name": "UI Pages and API Routes",
-      "dst_name": "Server Actions",
+      "relation": "dispatches actions to",
+      "src_name": "Application Pages and Endpoints",
+      "dst_name": "Server Action Handlers",
       "evidence": "",
       "key_edges": [
         {
-          "source": "src/app/(dashboard)/assistant/page.tsx|src.app.(dashboard).assistant.page.AssistantPage",
-          "target": "src/actions/ai.actions.ts|src.actions.ai.actions.getAiProfilesStatus",
-          "call_sites": [
-            {
-              "line": 302,
-              "column": 28
-            }
-          ],
-          "description": "Checks configured AI profiles status"
-        },
-        {
           "source": "src/app/(dashboard)/insights/page.tsx|src.app.(dashboard).insights.page.InsightsPage.useEffect() callback.loadData",
-          "target": "src/actions/transactions.actions.ts|src.actions.transactions.actions.getTransactions",
+          "target": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getTotalBalance",
           "call_sites": [
             {
-              "line": 64,
+              "line": 65,
               "column": 11
             }
           ],
-          "description": "Fetches transactions for insights display"
+          "description": "Fetches current balance totals via server action endpoints."
         }
       ],
       "src_id": "3.1",
@@ -29675,9 +29564,9 @@
       ]
     },
     {
-      "relation": "persists and queries data with",
-      "src_name": "Server Actions",
-      "dst_name": "AI Assistant Tools",
+      "relation": "persists and queries data via",
+      "src_name": "Server Action Handlers",
+      "dst_name": "Financial AI Assistant",
       "evidence": "",
       "key_edges": [],
       "src_id": "4",
@@ -29709,9 +29598,9 @@
       ]
     },
     {
-      "relation": "persists and queries data with",
-      "src_name": "Server Actions",
-      "dst_name": "Banking Integration",
+      "relation": "persists and queries data via",
+      "src_name": "Server Action Handlers",
+      "dst_name": "Banking Integration and Sync",
       "evidence": "",
       "key_edges": [],
       "src_id": "4",
@@ -29725,6 +29614,28 @@
             {
               "line": 58,
               "column": 9
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/actions/credentials.actions.ts|src.actions.credentials.actions.testConnectionAction",
+          "target": "src/lib/banking/adapters/dkb/api.ts|src.lib.banking.adapters.dkb.api.DkbAuthError",
+          "call_sites": [
+            {
+              "line": 111,
+              "column": 26
+            }
+          ],
+          "description": ""
+        },
+        {
+          "source": "src/actions/credentials.actions.ts|src.actions.credentials.actions.testConnectionAction",
+          "target": "src/lib/banking/adapters/dkb/api.ts|src.lib.banking.adapters.dkb.api.DkbNetworkError",
+          "call_sites": [
+            {
+              "line": 117,
+              "column": 26
             }
           ],
           "description": ""
@@ -29776,8 +29687,8 @@
       ]
     },
     {
-      "relation": "persists and queries data with",
-      "src_name": "Server Actions",
+      "relation": "persists and queries data via",
+      "src_name": "Server Action Handlers",
       "dst_name": "Financial Statistics and Analytics",
       "evidence": "",
       "key_edges": [],
@@ -29898,22 +29809,11 @@
       ]
     },
     {
-      "relation": "persists and queries data with",
-      "src_name": "Server Actions",
-      "dst_name": "Database Management",
+      "relation": "persists and queries data via",
+      "src_name": "Server Action Handlers",
+      "dst_name": "Database Access and Maintenance",
       "evidence": "",
       "key_edges": [
-        {
-          "source": "src/actions/accounts.actions.ts|src.actions.accounts.actions.closeAccount",
-          "target": "src/lib/db/index.ts|src.lib.db.index.invalidateDbCache",
-          "call_sites": [
-            {
-              "line": 136,
-              "column": 3
-            }
-          ],
-          "description": "Invalidates database cache following account changes"
-        },
         {
           "source": "src/actions/accounts.actions.ts|src.actions.accounts.actions.getAccounts",
           "target": "src/lib/db/index.ts|src.lib.db.index.getDb",
@@ -29923,7 +29823,7 @@
               "column": 20
             }
           ],
-          "description": "Acquires database handle to read account records"
+          "description": "Connects to database instances and executes queries for account operations."
         }
       ],
       "src_id": "4",
@@ -30205,32 +30105,21 @@
       ]
     },
     {
-      "relation": "reads and mutates settings through",
-      "src_name": "Server Actions",
-      "dst_name": "AI and Credential Configuration",
+      "relation": "reads configuration from",
+      "src_name": "Server Action Handlers",
+      "dst_name": "Service Configuration and Credentials",
       "evidence": "",
       "key_edges": [
         {
-          "source": "src/actions/ai.actions.ts|src.actions.ai.actions.deleteAiProfile",
-          "target": "src/config/ai.ts|src.config.ai.deleteAiProfile",
-          "call_sites": [
-            {
-              "line": 213,
-              "column": 18
-            }
-          ],
-          "description": "Deletes stored AI profile from config file"
-        },
-        {
           "source": "src/actions/ai.actions.ts|src.actions.ai.actions.getAiProfilesStatus",
-          "target": "src/config/ai.ts|src.config.ai.getAiProfiles",
+          "target": "src/config/ai.ts|src.config.ai.getActiveAiProfile",
           "call_sites": [
             {
-              "line": 116,
-              "column": 20
+              "line": 117,
+              "column": 27
             }
           ],
-          "description": "Retrieves AI profile configurations"
+          "description": "Retrieves active AI profile configurations when handling profile status requests."
         }
       ],
       "src_id": "4",
