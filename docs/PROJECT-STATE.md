@@ -52,6 +52,14 @@
 - "Pick in Storybook, talk in your own terminal" via MCP
 - Codex/Cursor adapters
 
+**Update (2026-11-14, Composer mode):**
+
+- Added Composer mode, the third mode. The panel acts as a guide/composer that hands context (flow, stories, picked elements, request) to the user's own agent.
+- Direction agreed with the client: the designer works in the Claude app with its built-in browser. MCP and real skills are deferred, because the skills need deeper design-system instructions.
+- Hand-off test: the composed prompt was fed to a fresh Claude Code session. It created a prototype story with 2 options in ~6 min and took its own screenshots, but missed visual flaws (numbers crammed together in option A, the bar lost its colours in option B). Self-verification needs stronger instructions in future skills.
+- Known limit: stories added via search carry no args/globals.
+- Next: client and designer try Composer from the Claude app; then design-system skills with visual QA checklists.
+
 ---
 
 ## This session changes (2026-10-15) — Shared currency formatters refactor

@@ -93,6 +93,14 @@ Prototype UI changes by chatting with Claude Code inside Storybook.
 - The manager UI doesn't hot-reload, so restart `npm run storybook` after changing `.storybook/manager.tsx`.
 - The agent's rules live in `.storybook/ai-chat/AGENT_RULES.md`.
 
+**Composer mode** (third mode; the panel composes a prompt and hands it to your own agent):
+
+- Works with Storybook alone: `npm run storybook:only`, no helper servers.
+- Pick a flow, add stories (the current one, or via search) and picked elements to the basket, then write your request.
+- 📋 **Copy prompt** and paste it into any agent (Claude app, your own terminal, Cursor), or use ⌨️ **Send to Terminal**.
+- 🌐 **Open in Claude app** copies a prompt that makes the Claude desktop app start Storybook and open the current story in its built-in browser.
+- The prompt includes story file paths, view URLs (with args/globals) and a "check visually before reporting" agreement.
+
 ## AI Assistant
 
 - **SDK:** Vercel AI SDK (`ai` v7, `@ai-sdk/react` v4) for streaming chat + multi-step tool calling
