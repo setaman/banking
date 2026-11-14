@@ -85,6 +85,11 @@ Prototype UI changes by chatting with Claude Code inside Storybook.
 - **Undo:** use git, e.g. `git restore <file>`.
 - **Model dropdown** in the panel header picks the Claude model (Opus, Sonnet, Haiku, or your Claude Code default); it is remembered and can be switched mid-conversation.
 - **New chat** resets the conversation.
+- **Terminal mode:** the ⌨️ Terminal tab runs a real interactive Claude Code session (your settings, `/model`, `/resume`, MCPs, permission prompts) via `scripts/ai-terminal-server.mjs` on 127.0.0.1:6101, which only accepts connections from localhost origins.
+- The terminal session survives panel reloads; **Restart** starts fresh.
+- Picking an element pastes a `[Storybook selection]` block into the input; type your request after `Request:` and press Enter.
+- **Flow chips** (Prototype, Research, Tweak, New page, Review) prepend instructions and are editable in `.storybook/ai-chat/flows.json`.
+- The manager UI doesn't hot-reload, so restart `npm run storybook` after changing `.storybook/manager.tsx`.
 - The agent's rules live in `.storybook/ai-chat/AGENT_RULES.md`.
 
 ## AI Assistant

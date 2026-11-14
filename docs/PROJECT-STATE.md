@@ -33,6 +33,25 @@
 - Run client tests locally
 - Then Codex/Cursor adapters, per-run diff, screenshot
 
+**Update (2026-11-14):**
+
+- Added a model picker to the chat panel.
+- Added Terminal mode (node-pty + ws + xterm): a real interactive Claude Code session in the panel, plus editable flows (Prototype, Research, Tweak, New page, Review).
+- Verified in a browser: Prototype flow + pick on `CardTitle` made Claude Code create a `*.prototype.stories.tsx` with 2 options, shown under "Prototypes/" in the sidebar.
+
+**Known issues (update):**
+
+- The component stack includes framework wrappers (hookified, StyleSheetContext, StyleRegistry).
+- The terminal's first render can wrap lines oddly until the first resize.
+- The chat's changed-files list is repo-wide.
+
+**Next steps (update):**
+
+- Run the client tests locally
+- Filter wrapper names from the component stack
+- "Pick in Storybook, talk in your own terminal" via MCP
+- Codex/Cursor adapters
+
 ---
 
 ## This session changes (2026-10-15) — Shared currency formatters refactor
