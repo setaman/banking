@@ -20,12 +20,13 @@ import { cn } from "@/lib/utils";
 const MAX_LENGTH = 2000;
 const COUNTER_THRESHOLD = 1800;
 const MAX_ROWS = 4;
-// Approximate per-row height (text-sm leading-relaxed) plus vertical padding,
-// used to cap the textarea's auto-grow at MAX_ROWS.
-const LINE_HEIGHT_PX = 20;
-const VERTICAL_PADDING_PX = 20;
+// Per-row height (text-sm leading-6) plus the textarea's own vertical
+// padding, used to cap the auto-grow at MAX_ROWS.
+const LINE_HEIGHT_PX = 24;
+const VERTICAL_PADDING_PX = 12;
 const MAX_HEIGHT_PX = LINE_HEIGHT_PX * MAX_ROWS + VERTICAL_PADDING_PX;
-const MIN_HEIGHT_PX = 44;
+// One row exactly, so a single line of text sits centred in the box.
+const MIN_HEIGHT_PX = 36;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -74,64 +75,88 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
     };
 
     const showCounter = value.length >= COUNTER_THRESHOLD;
+    const isEmpty = value.trim() === "";
+
+    const counter = showCounter ? (
+      <span
+        className={cn(
+          "shrink-0 text-xs tabular-nums",
+          value.length >= MAX_LENGTH
+            ? "text-destructive"
+            : "text-muted-foreground"
+        )}
+      >
+        {value.length}/{MAX_LENGTH}
+      </span>
+    ) : null;
+
+    const textarea = (
+      <Textarea
+        ref={setRefs}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder="Ask about your finances..."
+        rows={1}
+        maxLength={MAX_LENGTH}
+        disabled={disabled}
+        aria-label="Message input"
+        aria-describedby="chat-input-keyboard-hint"
+        style={{
+          minHeight: MIN_HEIGHT_PX,
+          maxHeight: MAX_HEIGHT_PX,
+        }}
+        className={cn(
+          // A bare field: the surrounding box carries border, fill and focus.
+          "min-h-0 resize-none rounded-none border-0 bg-transparent px-2 py-1.5 text-sm leading-6 shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60 md:text-sm dark:bg-transparent"
+        )}
+      />
+    );
+
+    const sendButton = (
+      <Button
+        size="icon"
+        onClick={onSend}
+        disabled={isEmpty || disabled}
+        aria-label="Send message"
+        className={cn(
+          "shrink-0 transition-colors",
+          // Nothing to send: a quiet grey button instead of a washed-out blue.
+          isEmpty &&
+            !disabled &&
+            "bg-muted text-muted-foreground disabled:opacity-100",
+          disabled && "disabled:opacity-80",
+          "rounded-xl"
+        )}
+      >
+        {disabled ? <Loader2 className="animate-spin" /> : <ArrowUp />}
+      </Button>
+    );
+
+    const hint = (
+      <span id="chat-input-keyboard-hint" className="sr-only">
+        Press Enter to send your message, or Shift+Enter to insert a new line.
+      </span>
+    );
 
     return (
       <div>
-        <div className="relative">
-          <Textarea
-            ref={setRefs}
-            value={value}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about your finances..."
-            rows={1}
-            maxLength={MAX_LENGTH}
-            disabled={disabled}
-            aria-label="Message input"
-            aria-describedby="chat-input-keyboard-hint"
-            style={{
-              minHeight: MIN_HEIGHT_PX,
-              maxHeight: MAX_HEIGHT_PX,
-            }}
-            className="border-border bg-card focus-visible:border-primary/40 resize-none rounded-xl pr-12 text-sm focus-visible:ring-0"
-          />
-          <Button
-            size="icon"
-            onClick={onSend}
-            disabled={value.trim() === "" || disabled}
-            aria-label="Send message"
-            className={cn(
-              "absolute right-2 bottom-2 h-8 w-8 rounded-lg",
-              "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
-            )}
-          >
-            {disabled ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ArrowUp className="h-4 w-4" />
-            )}
-          </Button>
+        <div
+          className={cn(
+            "border-border bg-card flex items-end gap-2 rounded-2xl border p-1.5 pl-2 shadow-sm backdrop-blur-xl transition-[border-color,box-shadow] dark:border-white/10",
+            "focus-within:border-ring focus-within:ring-ring/20 focus-within:ring-[3px]"
+          )}
+        >
+          {textarea}
+          {sendButton}
         </div>
-        <span id="chat-input-keyboard-hint" className="sr-only">
-          Press Enter to send your message, or Shift+Enter to insert a new line.
-        </span>
-        <div className="mt-1.5 flex items-center justify-center gap-2">
-          <p className="text-muted-foreground text-center text-[11px]">
+        {hint}
+        <div className="mt-2 flex items-center justify-center gap-2 px-1">
+          <p className="text-muted-foreground text-center text-xs">
             Answers are AI-generated and may be inaccurate. Verify important
             figures.
           </p>
-          {showCounter && (
-            <span
-              className={cn(
-                "shrink-0 text-[11px] tabular-nums",
-                value.length >= MAX_LENGTH
-                  ? "text-destructive"
-                  : "text-muted-foreground"
-              )}
-            >
-              {value.length}/{MAX_LENGTH}
-            </span>
-          )}
+          {counter}
         </div>
       </div>
     );
