@@ -13,8 +13,8 @@ export interface TerminalHandle {
   focus: () => void;
 }
 
-export const TerminalView = forwardRef<TerminalHandle, { visible: boolean; hasContext: boolean; onSendFlow: () => void; onInsert: () => void; flowSelected: boolean }>(
-  function TerminalView({ visible, hasContext, onSendFlow, onInsert, flowSelected }, ref) {
+export const TerminalView = forwardRef<TerminalHandle, { visible: boolean; hasContext: boolean; onSendFlow: () => void; onInsert: () => void; flowSelected: boolean; onConnectedChange?: (c: boolean) => void }>(
+  function TerminalView({ visible, hasContext, onSendFlow, onInsert, flowSelected, onConnectedChange }, ref) {
     const hostRef = useRef<HTMLDivElement>(null);
     const termRef = useRef<Terminal | null>(null);
     const fitRef = useRef<FitAddon | null>(null);
@@ -24,6 +24,9 @@ export const TerminalView = forwardRef<TerminalHandle, { visible: boolean; hasCo
       visibleRef.current = visible;
     });
     const [connected, setConnected] = useState(false);
+    useEffect(() => {
+      onConnectedChange?.(connected);
+    }, [connected, onConnectedChange]);
 
     const send = useCallback((msg: object) => {
       const ws = wsRef.current;
