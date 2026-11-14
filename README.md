@@ -83,6 +83,7 @@ Prototype UI changes by chatting with Claude Code inside Storybook.
 - **Setup:** `npm install`, then `npm run storybook`. This starts Storybook on :6006 and the local agent bridge on 127.0.0.1:6100. `npm run storybook:only` runs Storybook without the agent.
 - **Usage:** open the **AI Chat** panel on the right, click 🎯 **Pick element**, click something in the preview, type a request, and the change hot-reloads.
 - **Undo:** use git, e.g. `git restore <file>`.
+- **Model dropdown** in the panel header picks the Claude model (Opus, Sonnet, Haiku, or your Claude Code default); it is remembered and can be switched mid-conversation.
 - **New chat** resets the conversation.
 - The agent's rules live in `.storybook/ai-chat/AGENT_RULES.md`.
 

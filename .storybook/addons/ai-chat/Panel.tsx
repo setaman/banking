@@ -4,6 +4,17 @@ import type { API } from "storybook/manager-api";
 
 const SERVER = "http://127.0.0.1:6100";
 const LS_KEY = "ai-chat:v1";
+const LS_MODEL = "ai-chat:model";
+interface ModelOpt {
+  id: string;
+  label: string;
+}
+const FALLBACK_MODELS: ModelOpt[] = [
+  { id: "", label: "Default (your Claude Code setting)" },
+  { id: "opus", label: "Opus" },
+  { id: "sonnet", label: "Sonnet" },
+  { id: "haiku", label: "Haiku" },
+];
 
 interface Picked {
   componentName: string;
@@ -20,7 +31,7 @@ type Msg =
   | { kind: "assistant"; text: string }
   | { kind: "tool"; text: string }
   | { kind: "error"; text: string }
-  | { kind: "summary"; durationMs?: number; files: ChangedFile[]; ok?: boolean };
+  | { kind: "summary"; durationMs?: number; files: ChangedFile[]; ok?: boolean; model?: string };
 
 const chipLabel = (p: Picked): string =>
   `${p.componentName} <${p.tagName}>${p.source ? ` ${p.source.file}:${p.source.line}` : ""}`;
@@ -57,6 +68,16 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
   const [picked, setPicked] = useState<Picked | null>(null);
   const [picking, setPicking] = useState(false);
   const [up, setUp] = useState(false);
+  const [models, setModels] = useState<ModelOpt[]>(FALLBACK_MODELS);
+  const [model, setModel] = useState<string>(() => {
+    try {
+      return localStorage.getItem(LS_MODEL) ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const modelRef = useRef(model);
+  modelRef.current = model;
   const [running, setRunning] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -79,6 +100,22 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
       /* ignore */
     }
   }, [messages, sessionId]);
+
+  useEffect(() => {
+    fetch(`${SERVER}/models`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("bad status"))))
+      .then((l: ModelOpt[]) => Array.isArray(l) && l.length > 0 && setModels(l))
+      .catch(() => undefined);
+  }, []);
+
+  const changeModel = (v: string) => {
+    setModel(v);
+    try {
+      localStorage.setItem(LS_MODEL, v);
+    } catch {
+      /* ignore */
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -132,11 +169,12 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
     let files: ChangedFile[] = [];
     let durationMs: number | undefined;
     let ok: boolean | undefined;
+    let usedModel: string | undefined;
     try {
       const res = await fetch(`${SERVER}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, sessionId: sessionRef.current ?? undefined, context: ctx ?? undefined }),
+        body: JSON.stringify({ message, sessionId: sessionRef.current ?? undefined, context: ctx ?? undefined, model: modelRef.current || undefined }),
         signal: ac.signal,
       });
       if (!res.ok || !res.body) {
@@ -162,7 +200,10 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
           } catch {
             continue;
           }
-          if (ev.type === "session") setSessionId(ev.sessionId);
+          if (ev.type === "session") {
+            setSessionId(ev.sessionId);
+            usedModel = ev.model;
+          }
           else if (ev.type === "text") appendText(ev.text);
           else if (ev.type === "tool")
             setMessages((m) => [...m, { kind: "tool", text: `${TOOL_ICON[ev.name] ?? "•"} ${ev.name} ${ev.summary ?? ""}` }]);
@@ -173,7 +214,7 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
           } else if (ev.type === "changes") files = ev.files ?? [];
         }
       }
-      setMessages((m) => [...m, { kind: "summary", durationMs, files, ok }]);
+      setMessages((m) => [...m, { kind: "summary", durationMs, files, ok, model: usedModel }]);
     } catch (e) {
       if ((e as Error).name !== "AbortError")
         setMessages((m) => [...m, { kind: "error", text: `Connection failed: ${(e as Error).message}` }]);
@@ -215,6 +256,18 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
         />
         {!up && <span style={{ ...muted, fontSize: 11 }}>run npm run storybook</span>}
         <span style={{ flex: 1 }} />
+        <select
+          aria-label="Model"
+          value={model}
+          onChange={(e) => changeModel(e.target.value)}
+          style={{ ...btn(), padding: "3px 4px", maxWidth: 130, background: "transparent" }}
+        >
+          {models.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
         <button style={btn(picking)} onClick={togglePick} title="Click an element in the preview">
           🎯 Pick element
         </button>
@@ -261,6 +314,7 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
                 {m.ok === false ? "⚠ Finished with errors" : "✓ Done"}
                 {m.durationMs != null && ` in ${(m.durationMs / 1000).toFixed(1)}s`}
               </div>
+              {m.model && <div style={{ ...muted, fontSize: 11 }}>model: {m.model}</div>}
               {m.files.length > 0 ? (
                 <>
                   <div style={{ marginTop: 4, ...muted }}>Changed files:</div>

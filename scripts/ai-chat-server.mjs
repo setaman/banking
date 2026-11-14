@@ -66,6 +66,8 @@ async function chat(req, res) {
   const body = await readBody(req);
   if (!body || typeof body.message !== "string" || !body.message.trim())
     return json(res, 400, { error: "message required" });
+  if (body.model != null && body.model !== "" && (typeof body.model !== "string" || !/^[a-zA-Z0-9.\-_\[\]]{1,64}$/.test(body.model)))
+    return json(res, 400, { error: "invalid model" });
   if (child) return json(res, 409, { error: "busy" });
 
   res.writeHead(200, {
@@ -87,6 +89,7 @@ async function chat(req, res) {
   if (existsSync(rulesPath))
     args.push("--append-system-prompt", readFileSync(rulesPath, "utf8"));
   if (body.sessionId) args.push("--resume", body.sessionId);
+  if (body.model) args.push("--model", body.model);
 
   const p = spawn("claude", args, { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
   child = p;
@@ -102,7 +105,7 @@ async function chat(req, res) {
     } catch {
       return;
     }
-    if (m.type === "system" && m.subtype === "init") send({ type: "session", sessionId: m.session_id });
+    if (m.type === "system" && m.subtype === "init") send({ type: "session", sessionId: m.session_id, model: m.model });
     else if (m.type === "assistant") {
       for (const b of m.message?.content ?? []) {
         if (b.type === "text" && b.text) send({ type: "text", text: b.text });
@@ -164,6 +167,13 @@ http
       return res.end();
     }
     if (req.method === "GET" && url === "/health") return json(res, 200, { ok: true, busy: !!child });
+    if (req.method === "GET" && url === "/models")
+      return json(res, 200, [
+        { id: "", label: "Default (your Claude Code setting)" },
+        { id: "opus", label: "Opus" },
+        { id: "sonnet", label: "Sonnet" },
+        { id: "haiku", label: "Haiku" },
+      ]);
     if (req.method === "POST" && url === "/chat") return chat(req, res);
     if (req.method === "POST" && url === "/stop") {
       const stopped = !!child;
