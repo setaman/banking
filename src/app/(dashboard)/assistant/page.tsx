@@ -617,7 +617,7 @@ export default function AssistantPage(): React.JSX.Element {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.15 }}
-          className="border-border bg-background/80 sticky bottom-0 border-t px-2 py-3 backdrop-blur-xl sm:px-4"
+          className="bg-background before:from-background sticky bottom-0 px-2 pt-1 pb-4 before:pointer-events-none before:absolute before:inset-x-0 before:-top-6 before:h-6 before:bg-gradient-to-t before:to-transparent sm:px-4"
         >
           <ChatInput
             ref={inputRef}
