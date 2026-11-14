@@ -75,7 +75,18 @@ The application features a custom "Neo-Glass" aesthetic designed to feel premium
 - **Currency:** Intl.NumberFormat (EUR formatting)
 - **Banking API:** DKB REST API with cookie + CSRF auth
 
-### AI Assistant
+### AI design chat in Storybook (PoC)
+
+Prototype UI changes by chatting with Claude Code inside Storybook.
+
+- **Prerequisites:** the Claude Code CLI installed and logged in (run `claude` once). It uses your subscription; no API key is needed.
+- **Setup:** `npm install`, then `npm run storybook`. This starts Storybook on :6006 and the local agent bridge on 127.0.0.1:6100. `npm run storybook:only` runs Storybook without the agent.
+- **Usage:** open the **AI Chat** panel on the right, click 🎯 **Pick element**, click something in the preview, type a request, and the change hot-reloads.
+- **Undo:** use git, e.g. `git restore <file>`.
+- **New chat** resets the conversation.
+- The agent's rules live in `.storybook/ai-chat/AGENT_RULES.md`.
+
+## AI Assistant
 
 - **SDK:** Vercel AI SDK (`ai` v7, `@ai-sdk/react` v4) for streaming chat + multi-step tool calling
 - **Providers:** `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `ollama-ai-provider-v2` (all v4)

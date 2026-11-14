@@ -7,6 +7,34 @@
 
 ---
 
+## This session changes (2026-11-14) — Storybook AI chat PoC
+
+**Summary:** Proof of concept on branch `poc/storybook-claude-chat`: chat with Claude Code inside Storybook to pick a UI element and request a change that hot-reloads.
+
+**Built:**
+
+- Storybook 10 (`nextjs-vite`) with 5 story files
+- Source-tag Vite plugin (maps preview elements to source files)
+- Chat server `scripts/ai-chat-server.mjs` (local bridge to the Claude Code CLI)
+- AI Chat panel + element picker in `.storybook/addons/ai-chat`, registered in `.storybook/manager.tsx`
+- Agent rules in `.storybook/ai-chat/AGENT_RULES.md`; README section added
+
+**Verification:** end to end in a browser: picked `CardTitle`, asked for a bigger primary-colour title; the edit was applied in ~26s and hot-reloaded.
+
+**Known limitations:**
+
+- Changed-files list shows all uncommitted files, not just the agent's
+- No screenshot in the payload yet
+- Panel tab is not first in the tab order
+- About 3s CLI startup per message
+
+**Next actions:**
+
+- Run client tests locally
+- Then Codex/Cursor adapters, per-run diff, screenshot
+
+---
+
 ## This session changes (2026-10-15) — Shared currency formatters refactor
 
 **Summary:** Introduced `src/lib/format.ts` (shared currency/percent formatters) and migrated 15 files to it. Output is unchanged (parity-checked). The monthly budgets feature that was prototyped in the same PR was removed at the client's request (it served as a CodeBoarding large-PR test).
