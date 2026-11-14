@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useArgs, useGlobals, useStorybookApi, useStorybookState } from "storybook/manager-api";
+import { useArgs, useGlobals, useStorybookApi } from "storybook/manager-api";
 
 import { buildPrompt, claudeAppPrompt, copyText, repoPath, storyLabel } from "./composer";
 import type { Basket, BasketStory } from "./composer";
@@ -46,38 +46,28 @@ export function ComposerView({
   onSendToTerminal: (prompt: string) => void;
 }): React.ReactElement {
   const api = useStorybookApi();
-  const state = useStorybookState();
   const [args] = useArgs();
   const [globals] = useGlobals();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [adding, setAdding] = useState(false);
   const [copied, setCopied] = useState<"prompt" | "app" | null>(null);
   const origin = window.location.origin;
   const current = api.getCurrentStoryData() as unknown as (IndexEntry & { type: string }) | undefined;
   const currentId = current?.type === "story" ? current.id : null;
 
-  const entries = useMemo<IndexEntry[]>(() => {
-    const idx = ((state as unknown as { index?: Record<string, IndexEntry> }).index ?? {}) as Record<string, IndexEntry>;
-    return Object.values(idx).filter((e) => e.type === "story");
-  }, [state]);
-
   const prompt = useMemo(() => buildPrompt({ flow, request, basket, origin }), [flow, request, basket, origin]);
   const isEmpty = !basket.stories.length && !basket.elements.length && !request.trim();
 
-  const addStory = (e: IndexEntry, live: boolean): void => {
+  const addCurrent = (): void => {
+    if (!current || !currentId) return;
     const s: BasketStory = {
-      id: e.id,
-      title: e.title,
-      name: e.name,
-      importPath: repoPath(e.importPath),
-      args: live ? ((args ?? {}) as Record<string, unknown>) : {},
-      globals: live ? ((globals ?? {}) as Record<string, unknown>) : {},
+      id: current.id,
+      title: current.title,
+      name: current.name,
+      importPath: repoPath(current.importPath),
+      args: (args ?? {}) as Record<string, unknown>,
+      globals: (globals ?? {}) as Record<string, unknown>,
     };
     setBasket((b) => (b.stories.some((x) => x.id === s.id) ? b : { ...b, stories: [...b.stories, s] }));
-  };
-  const addCurrent = (): void => {
-    if (current && currentId) addStory(current, true);
   };
   const removeStory = (id: string): void => setBasket((b) => ({ ...b, stories: b.stories.filter((s) => s.id !== id) }));
   const removeEl = (i: number): void => setBasket((b) => ({ ...b, elements: b.elements.filter((_, j) => j !== i) }));
@@ -86,10 +76,6 @@ export function ComposerView({
     setCopied(k);
     setTimeout(() => setCopied(null), 2000);
   };
-
-  const matches = query.trim()
-    ? entries.filter((e) => `${e.title} ${e.name}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 8)
-    : entries.slice(0, 8);
 
   const elLabel = (p: Picked): string => `${p.componentName} <${p.tagName}>${p.source ? ` ${repoPath(p.source.file)}:${p.source.line}` : ""}`;
 
@@ -128,38 +114,8 @@ export function ComposerView({
           <button style={btn()} onClick={addCurrent} disabled={!currentId} title={currentId ? `Add ${current?.title} · ${current?.name}` : "Open a story first"}>
             + Add current story
           </button>
-          <button style={btn(adding)} onClick={() => setAdding((a) => !a)}>
-            Add story…
-          </button>
+          <span style={{ ...muted, fontSize: 11 }}>or hover a story in the sidebar and click 🧩</span>
         </div>
-        {adding && (
-          <div style={{ border: LINE, borderRadius: 6, padding: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search stories…"
-              aria-label="Search stories"
-              style={{ font: "inherit", fontSize: 12, padding: "4px 8px", borderRadius: 4, border: "1px solid rgba(128,128,128,0.4)", background: "transparent", color: "inherit" }}
-            />
-            <div style={{ maxHeight: 160, overflow: "auto", display: "flex", flexDirection: "column" }}>
-              {matches.map((e) => (
-                <button
-                  key={e.id}
-                  onClick={() => {
-                    addStory(e, e.id === currentId);
-                    setAdding(false);
-                    setQuery("");
-                  }}
-                  style={{ ...btn(), border: 0, textAlign: "left", padding: "3px 6px" }}
-                >
-                  {e.title} · {e.name}
-                </button>
-              ))}
-              {!matches.length && <span style={{ ...muted, fontSize: 11, padding: 4 }}>No match</span>}
-            </div>
-          </div>
-        )}
 
         <div style={{ ...muted, fontSize: 11, marginTop: 4 }}>Elements</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>

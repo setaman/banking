@@ -2,8 +2,13 @@ import React from "react";
 import { addons, types } from "storybook/manager-api";
 
 import { Panel } from "./addons/ai-chat/Panel";
+import { renderSidebarLabel } from "./addons/ai-chat/SidebarAddButton";
 
-addons.setConfig({ panelPosition: "right" });
+addons.setConfig({
+  panelPosition: "right",
+  // No public sidebar context-menu API (only a test-provider hook), so add a hover button to story labels.
+  sidebar: { renderLabel: renderSidebarLabel },
+});
 
 addons.register("ai-chat", (api) => {
   addons.add("ai-chat/panel", {

@@ -4,7 +4,7 @@ import type { API } from "storybook/manager-api";
 
 import { ChatView } from "./ChatView";
 import { ComposerView } from "./ComposerView";
-import { elementKey, loadBasket, saveBasket, slimElement } from "./composer";
+import { COMPOSER_ADD_EVENT, elementKey, loadBasket, saveBasket, slimElement } from "./composer";
 import type { Basket } from "./composer";
 import flowsJson from "../../ai-chat/flows.json";
 import { FALLBACK_FLOWS, btn, flowLine, insertionText } from "./shared";
@@ -55,6 +55,12 @@ export function Panel({ active, api }: { active: boolean; api: API }): React.Rea
       saveBasket(n);
       return n;
     });
+  }, []);
+  // Stories added from the sidebar (storage already written by the sender).
+  useEffect(() => {
+    const sync = (): void => setBasketState(loadBasket());
+    window.addEventListener(COMPOSER_ADD_EVENT, sync);
+    return () => window.removeEventListener(COMPOSER_ADD_EVENT, sync);
   }, []);
   const setRequest = (s: string): void => {
     setRequestState(s);

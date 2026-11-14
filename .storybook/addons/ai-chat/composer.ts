@@ -36,6 +36,21 @@ export function saveBasket(b: Basket): void {
   }
 }
 
+export const COMPOSER_ADD_EVENT = "ai-chat:composer-add";
+
+/**
+ * Add a story to the persisted basket from anywhere in the manager (e.g. the
+ * sidebar), even when the panel is not mounted. Returns false if it was already
+ * in the basket. Mounted panels pick the change up via COMPOSER_ADD_EVENT.
+ */
+export function addStoryToBasket(story: BasketStory): boolean {
+  const b = loadBasket();
+  if (b.stories.some((s) => s.id === story.id)) return false;
+  saveBasket({ ...b, stories: [...b.stories, story] });
+  window.dispatchEvent(new CustomEvent(COMPOSER_ADD_EVENT, { detail: story }));
+  return true;
+}
+
 /** Repo-relative path (`src/...`) from an index importPath or picker file. */
 export function repoPath(p: string): string {
   const s = p.replace(/\\/g, "/");
